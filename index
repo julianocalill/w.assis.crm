@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W.Assis CRM | Seguros</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 
+                        primary: '#0263E0', 
+                        surface: '#FFFFFF',
+                        bg: '#F8FAFC',
+                        border: '#E2E8F0',
+                        textMain: '#1E293B',
+                        textMuted: '#64748B'
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #F8FAFC; color: #1E293B; font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+        .ghost-card { background: #EFF6FF; border: 2px dashed #0263E0; opacity: 0.7; }
+        .kanban-col { min-width: 320px; width: 320px; }
+        .nav-item.active { background-color: #0263E0; color: #FFFFFF; font-weight: 600; }
+        .nav-item.active i { color: #FFFFFF; }
+        .tab-btn.active { border-bottom: 2px solid #0263E0; color: #0263E0; font-weight: 600; }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden text-sm">
+
+    <div id="loginOverlay" class="fixed inset-0 bg-bg z-[200] flex items-center justify-center">
+        <div class="bg-surface p-10 rounded-2xl shadow-xl border border-border w-[400px]">
+            <div class="flex items-center gap-3 justify-center mb-8">
+                <div class="bg-primary text-white p-2 rounded-lg"><i class="fa-solid fa-shield-halved text-2xl"></i></div>
+                <h1 class="text-3xl font-bold text-textMain">Nexus</h1>
+            </div>
+            <h2 class="text-center text-textMuted mb-6">Acesse sua conta corretor</h2>
+            <form id="loginForm" onsubmit="app.login(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-textMuted mb-1 uppercase tracking-wider">E-mail corporativo</label>
+                    <input type="email" id="loginEmail" required class="w-full border border-border rounded-lg p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-textMuted mb-1 uppercase tracking-wider">Senha</label>
+                    <input type="password" id="loginPassword" required class="w-full border border-border rounded-lg p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition">
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg shadow-primary/30 transition mt-2">
+                    Entrar no Sistema
+                </button>
+            </form>
+            <button onclick="ui.toggleSettings()" class="w-full mt-4 text-xs text-textMuted hover:text-primary transition"><i class="fa-solid fa-gear"></i> Configurar Banco de Dados</button>
+        </div>
+    </div>
+
+    <aside class="w-64 bg-surface border-r border-border flex flex-col h-full z-20 shadow-sm">
+        <div class="h-20 flex items-center gap-3 px-6 border-b border-border">
+            <div class="bg-primary text-white p-1.5 rounded-lg"><i class="fa-solid fa-shield-halved text-xl"></i></div>
+            <h1 class="text-2xl font-bold text-textMain tracking-tight">Nexus</h1>
+        </div>
+        
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            <button onclick="app.navigate('dashboard')" id="nav-dashboard" class="nav-item flex items-center gap-3 w-full px-4 py-3 rounded-xl text-textMuted hover:bg-slate-100 transition">
+                <i class="fa-solid fa-chart-pie w-5 text-center"></i> Dashboard
+            </button>
+            <button onclick="app.navigate('segurados')" id="nav-segurados" class="nav-item flex items-center gap-3 w-full px-4 py-3 rounded-xl text-textMuted hover:bg-slate-100 transition">
+                <i class="fa-solid fa-users w-5 text-center"></i> Segurados
+            </button>
+            <button onclick="app.navigate('oportunidades')" id="nav-oportunidades" class="nav-item active flex items-center gap-3 w-full px-4 py-3 rounded-xl text-textMuted hover:bg-slate-100 transition">
+                <i class="fa-solid fa-handshake w-5 text-center"></i> Oportunidades
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-border">
+            <button onclick="ui.openPipelineManager()" class="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-textMuted hover:bg-slate-100 transition">
+                <i class="fa-solid fa-gear w-5 text-center"></i> Configurações
+            </button>
+            <button onclick="app.logout()" class="flex items-center gap-3 w-full px-4 py-3 mt-2 rounded-xl text-red-500 hover:bg-red-50 transition">
+                <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i> Sair
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full bg-bg relative">
+        
+        <header class="h-20 bg-surface border-b border-border px-8 flex justify-between items-center z-10 shadow-sm">
+            <div class="relative w-96">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-textMuted"></i>
+                <input type="text" placeholder="Buscar por nome, CPF, e-mail ou oportunidade..." class="w-full bg-slate-100 border border-transparent focus:border-border rounded-full py-2.5 pl-11 pr-4 text-sm outline-none transition focus:bg-white">
+            </div>
+
+            <div class="flex items-center gap-6">
+                <button class="relative text-textMuted hover:text-primary transition">
+                    <i class="fa-regular fa-bell text-xl"></i>
+                    <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <div class="h-8 w-[1px] bg-border"></div>
+                <div class="flex items-center gap-3 text-right">
+                    <div class="hidden md:block">
+                        <p id="user-name" class="text-sm font-bold text-textMain leading-tight">Renato Silva</p>
+                        <p id="user-role" class="text-[10px] font-semibold text-textMuted uppercase tracking-wider">Corretor Master</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center text-primary font-bold">
+                        RS
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-hidden relative">
+            
+            <div id="view-oportunidades" class="h-full flex flex-col">
+                <div class="px-8 py-6 bg-surface border-b border-border shrink-0">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-textMain">Oportunidades de Vendas</h2>
+                            <p class="text-textMuted mt-1">Olá. Você possui <strong id="header-total-leads" class="text-orange-500">0 oportunidades pendentes</strong>.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex bg-slate-100 p-1 rounded-lg border border-border">
+                                <button class="px-4 py-1.5 rounded-md text-textMuted hover:text-textMain font-medium text-xs flex items-center gap-2 transition">
+                                    <i class="fa-solid fa-list"></i> Lista
+                                </button>
+                                <button class="px-4 py-1.5 rounded-md bg-white shadow-sm text-primary font-bold text-xs flex items-center gap-2 transition">
+                                    <i class="fa-solid fa-grip-vertical"></i> Kanban
+                                </button>
+                            </div>
+                            <button onclick="ui.openDealModal()" class="bg-primary hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md shadow-primary/20 transition flex items-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Nova Oportunidade
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3 items-center mt-2">
+                        <select id="pipeline-selector" onchange="app.switchPipeline(this.value)" class="bg-white border border-border rounded-lg px-4 py-2 text-sm text-textMain font-medium outline-none focus:border-primary shadow-sm cursor-pointer min-w-[180px]">
+                            <option value="">Carregando Funis...</option>
+                        </select>
+                        <div class="bg-white border border-border rounded-lg px-4 py-2 text-sm text-textMuted flex items-center gap-2 shadow-sm cursor-pointer hover:bg-slate-50">
+                            <i class="fa-regular fa-calendar"></i> Este Mês
+                        </div>
+                    </div>
+                </div>
+
+                <div id="board" class="flex-1 overflow-x-auto overflow-y-hidden flex p-8 gap-6 items-start">
+                    </div>
+            </div>
+
+            <div id="view-dashboard" class="h-full overflow-y-auto p-8 hidden">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h2 class="text-3xl font-extrabold text-textMain">Executive Analytics</h2>
+                        <p class="text-textMuted mt-1"><span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider mr-2">Performance Geral</span> Confira os resultados da sua corretora.</p>
+                    </div>
+                    <button class="border border-border bg-white px-4 py-2 rounded-lg text-textMuted hover:text-primary transition shadow-sm font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i> Exportar
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-border">
+                        <p class="text-[10px] font-bold text-textMuted uppercase tracking-widest mb-1">Oportunidades</p>
+                        <h3 class="text-2xl font-extrabold text-textMain" id="kpi-count">0</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-border">
+                        <p class="text-[10px] font-bold text-textMuted uppercase tracking-widest mb-1">Prêmio Líquido</p>
+                        <h3 class="text-2xl font-extrabold text-textMain" id="kpi-premio">R$ 0,00</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-border">
+                        <p class="text-[10px] font-bold text-textMuted uppercase tracking-widest mb-1">Comissão Média</p>
+                        <h3 class="text-2xl font-extrabold text-textMain" id="kpi-comissao-perc">0%</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-border">
+                        <p class="text-[10px] font-bold text-textMuted uppercase tracking-widest mb-1">Receita Estimada</p>
+                        <h3 class="text-2xl font-extrabold text-green-600" id="kpi-receita">R$ 0,00</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-border">
+                        <p class="text-[10px] font-bold text-textMuted uppercase tracking-widest mb-1">Ticket Médio</p>
+                        <h3 class="text-2xl font-extrabold text-textMain" id="kpi-ticket">R$ 0,00</h3>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-border lg:col-span-2">
+                        <h3 class="font-bold text-textMain mb-4">Distribuição por Ramo</h3>
+                        <div class="h-64 flex items-center justify-center text-textMuted bg-slate-50 rounded-xl border border-dashed border-border">Gráfico Chart.js Aqui</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-border">
+                        <h3 class="font-bold text-textMain mb-4">Funil de Vendas</h3>
+                        <div class="h-64 flex items-center justify-center text-textMuted bg-slate-50 rounded-xl border border-dashed border-border">Gráfico Chart.js Aqui</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="view-segurados" class="h-full overflow-y-auto p-8 hidden">
+                <h2 class="text-3xl font-extrabold text-textMain mb-2">Segurados</h2>
+                <p class="text-textMuted mb-8">Gerencie sua carteira de clientes ativos.</p>
+                <div class="bg-white rounded-2xl shadow-sm border border-border p-10 text-center text-textMuted">
+                    <i class="fa-solid fa-users text-4xl mb-4 text-slate-300"></i>
+                    <p>Módulo de segurados em construção.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="dealModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-[100] backdrop-blur-sm p-4">
+        <div class="bg-bg rounded-2xl shadow-2xl w-[900px] max-h-[90vh] flex flex-col overflow-hidden border border-border">
+            
+            <div class="bg-surface px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
+                <h2 class="text-xl font-bold text-textMain" id="modalTitle">Cadastrar Oportunidade</h2>
+                <button type="button" onclick="ui.closeDealModal()" class="text-textMuted hover:text-red-500 transition text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50">&times;</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                <form id="dealForm" onsubmit="app.saveDeal(event)">
+                    <input type="hidden" id="opId">
+                    
+                    <div class="bg-surface p-5 rounded-2xl border border-blue-100 shadow-sm mb-6 flex items-center gap-4">
+                        <div class="w-16 h-16 bg-blue-50 text-primary rounded-xl flex items-center justify-center text-2xl border border-blue-100">
+                            <i class="fa-solid fa-user-tie"></i>
+                        </div>
+                        <div class="flex-1">
+                            <input type="text" id="opNome" placeholder="Nome do Segurado ou Empresa..." required class="w-full text-xl font-bold text-textMain bg-transparent border-b border-transparent focus:border-primary outline-none transition mb-1 pb-1 placeholder-slate-300">
+                            <div class="flex gap-4">
+                                <div class="flex items-center gap-1.5 text-textMuted text-xs"><i class="fa-regular fa-envelope"></i> <input type="email" id="opEmail" placeholder="E-mail" class="bg-transparent outline-none w-48"></div>
+                                <div class="flex items-center gap-1.5 text-textMuted text-xs"><i class="fa-solid fa-phone"></i> <input type="text" id="opTelefone" placeholder="Telefone" class="bg-transparent outline-none w-32"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-6 border-b border-border mb-6 px-2">
+                        <button type="button" class="pb-3 border-b-2 border-primary text-primary font-bold text-xs tracking-wide uppercase">Negociação</button>
+                        <button type="button" class="pb-3 border-b-2 border-transparent text-textMuted font-semibold text-xs tracking-wide uppercase">Equipe</button>
+                        <button type="button" class="pb-3 border-b-2 border-transparent text-textMuted font-semibold text-xs tracking-wide uppercase">Arquivos</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <div class="bg-surface p-6 rounded-2xl border border-border shadow-sm space-y-5">
+                            <h3 class="text-sm font-bold text-textMain flex items-center gap-2 mb-2"><i class="fa-regular fa-file-lines text-primary"></i> Dados da Apólice</h3>
+                            
+                            <div>
+                                <label class="text-[10px] font-bold text-textMuted uppercase tracking-wider block mb-1">Ramo do Seguro</label>
+                                <select id="opRamo" class="w-full bg-slate-50 border border-border rounded-lg p-2.5 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-sm">
+                                    <option value="Automóvel">Automóvel</option>
+                                    <option value="Vida Individual">Vida Individual</option>
+                                    <option value="Saúde Empresarial">Saúde Empresarial</option>
+                                    <option value="Residencial">Residencial</option>
+                                    <option value="Patrimonial">Patrimonial</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="text-[10px] font-bold text-textMuted uppercase tracking-wider block mb-1">Tipo de Seguro</label>
+                                <div class="flex gap-2">
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="opTipo" value="Novo" class="peer hidden" checked>
+                                        <div class="text-center py-2 border border-border rounded-lg peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary font-semibold text-sm transition">Novo</div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="opTipo" value="Renovação" class="peer hidden">
+                                        <div class="text-center py-2 border border-border rounded-lg peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary font-semibold text-sm transition">Renovação</div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[10px] font-bold text-textMuted uppercase tracking-wider block mb-1">Probabilidade (%)</label>
+                                    <input type="number" id="opProbabilidade" placeholder="Ex: 50" class="w-full bg-slate-50 border border-border rounded-lg p-2.5 outline-none focus:border-primary text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-textMuted uppercase tracking-wider block mb-1">Fechamento Previsto</label>
+                                    <input type="date" id="opDataFechamento" class="w-full bg-slate-50 border border-border rounded-lg p-2.5 outline-none focus:border-primary text-sm">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-surface p-6 rounded-2xl border border-border shadow-sm flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-textMain flex items-center gap-2 mb-5"><i class="fa-solid fa-money-bill-trend-up text-green-600"></i> Projeção Financeira</h3>
+                                
+                                <div class="mb-5">
+                                    <label class="text-[10px] font-bold text-textMuted uppercase tracking-wider block mb-1">Prêmio Líquido (R$)</label>
+                                    <input type="number" id="opPremio" step="0.01" oninput="ui.calcComissao()" placeholder="0.00" class="w-full bg-slate-50 border border-border rounded-lg p-3 outline-none focus:border-primary text-2xl font-bold text-textMain">
+                                </div>
+                                
+                                <div class="flex gap-4 items-center">
+                                    <div class="w-1/3">
+                                        <label class="text-[10px] font-bold text-textMuted uppercase tracking-wider block mb-1">Comissão (%)</label>
+                                        <input type="number" id="opComissao" step="0.01" oninput="ui.calcComissao()" placeholder="0" class="w-full bg-slate-50 border border-border rounded-lg p-3 outline-none focus:border-primary text-lg font-bold text-center">
+                                    </div>
+                                    <div class="flex-1 bg-green-50 rounded-xl p-3 border border-green-100 flex flex-col items-center justify-center">
+                                        <label class="text-[10px] font-bold text-green-700 uppercase tracking-wider block">Receita Estimada</label>
+                                        <div class="text-2xl font-extrabold text-green-700 mt-1" id="opEstimado">R$ 0,00</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-textMuted mt-4 italic text-center">* O cálculo é executado em tempo real pelo sistema.</p>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-surface px-6 py-4 border-t border-border flex justify-between items-center shrink-0">
+                <button type="button" onclick="app.deleteDeal()" id="btnDeleteDeal" class="text-red-500 font-semibold hover:bg-red-50 px-4 py-2 rounded-lg transition hidden">Excluir</button>
+                <div class="flex gap-3 ml-auto">
+                    <button type="button" onclick="ui.closeDealModal()" class="px-5 py-2 font-semibold text-textMuted hover:bg-slate-100 rounded-lg transition">Cancelar</button>
+                    <button type="button" onclick="document.getElementById('dealForm').dispatchEvent(new Event('submit'))" class="bg-primary hover:bg-blue-700 text-white px-8 py-2 rounded-lg font-bold shadow-md shadow-primary/30 transition">Salvar Oportunidade</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/80 hidden flex items-center justify-center z-[250] backdrop-blur-sm">
+        <div class="bg-surface border border-border rounded-2xl w-96 p-8 shadow-2xl">
+            <h2 class="font-bold text-xl text-textMain mb-6 flex items-center gap-2"><i class="fa-solid fa-database text-primary"></i> Supabase Setup</h2>
+            <input type="password" id="sbUrl" placeholder="Supabase URL" class="w-full bg-slate-50 border border-border focus:border-primary p-3 rounded-lg text-sm mb-4 outline-none">
+            <input type="password" id="sbKey" placeholder="Supabase Anon Key" class="w-full bg-slate-50 border border-border focus:border-primary p-3 rounded-lg text-sm mb-6 outline-none">
+            <div class="flex gap-3">
+                <button onclick="ui.toggleSettings()" class="flex-1 bg-slate-100 text-textMuted py-3 rounded-lg font-semibold hover:bg-slate-200 transition">Cancelar</button>
+                <button onclick="app.saveSettings()" class="flex-1 bg-primary hover:bg-blue-700 text-white py-3 rounded-lg font-bold shadow-md transition">Salvar e Recarregar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURAÇÕES E ESTADO GLOBAL
+        const config = {
+            sbUrl: localStorage.getItem('nexus_sb_url') || '',
+            sbKey: localStorage.getItem('nexus_sb_key') || '',
+            activePipeline: localStorage.getItem('nexus_active_pipe') || '1'
+        };
+
+        const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+        // --- INTERFACE (UI) ---
+        window.ui = {
+            toggleSettings: () => document.getElementById('settingsModal').classList.toggle('hidden'),
+            
+            calcComissao: () => {
+                let p = parseFloat(document.getElementById('opPremio').value) || 0;
+                let c = parseFloat(document.getElementById('opComissao').value) || 0;
+                document.getElementById('opEstimado').innerText = formatBRL(p * (c / 100));
+            },
+
+            openDealModal: () => {
+                document.getElementById('dealForm').reset();
+                document.getElementById('opId').value = '';
+                document.getElementById('opEstimado').innerText = 'R$ 0,00';
+                document.getElementById('btnDeleteDeal').classList.add('hidden');
+                document.getElementById('modalTitle').innerText = 'Cadastrar Oportunidade';
+                document.getElementById('dealModal').classList.remove('hidden');
+            },
+
+            closeDealModal: () => document.getElementById('dealModal').classList.add('hidden'),
+
+            editDeal: (d) => {
+                document.getElementById('opId').value = d.id;
+                document.getElementById('opNome').value = d.nome_segurado;
+                document.getElementById('opEmail').value = d.email || '';
+                document.getElementById('opTelefone').value = d.telefone || '';
+                document.getElementById('opRamo').value = d.ramo_seguro || 'Automóvel';
+                
+                // Tratar Radio Button (Tipo de Seguro)
+                const radios = document.getElementsByName('opTipo');
+                for(let r of radios) { r.checked = (r.value === d.tipo_seguro); }
+                
+                document.getElementById('opProbabilidade').value = d.probabilidade || '';
+                document.getElementById('opDataFechamento').value = d.data_fechamento || '';
+                document.getElementById('opPremio').value = d.premio_liquido || '';
+                document.getElementById('opComissao').value = d.comissao_percentual || '';
+                
+                ui.calcComissao(); // Recalcula visualmente
+                
+                document.getElementById('modalTitle').innerText = 'Editar Oportunidade';
+                document.getElementById('btnDeleteDeal').classList.remove('hidden');
+                document.getElementById('dealModal').classList.remove('hidden');
+            },
+
+            renderBoard: (etapas) => {
+                const b = document.getElementById('board'); 
+                b.innerHTML = '';
+                if(!etapas || etapas.length === 0) {
+                    b.innerHTML = '<div class="text-textMuted text-center w-full pt-20">Nenhuma etapa configurada.</div>';
+                    return;
+                }
+                
+                etapas.forEach((e) => {
+                    const col = document.createElement('div');
+                    col.className = 'flex flex-col kanban-col max-h-full';
+                    // Header da Coluna (Estilo Nexus)
+                    col.innerHTML = `
+                        <div class="flex justify-between mb-4 px-2 items-center shrink-0">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full ${e.cor}"></span>
+                                <h3 class="font-extrabold text-textMain tracking-wide uppercase text-xs">${e.nome}</h3>
+                                <span class="bg-slate-200 text-textMuted px-2 py-0.5 rounded-full text-[10px] font-bold count">0</span>
+                            </div>
+                            <span data-total-stage="${e.nome}" class="text-xs font-bold text-textMuted hidden"></span>
+                        </div>
+                        <div class="kanban-list flex-1 space-y-3 overflow-y-auto pb-10 custom-scrollbar" data-stage="${e.nome}"></div>
+                    `;
+                    b.appendChild(col);
+
+                    if(typeof Sortable !== 'undefined') {
+                        new Sortable(col.querySelector('.kanban-list'), { 
+                            group: 'deals', animation: 150, ghostClass: 'ghost-card',
+                            onEnd: (evt) => { 
+                                if (evt.to.dataset.stage !== evt.from.dataset.stage) 
+                                    window.app.moveDeal(evt.item.dataset.id, evt.to.dataset.stage); 
+                            } 
+                        });
+                    }
+                });
+            },
+
+            createCard: (d) => {
+                const el = document.createElement('div'); 
+                el.className = 'bg-surface p-4 rounded-xl border border-border shadow-sm cursor-pointer hover:shadow-md hover:border-blue-300 transition group'; 
+                el.dataset.id = d.id; 
+                el.onclick = (e) => { window.ui.editDeal(d); };
+                
+                const val = formatBRL(parseFloat(d.valor_estimado) || 0);
+                const dataFechamento = d.data_fechamento ? new Date(d.data_fechamento).toLocaleDateString('pt-BR').slice(0,5) : '--/--';
+                const tagColor = d.tipo_seguro === 'Novo' ? 'text-emerald-600 bg-emerald-50' : 'text-blue-600 bg-blue-50';
+                
+                el.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[9px] font-extrabold uppercase px-2 py-1 rounded-md ${tagColor} tracking-wider">${d.tipo_seguro || 'Novo'}</span>
+                        <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-textMuted text-xs"><i class="fa-solid fa-user"></i></div>
+                    </div>
+                    <h4 class="font-bold text-textMain text-sm mb-1 truncate">${d.nome_segurado}</h4>
+                    <p class="text-xs text-textMuted mb-4 flex items-center gap-1"><i class="fa-regular fa-folder-open"></i> ${d.ramo_seguro || 'Não definido'}</p>
+                    
+                    <div class="flex justify-between items-center border-t border-slate-100 pt-3">
+                        <div class="text-[10px] text-textMuted font-medium flex items-center gap-1">
+                            <i class="fa-regular fa-calendar"></i> ${dataFechamento}
+                        </div>
+                        <div class="font-extrabold text-textMain">${val}</div>
+                    </div>
+                `;
+                return el;
+            }
+        };
+
+        // --- LÓGICA CORE DO APLICATIVO ---
+        window.app = {
+            sb: null, user: null, funis: [], etapas: [], oportunidades: [],
+
+            init: async () => {
+                if(!config.sbUrl) { document.getElementById('settingsModal').classList.remove('hidden'); return; }
+                app.sb = supabase.createClient(config.sbUrl, config.sbKey);
+                
+                // Verifica Sessão Ativa
+                const { data: { session } } = await app.sb.auth.getSession();
+                if(session) {
+                    app.user = session.user;
+                    app.initApp();
+                } else {
+                    document.getElementById('loginOverlay').classList.remove('hidden');
+                }
+            },
+
+            login: async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const pass = document.getElementById('loginPassword').value;
+                try {
+                    const { data, error } = await app.sb.auth.signInWithPassword({ email, password: pass });
+                    if(error) throw error;
+                    app.user = data.user;
+                    document.getElementById('loginOverlay').classList.add('hidden');
+                    app.initApp();
+                } catch(err) { Swal.fire('Erro no Login', err.message, 'error'); }
+            },
+
+            logout: async () => {
+                await app.sb.auth.signOut();
+                location.reload();
+            },
+
+            initApp: async () => {
+                document.getElementById('loginOverlay').classList.add('hidden');
+                document.getElementById('user-name').innerText = app.user.email.split('@')[0]; // Simple fallback name
+                
+                // Listeners (Tempo real)
+                app.sb.channel('public:oportunidades').on('postgres_changes', { event: '*', schema: 'public', table: 'oportunidades' }, () => app.loadData()).subscribe();
+                
+                await app.loadPipelines();
+                await app.loadData();
+            },
+
+            navigate: (view) => {
+                document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+                document.getElementById(`nav-${view}`).classList.add('active');
+                
+                ['dashboard', 'segurados', 'oportunidades'].forEach(v => {
+                    const el = document.getElementById(`view-${v}`);
+                    if(el) el.classList.add('hidden');
+                });
+                const activeView = document.getElementById(`view-${view}`);
+                if(activeView) activeView.classList.remove('hidden');
+
+                if(view === 'dashboard') app.updateDashboard();
+            },
+
+            loadPipelines: async () => {
+                try {
+                    const {data, error} = await app.sb.from('funis').select('*').order('id');
+                    if(error) throw error;
+                    app.funis = data || [];
+                    const sel = document.getElementById('pipeline-selector');
+                    
+                    if((!config.activePipeline) && app.funis.length > 0) {
+                        config.activePipeline = app.funis[0].id;
+                    }
+                    
+                    if(app.funis.length === 0) { sel.innerHTML = '<option value="">Sem funis...</option>'; return; }
+                    sel.innerHTML = app.funis.map(p => `<option value="${p.id}" ${p.id == config.activePipeline ? 'selected' : ''}>${p.nome}</option>`).join('');
+                } catch (e) { console.error("Erro Funis:", e); }
+            },
+
+            switchPipeline: (id) => {
+                if(!id) return; 
+                config.activePipeline = id; 
+                localStorage.setItem('nexus_active_pipe', id);
+                app.loadData(); 
+            },
+
+            loadData: async () => {
+                try {
+                    // 1. Etapas do funil pt-BR
+                    const {data: etapas, error: e1} = await app.sb.from('etapas_funil')
+                        .select('*')
+                        .eq('funil_id', config.activePipeline)
+                        .order('ordem', { ascending: true });
+                    if(e1) throw e1;
+                    app.etapas = etapas || [];
+                    ui.renderBoard(app.etapas);
+
+                    // 2. Oportunidades (RLS garante que só vem o que ele pode ver)
+                    const {data: ops, error: e2} = await app.sb.from('oportunidades')
+                        .select('*')
+                        .neq('status','perdido')
+                        .order('criado_em', {ascending:false});
+                    if(e2) throw e2;
+                    app.oportunidades = ops || []; 
+                    
+                    app.renderKanban(); 
+                } catch (e) { console.error("Erro Dados:", e); }
+            },
+
+            renderKanban: (list = app.oportunidades) => {
+                document.querySelectorAll('.kanban-list').forEach(el => el.innerHTML = '');
+                let totalLeads = 0;
+                
+                list.forEach(d => {
+                    const col = document.querySelector(`.kanban-list[data-stage="${d.etapa_nome}"]`);
+                    if(col) {
+                        col.appendChild(ui.createCard(d));
+                        totalLeads++;
+                    }
+                });
+                
+                document.getElementById('header-total-leads').innerText = `${totalLeads} oportunidades pendentes`;
+                
+                document.querySelectorAll('.kanban-col').forEach(col => {
+                    const countEl = col.querySelector('.count');
+                    const listEl = col.querySelector('.kanban-list');
+                    if(countEl && listEl) countEl.innerText = listEl.children.length;
+                });
+            },
+
+            saveDeal: async (e) => {
+                e.preventDefault(); 
+                const id = document.getElementById('opId').value;
+                const tipoRadio = document.querySelector('input[name="opTipo"]:checked');
+                
+                const deal = { 
+                    nome_segurado: document.getElementById('opNome').value, 
+                    email: document.getElementById('opEmail').value, 
+                    telefone: document.getElementById('opTelefone').value, 
+                    ramo_seguro: document.getElementById('opRamo').value,
+                    tipo_seguro: tipoRadio ? tipoRadio.value : 'Novo',
+                    probabilidade: parseInt(document.getElementById('opProbabilidade').value) || 0,
+                    data_fechamento: document.getElementById('opDataFechamento').value || null,
+                    premio_liquido: parseFloat(document.getElementById('opPremio').value) || 0,
+                    comissao_percentual: parseFloat(document.getElementById('opComissao').value) || 0,
+                    corretor_id: app.user.id // Salva atrelando ao usuário logado
+                };
+
+                try {
+                    if(!id) {
+                        deal.funil_id = config.activePipeline;
+                        if(app.etapas[0]) deal.etapa_nome = app.etapas[0].nome;
+                        const {error} = await app.sb.from('oportunidades').insert([deal]);
+                        if(error) throw error;
+                    } else { 
+                        const {error} = await app.sb.from('oportunidades').update(deal).eq('id', id);
+                        if(error) throw error;
+                    }
+                    ui.closeDealModal(); 
+                    app.loadData();
+                } catch(err) { Swal.fire('Erro', err.message, 'error'); }
+            },
+
+            deleteDeal: async () => {
+                const id = document.getElementById('opId').value;
+                if(confirm('Tem certeza que deseja excluir esta oportunidade?')) { 
+                    await app.sb.from('oportunidades').delete().eq('id', id); 
+                    ui.closeDealModal(); 
+                    app.loadData(); 
+                }
+            },
+
+            moveDeal: async (id, novaEtapa) => { 
+                await app.sb.from('oportunidades').update({etapa_nome: novaEtapa}).eq('id',id); 
+                if(novaEtapa.toLowerCase().includes('ganho') || novaEtapa.toLowerCase().includes('fechado')) {
+                    confetti({particleCount:150, spread:70, origin:{y:0.6}, colors: ['#0263E0', '#10B981']}); 
+                }
+                app.loadData(); 
+            },
+
+            updateDashboard: () => {
+                const ops = app.oportunidades;
+                document.getElementById('kpi-count').innerText = ops.length;
+                
+                const premioTotal = ops.reduce((acc, curr) => acc + (parseFloat(curr.premio_liquido)||0), 0);
+                document.getElementById('kpi-premio').innerText = formatBRL(premioTotal);
+                
+                const receitaTotal = ops.reduce((acc, curr) => acc + (parseFloat(curr.valor_estimado)||0), 0);
+                document.getElementById('kpi-receita').innerText = formatBRL(receitaTotal);
+                
+                const ticket = ops.length > 0 ? (premioTotal / ops.length) : 0;
+                document.getElementById('kpi-ticket').innerText = formatBRL(ticket);
+
+                // Média de Comissão
+                const comissaoMedia = ops.length > 0 ? (ops.reduce((acc, curr) => acc + (parseFloat(curr.comissao_percentual)||0), 0) / ops.length) : 0;
+                document.getElementById('kpi-comissao-perc').innerText = comissaoMedia.toFixed(2) + '%';
+            },
+
+            saveSettings: () => { 
+                localStorage.setItem('nexus_sb_url', document.getElementById('sbUrl').value); 
+                localStorage.setItem('nexus_sb_key', document.getElementById('sbKey').value); 
+                location.reload(); 
+            }
+        };
+
+        // INICIALIZAÇÃO
+        document.addEventListener('DOMContentLoaded', app.init);
+    </script>
+</body>
+</html>

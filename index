@@ -381,6 +381,13 @@
                     </div>
                     
                     <div class="bg-slate-50 p-3 rounded-lg border border-border flex flex-wrap gap-3 items-end shadow-inner">
+                        <div class="flex-1 min-w-[140px]">
+                            <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Datas por</label>
+                            <select id="filter-data-campo" class="w-full text-xs p-2 rounded border border-border outline-none focus:border-primary bg-white">
+                                <option value="vigencia">Vigência</option>
+                                <option value="retorno">Data de retorno</option>
+                            </select>
+                        </div>
                         <div class="flex-1 min-w-[120px]">
                             <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Data Inicial</label>
                             <input type="date" id="filter-data-ini" class="w-full text-xs p-2 rounded border border-border outline-none focus:border-primary bg-white">
@@ -389,6 +396,23 @@
                         <div class="flex-1 min-w-[120px]">
                             <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Data Final</label>
                             <input type="date" id="filter-data-fim" class="w-full text-xs p-2 rounded border border-border outline-none focus:border-primary bg-white">
+                        </div>
+                        
+                        <div class="flex-1 min-w-[120px]">
+                            <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Etapa</label>
+                            <select id="filter-etapa" class="w-full text-xs p-2 rounded border border-border outline-none focus:border-primary bg-white">
+                                <option value="">Todas as etapas</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex-1 min-w-[120px]">
+                            <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Status</label>
+                            <select id="filter-status" class="w-full text-xs p-2 rounded border border-border outline-none focus:border-primary bg-white">
+                                <option value="">Todos</option>
+                                <option value="aberto">Aberto</option>
+                                <option value="ganho">Ganho</option>
+                                <option value="perdido">Perdido</option>
+                            </select>
                         </div>
                         
                         <div class="flex-1 min-w-[120px]">
@@ -430,6 +454,9 @@
                                     <th class="px-6 py-4">Ramo(s)</th>
                                     <th class="px-6 py-4 cursor-pointer hover:bg-slate-100 transition" onclick="app.sortList('etapa_nome')">
                                         Etapa <i class="fa-solid fa-sort ml-1 text-slate-300"></i>
+                                    </th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-slate-100 transition" onclick="app.sortList('status')">
+                                        Status <i class="fa-solid fa-sort ml-1 text-slate-300"></i>
                                     </th>
                                     <th class="px-6 py-4 text-center cursor-pointer hover:bg-slate-100 transition" onclick="app.sortList('retorno')">
                                         Data Retorno <i class="fa-solid fa-sort ml-1 text-slate-300"></i>
@@ -760,9 +787,14 @@
                         
                         <div>
                             <h3 class="text-lg font-bold text-textMain mb-3">Gerente</h3>
-                            <select id="opGerente" class="border border-border rounded-md px-4 py-2.5 text-sm text-textMuted outline-none w-64 text-center focus:border-primary shadow-sm cursor-pointer">
-                                <option value="">Selecione o Gerente...</option>
-                            </select>
+                            <div class="flex items-center justify-center gap-3">
+                                <div id="opGerenteAvatar" class="w-10 h-10 rounded-full bg-slate-200 border border-border flex items-center justify-center shadow-sm shrink-0 bg-cover bg-center">
+                                    <i class="fa-solid fa-user text-textMuted"></i>
+                                </div>
+                                <select id="opGerente" class="border border-border rounded-md px-4 py-2.5 text-sm text-textMuted outline-none w-64 text-center focus:border-primary shadow-sm cursor-pointer">
+                                    <option value="">Selecione o Gerente...</option>
+                                </select>
+                            </div>
                         </div>
                         
                         <div class="grid grid-cols-2 gap-10 border-t border-border pt-10">
@@ -773,10 +805,12 @@
                             <div>
                                 <h3 class="text-lg font-bold text-textMain mb-3">Produtor Responsável</h3>
                                 <div class="flex items-center justify-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-slate-200 border border-border flex items-center justify-center shadow-sm">
+                                    <div id="opProdutorAvatar" class="w-10 h-10 rounded-full bg-slate-200 border border-border flex items-center justify-center shadow-sm shrink-0 bg-cover bg-center">
                                         <i class="fa-solid fa-user text-textMuted"></i>
                                     </div>
-                                    <input type="text" id="opProdutorNome" readonly class="border border-border rounded-md px-4 py-2.5 text-sm text-textMain outline-none bg-slate-50 w-full text-center font-semibold">
+                                    <select id="opProdutor" class="border border-border rounded-md px-4 py-2.5 text-sm text-textMuted outline-none w-64 text-center focus:border-primary shadow-sm cursor-pointer">
+                                        <option value="">Selecione o Produtor...</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -1058,6 +1092,17 @@
         const formatBRL = (val) => {
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
         };
+
+        const formatKanbanRetorno = (iso) => {
+            if (!iso || typeof iso !== 'string') return '';
+            const parts = iso.split('-');
+            if (parts.length < 3) return iso;
+            const [ano, mes, dia] = parts;
+            const meses = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+            const mi = parseInt(mes, 10) - 1;
+            const mabbr = meses[mi] || mes;
+            return `${dia} ${mabbr} ${ano}`;
+        };
         
         let chartRamoInst = null; 
         let chartFunilInst = null;
@@ -1088,6 +1133,57 @@
                 return v.substring(0, 15);
             },
 
+            oportunidadeRamoExibicao: (o) => {
+                if (o.ramo_seguro != null && String(o.ramo_seguro).trim() !== '') {
+                    return o.ramo_seguro;
+                }
+                if (o.produtos && Array.isArray(o.produtos) && o.produtos.length > 0) {
+                    return o.produtos.map(p => p.ramo).filter(Boolean).join(', ') || 'Não definido';
+                }
+                return 'Não definido';
+            },
+
+            oportunidadeReceitaEstimada: (o) => {
+                const temFlat = (o.ramo_seguro != null && String(o.ramo_seguro).trim() !== '') ||
+                    (parseFloat(o.premio_liquido) || 0) !== 0 ||
+                    (o.tipo_seguro != null && String(o.tipo_seguro).trim() !== '') ||
+                    (parseFloat(o.comissao_percentual) || 0) !== 0 ||
+                    (parseFloat(o.agenciamento_percentual) || 0) !== 0;
+                if (temFlat || !o.produtos || !Array.isArray(o.produtos) || o.produtos.length === 0) {
+                    const dPremio = parseFloat(o.premio_liquido) || 0;
+                    const dComissao = parseFloat(o.comissao_percentual) || 0;
+                    const dAgen = parseFloat(o.agenciamento_percentual) || 0;
+                    return dPremio * ((dComissao + dAgen) / 100);
+                }
+                let val = 0;
+                o.produtos.forEach(p => {
+                    const pPremio = parseFloat(p.premio) || 0;
+                    const pComissao = parseFloat(p.comissao) || 0;
+                    const pAgen = parseFloat(p.agenciamento) || 0;
+                    val += pPremio * ((pComissao + pAgen) / 100);
+                });
+                return val;
+            },
+
+            syncCorretorAvatar: (selectId, avatarElId) => {
+                const sel = document.getElementById(selectId);
+                const av = document.getElementById(avatarElId);
+                if (!sel || !av) return;
+                const cor = app.corretores.find(c => c.id === sel.value);
+                av.innerHTML = '';
+                if (cor && cor.avatar_url) {
+                    av.style.backgroundImage = `url('${cor.avatar_url}')`;
+                } else {
+                    av.style.backgroundImage = '';
+                    av.innerHTML = '<i class="fa-solid fa-user text-textMuted"></i>';
+                }
+            },
+
+            refreshProdutoresModalAvatars: () => {
+                ui.syncCorretorAvatar('opGerente', 'opGerenteAvatar');
+                ui.syncCorretorAvatar('opProdutor', 'opProdutorAvatar');
+            },
+
             switchModalTab: (tabName) => {
                 const tabs = [
                     'orcamento', 
@@ -1111,6 +1207,10 @@
                     if (id) {
                         app.loadTimeline(id);
                     }
+                }
+
+                if (tabName === 'produtores') {
+                    ui.refreshProdutoresModalAvatars();
                 }
                 
                 if (tabName === 'oportunidades') {
@@ -1402,12 +1502,12 @@
                 document.getElementById('opChatwootId').value = '';
                 document.getElementById('opChatwootId').placeholder = 'Buscando automático pelo telefone...';
                 
-                let nomeCorretorAtual = 'Corretor';
-                try { 
-                    nomeCorretorAtual = document.getElementById('user-name').innerText; 
-                } catch(e) {}
-                
-                document.getElementById('opProdutorNome').value = nomeCorretorAtual; 
+                const prodSel = document.getElementById('opProdutor');
+                if (prodSel) {
+                    const userNaLista = app.corretores.find(c => c.id === app.user.id);
+                    prodSel.value = userNaLista ? app.user.id : '';
+                }
+                ui.refreshProdutoresModalAvatars(); 
                 
                 const defaultRamo = app.ramos.length > 0 ? app.ramos[0].nome : 'Automóvel';
                 ui.produtos = [{ 
@@ -1584,20 +1684,26 @@
 
                 document.getElementById('opGerente').value = d.gerente_id || '';
                 document.getElementById('opIndicador').value = d.indicador || '';
-                document.getElementById('opProdutorNome').value = d.nome_corretor || 'Corretor';
+                document.getElementById('opProdutor').value = d.corretor_id || '';
+                ui.refreshProdutoresModalAvatars();
                 
-                if (d.produtos && Array.isArray(d.produtos) && d.produtos.length > 0) {
-                    ui.produtos = [JSON.parse(JSON.stringify(d.produtos[0]))];
-                } else {
-                    const defaultRamo = app.ramos.length > 0 ? app.ramos[0].nome : 'Automóvel';
+                const defaultRamo = app.ramos.length > 0 ? app.ramos[0].nome : 'Automóvel';
+                const temColunas1x1 = (d.ramo_seguro != null && String(d.ramo_seguro).trim() !== '') ||
+                    (d.tipo_seguro != null && String(d.tipo_seguro).trim() !== '') ||
+                    (parseFloat(d.premio_liquido) || 0) !== 0 ||
+                    (parseFloat(d.comissao_percentual) || 0) !== 0 ||
+                    (parseFloat(d.agenciamento_percentual) || 0) !== 0;
+                if (temColunas1x1 || !d.produtos || !Array.isArray(d.produtos) || d.produtos.length === 0) {
                     ui.produtos = [{ 
                         id: Date.now(), 
                         ramo: d.ramo_seguro || defaultRamo, 
                         tipo: d.tipo_seguro || 'Novo', 
-                        premio: d.premio_liquido || 0, 
-                        comissao: d.comissao_percentual || 0, 
-                        agenciamento: d.agenciamento_percentual || 0 
+                        premio: parseFloat(d.premio_liquido) || 0, 
+                        comissao: parseFloat(d.comissao_percentual) || 0, 
+                        agenciamento: parseFloat(d.agenciamento_percentual) || 0 
                     }];
+                } else {
+                    ui.produtos = [JSON.parse(JSON.stringify(d.produtos[0]))];
                 }
                 
                 ui.renderProdutos();
@@ -1622,9 +1728,6 @@
                 etapas.forEach((e) => {
                     board.appendChild(ui.buildColumnHTML(e.nome, e.cor, 'deals'));
                 });
-                
-                board.appendChild(ui.buildColumnHTML('Ganho', 'bg-emerald-500', 'deals', true));
-                board.appendChild(ui.buildColumnHTML('Perdido', 'bg-red-500', 'deals', true));
 
                 board.querySelectorAll('.kanban-list').forEach(list => {
                     new Sortable(list, { 
@@ -1669,8 +1772,7 @@
             createCard: (d) => {
                 const el = document.createElement('div');
                 
-                let colorClasses = 'border-border bg-white';
-                let iconClass = 'text-textMuted';
+                let colorClasses = 'border-blue-200 bg-white';
                 
                 if (d.retorno && d.status === 'aberto') {
                     const hoje = new Date();
@@ -1682,54 +1784,61 @@
                     
                     if (dataRet < hoje) {
                         colorClasses = 'border-red-400 bg-red-50';
-                        iconClass = 'text-red-500';
                     } else if (dataRet.getTime() === hoje.getTime()) {
                         colorClasses = 'border-yellow-400 bg-yellow-50';
-                        iconClass = 'text-yellow-500';
                     }
                 }
                 
-                el.className = `p-4 rounded-xl border ${colorClasses} shadow-sm cursor-pointer hover:shadow-md transition group w-full`;
+                el.className = `p-3 rounded-xl border ${colorClasses} shadow-sm cursor-pointer hover:shadow-md transition group w-full h-[126px] min-h-[126px] max-h-[126px] flex flex-col overflow-hidden`;
                 el.dataset.id = d.id;
                 el.onclick = () => window.ui.editDealById(d.id);
                 
-                let ramosText = d.ramo_seguro || 'Não definido';
-                let val = 0;
-                
-                if (d.produtos && Array.isArray(d.produtos) && d.produtos.length > 0) {
-                    ramosText = d.produtos.map(p => p.ramo).join(', ');
-                    d.produtos.forEach(p => {
-                        const pPremio = parseFloat(p.premio) || 0;
-                        const pComissao = parseFloat(p.comissao) || 0;
-                        const pAgen = parseFloat(p.agenciamento) || 0;
-                        val += pPremio * ((pComissao + pAgen) / 100);
-                    });
+                const ramosText = ui.oportunidadeRamoExibicao(d);
+                const val = ui.oportunidadeReceitaEstimada(d);
+
+                let rightBadge = '';
+                if (d.status === 'aberto' && d.retorno) {
+                    const retTxt = formatKanbanRetorno(d.retorno);
+                    rightBadge = `
+                        <span class="text-[8px] font-bold uppercase px-2 py-0.5 rounded-md bg-orange-100 text-orange-800 flex items-center gap-1 max-w-[55%] shrink-0 truncate" title="TAREFA: RETORNO ${retTxt}">
+                            <i class="fa-regular fa-calendar-days shrink-0"></i>
+                            <span class="truncate">TAREFA: RETORNO ${retTxt}</span>
+                        </span>`;
+                }
+
+                const vendedorNome = (d.nome_corretor || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                const seguradoNome = (d.nome_segurado || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                const ramosEsc = (ramosText || '').replace(/"/g, '&quot;');
+                const segEsc = (d.seguradora || '-').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+                let avatarCell = '';
+                if (d.avatar_corretor) {
+                    const url = String(d.avatar_corretor).replace(/'/g, "\\'");
+                    avatarCell = `<div class="w-8 h-8 rounded-full border border-border shrink-0 bg-slate-200 bg-cover bg-center" style="background-image:url('${url}')"></div>`;
                 } else {
-                    const dPremio = parseFloat(d.premio_liquido) || 0;
-                    const dComissao = parseFloat(d.comissao_percentual) || 0;
-                    const dAgen = parseFloat(d.agenciamento_percentual) || 0;
-                    val = dPremio * ((dComissao + dAgen) / 100);
-                }
-                
-                let iconStatus = `<i class="fa-regular fa-clock ${iconClass}"></i>`;
-                if (d.status === 'ganho') {
-                    iconStatus = '<i class="fa-solid fa-check text-emerald-500 text-lg"></i>';
-                }
-                if (d.status === 'perdido') {
-                    iconStatus = '<i class="fa-solid fa-x text-red-500 text-lg"></i>';
+                    avatarCell = `<div class="w-8 h-8 rounded-full border border-border shrink-0 bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-user text-[10px] text-textMuted"></i></div>`;
                 }
 
                 el.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded bg-slate-100 text-textMuted truncate max-w-[70%]" title="${ramosText}">${ramosText}</span>
-                        <div class="text-[10px] font-bold uppercase">${iconStatus}</div>
+                    <div class="flex justify-between items-start gap-1 shrink-0 mb-1.5">
+                        <span class="text-[8px] font-bold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 truncate max-w-[45%]" title="${ramosEsc}">${ramosText}</span>
+                        ${rightBadge}
                     </div>
-                    <h4 class="font-bold text-textMain text-sm mb-2 truncate">${d.nome_segurado}</h4>
-                    <div class="flex justify-between items-center border-t border-slate-100/50 pt-3">
-                        <div class="text-[10px] text-textMuted flex items-center gap-1 font-semibold truncate max-w-[50%]">
-                            <i class="fa-regular fa-building"></i> ${d.seguradora || '-'}
+                    <h4 class="font-bold text-textMain text-sm leading-snug truncate shrink-0">${seguradoNome}</h4>
+                    <div class="border-t border-slate-200 shrink-0 my-1.5"></div>
+                    <div class="flex justify-between items-end gap-2 min-h-0 flex-1 pt-0.5">
+                        <div class="flex items-end gap-2 min-w-0">
+                            ${avatarCell}
+                            <div class="min-w-0 text-left">
+                                <p class="text-[9px] text-textMain font-semibold truncate leading-tight">Vendedor: ${vendedorNome || '—'}</p>
+                                <p class="text-[8px] text-textMuted flex items-center gap-1 truncate leading-tight mt-0.5">
+                                    <i class="fa-regular fa-building shrink-0"></i><span class="truncate">${segEsc}</span>
+                                </p>
+                            </div>
                         </div>
-                        <div class="font-extrabold text-textMain text-xs">${formatBRL(val)}</div>
+                        <div class="text-right shrink-0">
+                            <p class="text-[8px] font-bold text-textMuted uppercase tracking-wide leading-none mb-0.5">Comissão do Negócio</p>
+                            <p class="font-extrabold text-textMain text-xs leading-none">${formatBRL(val)}</p>
+                        </div>
                     </div>
                 `;
                 return el;
@@ -1739,29 +1848,13 @@
                 const tbody = document.getElementById('lista-tbody');
                 
                 if (!app.oportunidades || app.oportunidades.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-textMuted font-medium">Nenhuma oportunidade com esses filtros.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-textMuted font-medium">Nenhuma oportunidade com esses filtros.</td></tr>';
                     return;
                 }
 
                 tbody.innerHTML = app.oportunidades.map(d => {
-                    let ramosText = d.ramo_seguro || '-';
-                    let val = 0;
-                    
-                    if (d.produtos && Array.isArray(d.produtos) && d.produtos.length > 0) {
-                        ramosText = d.produtos.map(p => p.ramo).join(', ');
-                        d.produtos.forEach(p => {
-                            const pPremio = parseFloat(p.premio) || 0;
-                            const pComissao = parseFloat(p.comissao) || 0;
-                            const pAgen = parseFloat(p.agenciamento) || 0;
-                            val += pPremio * ((pComissao + pAgen) / 100);
-                        });
-                    } else {
-                        const dPremio = parseFloat(d.premio_liquido) || 0;
-                        const dComissao = parseFloat(d.comissao_percentual) || 0;
-                        const dAgen = parseFloat(d.agenciamento_percentual) || 0;
-                        val = dPremio * ((dComissao + dAgen) / 100);
-                    }
-                    
+                    const ramosText = ui.oportunidadeRamoExibicao(d);
+
                     let bgRowClass = 'hover:bg-slate-50 border-b border-border';
                     let textRetornoClass = 'text-textMuted font-medium';
                     
@@ -1789,11 +1882,23 @@
                     const dtRetorno = d.retorno ? new Date(d.retorno + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
                     const dtVigencia = d.vigencia ? new Date(d.vigencia + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
 
+                    const st = d.status || 'aberto';
+                    let statusBadgeClass = 'bg-slate-100 text-slate-700';
+                    let statusLabel = 'Aberto';
+                    if (st === 'ganho') {
+                        statusBadgeClass = 'bg-emerald-100 text-emerald-700';
+                        statusLabel = 'Ganho';
+                    } else if (st === 'perdido') {
+                        statusBadgeClass = 'bg-red-100 text-red-700';
+                        statusLabel = 'Perdido';
+                    }
+
                     return `
                     <tr class="transition cursor-pointer ${bgRowClass}" onclick="ui.editDealById(${d.id})">
                         <td class="px-6 py-4 font-bold text-textMain">${d.nome_segurado}</td>
                         <td class="px-6 py-4 text-textMuted text-xs font-semibold">${ramosText}</td>
                         <td class="px-6 py-4"><span class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider">${d.etapa_nome}</span></td>
+                        <td class="px-6 py-4"><span class="${statusBadgeClass} px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider">${statusLabel}</span></td>
                         <td class="px-6 py-4 text-center text-xs ${textRetornoClass}">${dtRetorno}</td>
                         <td class="px-6 py-4 text-center text-xs text-textMuted">${dtVigencia}</td>
                     </tr>
@@ -1844,23 +1949,8 @@
                 }
 
                 tbody.innerHTML = negociosGanhos.map(o => {
-                    let ramosText = o.ramo_seguro || '-';
-                    let val = 0;
-                    
-                    if (o.produtos && Array.isArray(o.produtos) && o.produtos.length > 0) {
-                        ramosText = o.produtos.map(p => p.ramo).join(', ');
-                        o.produtos.forEach(p => {
-                            const pPremio = parseFloat(p.premio) || 0;
-                            const pComissao = parseFloat(p.comissao) || 0;
-                            const pAgen = parseFloat(p.agenciamento) || 0;
-                            val += pPremio * ((pComissao + pAgen) / 100);
-                        });
-                    } else {
-                        const dPremio = parseFloat(o.premio_liquido) || 0;
-                        const dComissao = parseFloat(o.comissao_percentual) || 0;
-                        const dAgen = parseFloat(o.agenciamento_percentual) || 0;
-                        val = dPremio * ((dComissao + dAgen) / 100);
-                    }
+                    const ramosText = ui.oportunidadeRamoExibicao(o);
+                    const val = ui.oportunidadeReceitaEstimada(o);
                     
                     const dataFechamento = o.data_fechamento ? new Date(o.data_fechamento).toLocaleDateString('pt-BR') : new Date(o.criado_em).toLocaleDateString('pt-BR');
 
@@ -1956,6 +2046,7 @@
                 
                 if (session) {
                     app.user = session.user;
+                    document.getElementById('loginOverlay').classList.add('hidden');
                     app.initApp();
                 } else {
                     document.getElementById('loginOverlay').classList.remove('hidden');
@@ -2007,6 +2098,7 @@
                     }
 
                     const gerenteSelect = document.getElementById('opGerente');
+                    const produtorSelect = document.getElementById('opProdutor');
                     const filtroSelect = document.getElementById('filter-corretor');
                     let optionsHtml = '';
                     
@@ -2016,7 +2108,16 @@
                     });
                     
                     if (gerenteSelect) {
-                        gerenteSelect.innerHTML += optionsHtml;
+                        gerenteSelect.innerHTML = '<option value="">Selecione o Gerente...</option>' + optionsHtml;
+                    }
+                    if (produtorSelect) {
+                        produtorSelect.innerHTML = '<option value="">Selecione o Produtor...</option>' + optionsHtml;
+                    }
+                    if (gerenteSelect) {
+                        gerenteSelect.onchange = () => ui.syncCorretorAvatar('opGerente', 'opGerenteAvatar');
+                    }
+                    if (produtorSelect) {
+                        produtorSelect.onchange = () => ui.syncCorretorAvatar('opProdutor', 'opProdutorAvatar');
                     }
                     
                     // SPRINT 4: Identificando o Perfil do Usuário Logado
@@ -2055,7 +2156,7 @@
                     
                     // Lógica de Trava (Se não for Gerente, bloqueia o select do filtro)
                     if (filtroSelect) {
-                        filtroSelect.innerHTML += optionsHtml;
+                        filtroSelect.innerHTML = '<option value="">Todos os Usuários</option>' + optionsHtml;
                         
                         const userNaLista = app.corretores.find(c => c.id === app.user.id);
                         if (userNaLista) {
@@ -2731,6 +2832,16 @@
                     app.etapas = etapas || [];
                     ui.renderBoard(app.etapas);
 
+                    const selFilterEtapa = document.getElementById('filter-etapa');
+                    if (selFilterEtapa) {
+                        const prevEtapa = selFilterEtapa.value;
+                        selFilterEtapa.innerHTML = '<option value="">Todas as etapas</option>' +
+                            app.etapas.map(e => `<option value="${e.nome}">${e.nome}</option>`).join('');
+                        if (prevEtapa && app.etapas.some(e => e.nome === prevEtapa)) {
+                            selFilterEtapa.value = prevEtapa;
+                        }
+                    }
+
                     const {data: ops, error: errOps} = await app.sb.from('oportunidades').select('*').eq('excluido', false).order('criado_em', {ascending:false});
                     if (errOps) {
                         console.error("Erro oportunidades:", errOps);
@@ -2759,20 +2870,42 @@
                         const cor = app.corretores.find(c => c.id === op.corretor_id);
                         if (cor) {
                             op.nome_corretor = cor.nome_completo;
+                            op.avatar_corretor = cor.avatar_url || null;
+                        } else {
+                            op.avatar_corretor = null;
                         }
                     });
 
                     const fDataIni = document.getElementById('filter-data-ini')?.value;
                     const fDataFim = document.getElementById('filter-data-fim')?.value;
+                    const fDataCampo = document.getElementById('filter-data-campo')?.value || 'vigencia';
+                    const fEtapa = document.getElementById('filter-etapa')?.value;
+                    const fStatus = document.getElementById('filter-status')?.value;
                     const fRamo = document.getElementById('filter-ramo')?.value;
                     const fOrigem = document.getElementById('filter-origem')?.value;
                     const fCorretor = document.getElementById('filter-corretor')?.value;
 
-                    if (fDataIni) {
-                        baseOps = baseOps.filter(o => new Date(o.criado_em) >= new Date(fDataIni));
+                    if (fDataIni || fDataFim) {
+                        baseOps = baseOps.filter(o => {
+                            const raw = o[fDataCampo];
+                            if (!raw) {
+                                return false;
+                            }
+                            const d = String(raw).slice(0, 10);
+                            if (fDataIni && d < fDataIni) {
+                                return false;
+                            }
+                            if (fDataFim && d > fDataFim) {
+                                return false;
+                            }
+                            return true;
+                        });
                     }
-                    if (fDataFim) {
-                        baseOps = baseOps.filter(o => new Date(o.criado_em) <= new Date(fDataFim + 'T23:59:59'));
+                    if (fEtapa) {
+                        baseOps = baseOps.filter(o => o.etapa_nome === fEtapa);
+                    }
+                    if (fStatus) {
+                        baseOps = baseOps.filter(o => (o.status || 'aberto') === fStatus);
                     }
                     if (fOrigem) {
                         baseOps = baseOps.filter(o => o.origem === fOrigem);
@@ -2782,12 +2915,8 @@
                     }
                     
                     if (fRamo) {
-                        baseOps = baseOps.filter(o => {
-                            if (o.produtos && Array.isArray(o.produtos) && o.produtos.length > 0) {
-                                return o.produtos.some(p => p.ramo === fRamo);
-                            }
-                            return o.ramo_seguro === fRamo;
-                        });
+                        baseOps = baseOps.filter(o => o.ramo_seguro === fRamo ||
+                            (o.produtos && Array.isArray(o.produtos) && o.produtos.some(p => p.ramo === fRamo)));
                     }
 
                     app.oportunidades = baseOps;
@@ -2826,6 +2955,12 @@
                         valA = etapaA ? etapaA.ordem : 99;
                         valB = etapaB ? etapaB.ordem : 99;
                     }
+
+                    if (col === 'status') {
+                        const ord = { aberto: 0, ganho: 1, perdido: 2 };
+                        valA = ord[a.status] !== undefined ? ord[a.status] : 9;
+                        valB = ord[b.status] !== undefined ? ord[b.status] : 9;
+                    }
                     
                     if (valA < valB) return app.currentSortAsc ? -1 : 1;
                     if (valA > valB) return app.currentSortAsc ? 1 : -1;
@@ -2861,20 +2996,14 @@
                 let pendentesCount = 0;
                 
                 app.oportunidades.forEach(d => {
-                    let targetStage = d.etapa_nome;
-                    if (d.status === 'ganho') {
-                        targetStage = 'Ganho';
+                    if (d.status !== 'aberto') {
+                        return;
                     }
-                    if (d.status === 'perdido') {
-                        targetStage = 'Perdido';
-                    }
-                    
+                    const targetStage = d.etapa_nome;
                     const col = document.querySelector(`.kanban-list[data-stage="${targetStage}"]`);
-                    if (col) { 
-                        col.appendChild(ui.createCard(d)); 
-                        if (d.status === 'aberto') {
-                            pendentesCount++; 
-                        }
+                    if (col) {
+                        col.appendChild(ui.createCard(d));
+                        pendentesCount++;
                     }
                 });
                 
@@ -2909,10 +3038,7 @@
                     }
                     
                     tbody.innerHTML = data.map(o => {
-                        let ramosText = o.ramo_seguro || '-'; 
-                        if (o.produtos && Array.isArray(o.produtos) && o.produtos.length > 0) {
-                            ramosText = o.produtos.map(p => p.ramo).join(', ');
-                        }
+                        const ramosText = ui.oportunidadeRamoExibicao(o);
                         
                         const corretorNome = app.corretores.find(c => c.id === o.corretor_id)?.nome_completo || 'Corretor';
                         
@@ -3130,19 +3256,11 @@
                         responsavelIdFinal = rid;
                     }
 
-                    let tPremio = 0; 
-                    let tReceita = 0;
-                    
-                    ui.produtos.forEach(p => { 
-                        const pPremio = parseFloat(p.premio) || 0;
-                        const pComissao = parseFloat(p.comissao) || 0;
-                        const pAgen = parseFloat(p.agenciamento) || 0;
-                        
-                        tPremio += pPremio; 
-                        tReceita += pPremio * ((pComissao + pAgen) / 100); 
-                    });
-                    
-                    let mComissao = tPremio > 0 ? (tReceita / tPremio) * 100 : 0;
+                    const defaultRamoSave = app.ramos.length > 0 ? app.ramos[0].nome : 'Automóvel';
+                    const p0 = (ui.produtos && ui.produtos[0]) ? ui.produtos[0] : {};
+                    const premioLiq = parseFloat(p0.premio) || 0;
+                    const comissPct = parseFloat(p0.comissao) || 0;
+                    const agencPct = parseFloat(p0.agenciamento) || 0;
                     
                     let etapa = document.getElementById('opEtapaHeader').value || (app.etapas[0] ? app.etapas[0].nome : 'Nova');
                     
@@ -3165,12 +3283,14 @@
                         ativo: document.getElementById('opAtivo').checked, 
                         origem: document.getElementById('opOrigem').value, 
                         seguradora: document.getElementById('opSeguradora').value,
-                        premio_liquido: tPremio, 
-                        comissao_percentual: mComissao, 
-                        produtos: ui.produtos, 
+                        ramo_seguro: p0.ramo || defaultRamoSave, 
+                        tipo_seguro: p0.tipo || 'Novo', 
+                        premio_liquido: premioLiq, 
+                        comissao_percentual: comissPct, 
+                        agenciamento_percentual: agencPct, 
                         gerente_id: document.getElementById('opGerente').value || null, 
                         indicador: document.getElementById('opIndicador').value,
-                        corretor_id: app.user.id, 
+                        corretor_id: document.getElementById('opProdutor').value || app.user.id, 
                         etapa_nome: etapa, 
                         status: st
                     };
@@ -3308,43 +3428,10 @@
                 }
             },
 
-            moveDeal: async (id, toStage, fromStage) => { 
-                let status = 'aberto'; 
-                let etapa = toStage; 
-                
-                if (toStage === 'Ganho') { 
-                    status = 'ganho'; 
-                    etapa = 'Fechado Ganho'; 
-                }
-                if (toStage === 'Perdido') { 
-                    status = 'perdido'; 
-                    etapa = 'Fechado Perdido'; 
-                }
-
-                await app.sb.from('oportunidades').update({etapa_nome: etapa, status: status}).eq('id', id); 
+            moveDeal: async (id, toStage, fromStage) => {
+                await app.sb.from('oportunidades').update({ etapa_nome: toStage }).eq('id', id);
                 app.logTimeline(id, 'Movimentação', `O card foi movido da coluna "${fromStage}" para "${toStage}".`);
-
-                if (status === 'ganho') {
-                    const opData = app.oportunidades.find(o => o.id == id);
-                    if (opData && opData.contato_id) {
-                        await app.sb.from('contatos').update({is_segurado: true}).eq('id', opData.contato_id);
-                        await app.loadContatos();
-                    }
-                    confetti({particleCount:150, spread:70, origin:{y:0.6}, colors: ['#10B981', '#047857']}); 
-                    
-                    // SPRINT 4: Disparo do Webhook do N8N (Pós-Venda via Kanban drag and drop)
-                    const n8nGanhoUrl = localStorage.getItem('nexus_n8n_ganho');
-                    if (n8nGanhoUrl && opData) {
-                        const cData = app.contatos.find(c => c.id == opData.contato_id);
-                        fetch(n8nGanhoUrl, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ oportunidade: opData, contato: cData })
-                        }).catch(e => console.error("Webhook N8N Ganho falhou", e));
-                    }
-                }
-                
-                await app.loadData(); 
+                await app.loadData();
             },
 
             addObservacao: async () => {
@@ -3522,32 +3609,29 @@
                 let numProdutos = 0;
 
                 ops.forEach(o => {
-                    if (o.produtos && Array.isArray(o.produtos) && o.produtos.length > 0) {
+                    const oPrem = parseFloat(o.premio_liquido) || 0;
+                    const oCom = parseFloat(o.comissao_percentual) || 0;
+                    const oAg = parseFloat(o.agenciamento_percentual) || 0;
+                    const temFlat = (o.ramo_seguro != null && String(o.ramo_seguro).trim() !== '') || oPrem !== 0 || oCom !== 0 || oAg !== 0;
+                    if (temFlat || !o.produtos || !Array.isArray(o.produtos) || o.produtos.length === 0) {
+                        premioTotal += oPrem;
+                        receitaTotal += oPrem * ((oCom + oAg) / 100);
+                        if (oPrem > 0) {
+                            somaComissoes += (oCom + oAg);
+                            numProdutos++;
+                        }
+                    } else {
                         o.produtos.forEach(p => {
                             const pPrem = parseFloat(p.premio) || 0;
                             const pCom = parseFloat(p.comissao) || 0;
                             const pAg = parseFloat(p.agenciamento) || 0;
-                            
                             premioTotal += pPrem;
                             receitaTotal += pPrem * ((pCom + pAg) / 100);
-                            
                             if (pPrem > 0) {
                                 somaComissoes += (pCom + pAg);
                                 numProdutos++;
                             }
                         });
-                    } else {
-                        const oPrem = parseFloat(o.premio_liquido) || 0;
-                        const oCom = parseFloat(o.comissao_percentual) || 0;
-                        const oAg = parseFloat(o.agenciamento_percentual) || 0;
-                        
-                        premioTotal += oPrem;
-                        receitaTotal += oPrem * ((oCom + oAg) / 100);
-                        
-                        if (oPrem > 0) {
-                            somaComissoes += (oCom + oAg);
-                            numProdutos++;
-                        }
                     }
                 });
                 
@@ -3599,14 +3683,8 @@
 
                 const ramosCount = {};
                 ops.forEach(o => {
-                    if (o.produtos && Array.isArray(o.produtos) && o.produtos.length > 0) {
-                        o.produtos.forEach(p => {
-                            ramosCount[p.ramo] = (ramosCount[p.ramo] || 0) + 1;
-                        });
-                    } else {
-                        const r = o.ramo_seguro || 'Não Definido';
-                        ramosCount[r] = (ramosCount[r] || 0) + 1;
-                    }
+                    const r = ui.oportunidadeRamoExibicao(o);
+                    ramosCount[r] = (ramosCount[r] || 0) + 1;
                 });
                 
                 if (chartRamoInst) {
@@ -3640,23 +3718,8 @@
                     tbRecentes.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-textMuted">Nenhum fechamento registrado neste funil.</td></tr>';
                 } else {
                     tbRecentes.innerHTML = negociosGanhos.map(o => {
-                        let ramosText = o.ramo_seguro || '-';
-                        let rec = 0;
-                        
-                        if (o.produtos && Array.isArray(o.produtos) && o.produtos.length > 0) {
-                            ramosText = o.produtos.map(p => p.ramo).join(', ');
-                            o.produtos.forEach(p => {
-                                const pPremio = parseFloat(p.premio) || 0;
-                                const pComissao = parseFloat(p.comissao) || 0;
-                                const pAgen = parseFloat(p.agenciamento) || 0;
-                                rec += pPremio * ((pComissao + pAgen) / 100);
-                            });
-                        } else {
-                            const dPremio = parseFloat(o.premio_liquido) || 0;
-                            const dComissao = parseFloat(o.comissao_percentual) || 0;
-                            const dAgen = parseFloat(o.agenciamento_percentual) || 0;
-                            rec = dPremio * ((dComissao + dAgen) / 100);
-                        }
+                        const ramosText = ui.oportunidadeRamoExibicao(o);
+                        const rec = ui.oportunidadeReceitaEstimada(o);
                         
                         const dtFechamento = o.data_fechamento ? new Date(o.data_fechamento).toLocaleDateString('pt-BR') : new Date(o.criado_em).toLocaleDateString('pt-BR');
                         const produtor = o.nome_corretor || '-';

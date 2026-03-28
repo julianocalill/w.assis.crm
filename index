@@ -589,10 +589,11 @@
                 
                 <input type="hidden" id="opId">
                 <input type="hidden" id="contatoId">
+                <input type="hidden" id="responsavelId">
                 
                 <div class="flex gap-8 border-b border-border px-8 pt-6 justify-center">
                     <button type="button" onclick="ui.switchModalTab('orcamento')" id="tab-btn-orcamento" class="modal-tab-btn">Orçamento</button>
-                    <button type="button" onclick="ui.switchModalTab('segurado')" id="tab-btn-segurado" class="modal-tab-btn active">Segurado</button>
+                    <button type="button" onclick="ui.switchModalTab('segurado')" id="tab-btn-segurado" class="modal-tab-btn active">Envolvidos</button>
                     <button type="button" onclick="ui.switchModalTab('produtores')" id="tab-btn-produtores" class="modal-tab-btn">Produtores</button>
                     <button type="button" onclick="ui.switchModalTab('arquivos')" id="tab-btn-arquivos" class="modal-tab-btn">Anexos e logs</button>
                     <button type="button" onclick="ui.switchModalTab('historico')" id="tab-btn-historico" class="modal-tab-btn">Histórico</button>
@@ -601,50 +602,107 @@
 
                 <div class="p-8 bg-white flex-1 relative">
                     
-                    <div id="modal-content-segurado" class="space-y-4 max-w-2xl mx-auto">
-                        <div class="relative">
-                            <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Buscar Cliente</label>
-                            <input type="text" id="opBuscaCliente" oninput="app.onBuscaClienteInput(this.value)" onfocus="app.onBuscaClienteFocus()" placeholder="Nome, CPF, CNPJ ou telefone..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition">
-                            <div id="opBuscaResultados" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-border rounded-lg shadow-xl z-30 max-h-64 overflow-y-auto"></div>
-                            <p id="opBuscaStatus" class="text-[11px] text-textMuted mt-1"></p>
-                        </div>
-                        
-                        <div>
-                            <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">CNPJ / CPF</label>
-                            <input type="text" id="opDocumento" oninput="this.value = window.ui.maskDoc(this.value); app.handleContatoFieldInput('documento', this.value)" placeholder="Apenas números..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono">
-                        </div>
-                        
-                        <div>
-                            <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Razão Social / Nome Completo <span class="text-red-500">*</span></label>
-                            <input type="text" id="opNome" oninput="document.getElementById('modal-header-nome').value = this.value; app.handleContatoFieldInput('nome', this.value)" required placeholder="Digite o nome do cliente..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition">
-                        </div>
-                        
-                        <div>
-                            <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Telefone</label>
-                            <div class="flex gap-2">
-                                <input type="text" id="opTelefone" placeholder="(00) 00000-0000" oninput="this.value = window.ui.maskPhone(this.value); app.handleContatoFieldInput('telefone', this.value)" onblur="app.buscarChatwoot()" class="flex-1 border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono">
-                                <button type="button" id="btnBuscarChatwoot" onclick="app.buscarChatwoot()" class="bg-slate-100 hover:bg-slate-200 text-textMain border border-border transition px-5 rounded-lg font-bold whitespace-nowrap outline-none shadow-sm flex items-center">
-                                    <i class="fa-solid fa-magnifying-glass mr-2"></i> Buscar Conversa
-                                </button>
+                    <div id="modal-content-segurado" class="space-y-6 max-w-2xl mx-auto">
+                        <div class="rounded-xl border border-border p-5 space-y-4 bg-white">
+                            <div class="flex justify-between items-start gap-3">
+                                <div>
+                                    <h3 class="text-xs font-extrabold text-textMain uppercase tracking-wider">Segurado (titular da apólice)</h3>
+                                    <p class="text-[10px] text-textMuted mt-0.5">Quem consta como segurado no contrato.</p>
+                                </div>
+                                <button type="button" onclick="app.desvincularSegurado()" class="shrink-0 text-[10px] font-bold uppercase text-red-600 hover:bg-red-50 px-2 py-1.5 rounded-lg border border-red-100 transition outline-none">Desvincular</button>
                             </div>
-                        </div>
-                        
-                        <div>
-                            <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">E-mail</label>
-                            <input type="email" id="opEmail" placeholder="cliente@email.com" class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition">
+                            <div class="relative">
+                                <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Buscar segurado</label>
+                                <input type="text" id="opBuscaCliente" oninput="app.onBuscaContatoModalInput('segurado', this.value)" onfocus="app.onBuscaContatoModalFocus('segurado')" placeholder="Nome, CPF, CNPJ ou telefone..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition">
+                                <div id="opBuscaResultados" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-border rounded-lg shadow-xl z-30 max-h-64 overflow-y-auto"></div>
+                                <p id="opBuscaStatus" class="text-[11px] text-textMuted mt-1"></p>
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">CNPJ / CPF</label>
+                                <input type="text" id="opDocumento" oninput="this.value = window.ui.maskDoc(this.value); app.handleContatoFieldInput('segurado', 'documento', this.value)" placeholder="Apenas números..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Razão Social / Nome Completo <span class="text-red-500">*</span></label>
+                                <input type="text" id="opNome" oninput="document.getElementById('modal-header-nome').value = this.value; app.handleContatoFieldInput('segurado', 'nome', this.value)" required placeholder="Nome do segurado..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Telefone</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="opTelefone" placeholder="(00) 00000-0000" oninput="this.value = window.ui.maskPhone(this.value); app.handleContatoFieldInput('segurado', 'telefone', this.value)" onblur="app.buscarChatwoot('segurado')" class="flex-1 border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono">
+                                    <button type="button" id="btnBuscarChatwoot" onclick="app.buscarChatwoot('segurado')" class="bg-slate-100 hover:bg-slate-200 text-textMain border border-border transition px-5 rounded-lg font-bold whitespace-nowrap outline-none shadow-sm flex items-center">
+                                        <i class="fa-solid fa-magnifying-glass mr-2"></i> Buscar Conversa
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">E-mail</label>
+                                <input type="email" id="opEmail" placeholder="cliente@email.com" class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition">
+                            </div>
+                            <div class="pt-4 mt-2 border-t border-slate-100">
+                                <label class="text-[11px] font-bold text-primary mb-2 block uppercase tracking-wider flex items-center gap-1">
+                                    <i class="fa-brands fa-rocketchat text-base"></i> Integração ChatWoot (segurado)
+                                </label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="opChatwootId" readonly placeholder="Preenchido ao buscar pelo telefone..." class="flex-1 border border-blue-200 rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary bg-blue-50/30 transition font-mono">
+                                    <button type="button" onclick="app.abrirChatwoot('segurado')" class="bg-primary hover:bg-blue-700 text-white transition px-5 rounded-lg font-bold shadow-sm whitespace-nowrap flex items-center gap-2 outline-none">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir Conversa
+                                    </button>
+                                </div>
+                                <p class="text-[10px] text-textMuted mt-1.5 font-medium">* O ID pode ser preenchido ao sair do campo Telefone, se existir no Chatwoot.</p>
+                            </div>
                         </div>
 
-                        <div class="pt-6 mt-4 border-t border-slate-100">
-                            <label class="text-[11px] font-bold text-primary mb-2 block uppercase tracking-wider flex items-center gap-1">
-                                <i class="fa-brands fa-rocketchat text-base"></i> Integração ChatWoot
-                            </label>
-                            <div class="flex gap-2">
-                                <input type="text" id="opChatwootId" readonly placeholder="Buscando ID automaticamente pelo telefone..." class="flex-1 border border-blue-200 rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary bg-blue-50/30 transition font-mono">
-                                <button type="button" onclick="app.abrirChatwoot()" class="bg-primary hover:bg-blue-700 text-white transition px-5 rounded-lg font-bold shadow-sm whitespace-nowrap flex items-center gap-2 outline-none">
-                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir Conversa
-                                </button>
+                        <label class="flex items-center gap-2 text-sm font-semibold cursor-pointer text-textMain select-none">
+                            <input type="checkbox" id="opResponsavelMesmo" checked onchange="app.toggleResponsavelMesmo()" class="w-4 h-4 accent-primary">
+                            O responsável pela negociação é o mesmo que o segurado
+                        </label>
+
+                        <div id="bloco-responsavel" class="hidden rounded-xl border border-dashed border-blue-200 p-5 space-y-4 bg-blue-50/20">
+                            <div class="flex justify-between items-start gap-3">
+                                <div>
+                                    <h3 class="text-xs font-extrabold text-primary uppercase tracking-wider">Responsável pela negociação</h3>
+                                    <p class="text-[10px] text-textMuted mt-0.5">Quem trata o seguro no dia a dia (ex.: cônjuge, filho).</p>
+                                </div>
+                                <button type="button" onclick="app.desvincularResponsavel()" class="shrink-0 text-[10px] font-bold uppercase text-red-600 hover:bg-red-50 px-2 py-1.5 rounded-lg border border-red-100 transition outline-none">Desvincular</button>
                             </div>
-                            <p class="text-[10px] text-textMuted mt-1.5 font-medium">* O ID será preenchido sozinho ao sair do campo "Telefone", caso exista no Chatwoot.</p>
+                            <div class="relative">
+                                <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Buscar responsável</label>
+                                <input type="text" id="opBuscaResponsavel" oninput="app.onBuscaContatoModalInput('responsavel', this.value)" onfocus="app.onBuscaContatoModalFocus('responsavel')" placeholder="Nome, CPF, CNPJ ou telefone..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition bg-white">
+                                <div id="opBuscaRespResultados" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-border rounded-lg shadow-xl z-30 max-h-64 overflow-y-auto"></div>
+                                <p id="opBuscaRespStatus" class="text-[11px] text-textMuted mt-1"></p>
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">CNPJ / CPF</label>
+                                <input type="text" id="opRespDocumento" oninput="this.value = window.ui.maskDoc(this.value); app.handleContatoFieldInput('responsavel', 'documento', this.value)" placeholder="Apenas números..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono bg-white">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Nome completo <span class="text-red-500">*</span></label>
+                                <input type="text" id="opRespNome" oninput="app.handleContatoFieldInput('responsavel', 'nome', this.value)" placeholder="Nome de quem negocia..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition bg-white">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Telefone</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="opRespTelefone" placeholder="(00) 00000-0000" oninput="this.value = window.ui.maskPhone(this.value); app.handleContatoFieldInput('responsavel', 'telefone', this.value)" onblur="app.buscarChatwoot('responsavel')" class="flex-1 border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono bg-white">
+                                    <button type="button" id="btnBuscarChatwootResp" onclick="app.buscarChatwoot('responsavel')" class="bg-slate-100 hover:bg-slate-200 text-textMain border border-border transition px-5 rounded-lg font-bold whitespace-nowrap outline-none shadow-sm flex items-center">
+                                        <i class="fa-solid fa-magnifying-glass mr-2"></i> Buscar Conversa
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">E-mail</label>
+                                <input type="email" id="opRespEmail" placeholder="email@exemplo.com" class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition bg-white">
+                            </div>
+                            <div class="pt-4 mt-2 border-t border-blue-100">
+                                <label class="text-[11px] font-bold text-primary mb-2 block uppercase tracking-wider flex items-center gap-1">
+                                    <i class="fa-brands fa-rocketchat text-base"></i> Integração ChatWoot (responsável)
+                                </label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="opRespChatwootId" readonly placeholder="Preenchido ao buscar pelo telefone..." class="flex-1 border border-blue-200 rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary bg-blue-50/30 transition font-mono">
+                                    <button type="button" onclick="app.abrirChatwoot('responsavel')" class="bg-primary hover:bg-blue-700 text-white transition px-5 rounded-lg font-bold shadow-sm whitespace-nowrap flex items-center gap-2 outline-none">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir Conversa
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -661,7 +719,8 @@
                             </div>
                             <div class="flex items-center justify-center pt-5">
                                 <label class="flex items-center gap-2 text-sm font-semibold cursor-pointer text-textMain">
-                                    <input type="checkbox" id="opAtivo" checked class="w-4 h-4 accent-primary"> Ativo?
+                                    <input type="checkbox" id="opAtivo" class="w-4 h-4 accent-primary">
+                                    É uma prospeção ativa?
                                 </label>
                             </div>
                         </div>
@@ -1327,6 +1386,7 @@
                 document.getElementById('dealForm').reset();
                 document.getElementById('opId').value = '';
                 document.getElementById('contatoId').value = '';
+                document.getElementById('responsavelId').value = '';
                 document.getElementById('modal-header-nome').value = '';
                 app.resetBuscaContatoModal();
                 
@@ -1449,9 +1509,39 @@
                 document.getElementById('opTelefone').value = d.telefone_contato ? ui.maskPhone(d.telefone_contato) : '';
                 document.getElementById('opChatwootId').value = d.chatwoot_id || '';
                 document.getElementById('opBuscaCliente').value = d.nome_segurado || '';
-                document.getElementById('opBuscaStatus').innerText = d.contato_id ? 'Cliente já vinculado nesta oportunidade.' : '';
+                document.getElementById('opBuscaStatus').innerText = d.contato_id ? 'Segurado vinculado a um cadastro existente.' : '';
                 const buscaResultados = document.getElementById('opBuscaResultados');
                 if (buscaResultados) buscaResultados.classList.add('hidden');
+
+                const chkResp = document.getElementById('opResponsavelMesmo');
+                const blocoResp = document.getElementById('bloco-responsavel');
+                const rid = d.responsavel_id;
+                if (rid) {
+                    if (chkResp) chkResp.checked = false;
+                    if (blocoResp) blocoResp.classList.remove('hidden');
+                    document.getElementById('responsavelId').value = rid;
+                    const rc = app.contatos.find(c => c.id == rid);
+                    document.getElementById('opRespNome').value = (d.nome_responsavel || rc?.nome || '');
+                    document.getElementById('opRespDocumento').value = (d.documento_responsavel || rc?.documento) ? ui.maskDoc(d.documento_responsavel || rc?.documento) : '';
+                    document.getElementById('opRespTelefone').value = (d.telefone_responsavel || rc?.telefone) ? ui.maskPhone(d.telefone_responsavel || rc?.telefone) : '';
+                    document.getElementById('opRespEmail').value = d.email_responsavel || rc?.email || '';
+                    document.getElementById('opRespChatwootId').value = d.chatwoot_responsavel || rc?.chatwoot_id || '';
+                    document.getElementById('opBuscaResponsavel').value = (d.nome_responsavel || rc?.nome || '');
+                    document.getElementById('opBuscaRespStatus').innerText = 'Responsável vinculado a um cadastro existente.';
+                } else {
+                    if (chkResp) chkResp.checked = true;
+                    if (blocoResp) blocoResp.classList.add('hidden');
+                    document.getElementById('responsavelId').value = '';
+                    document.getElementById('opRespNome').value = '';
+                    document.getElementById('opRespDocumento').value = '';
+                    document.getElementById('opRespTelefone').value = '';
+                    document.getElementById('opRespEmail').value = '';
+                    document.getElementById('opRespChatwootId').value = '';
+                    document.getElementById('opBuscaResponsavel').value = '';
+                    document.getElementById('opBuscaRespStatus').innerText = '';
+                    const br = document.getElementById('opBuscaRespResultados');
+                    if (br) br.classList.add('hidden');
+                }
                 
                 document.getElementById('opVigencia').value = d.vigencia || '';
                 document.getElementById('opRetorno').value = d.retorno || '';
@@ -1815,6 +1905,33 @@
             }
         };
 
+        const MODAL_CONTATO_FIELDS = {
+            segurado: {
+                busca: 'opBuscaCliente',
+                resultados: 'opBuscaResultados',
+                status: 'opBuscaStatus',
+                hiddenId: 'contatoId',
+                nome: 'opNome',
+                documento: 'opDocumento',
+                telefone: 'opTelefone',
+                email: 'opEmail',
+                chatwoot: 'opChatwootId',
+                btnChatwoot: 'btnBuscarChatwoot'
+            },
+            responsavel: {
+                busca: 'opBuscaResponsavel',
+                resultados: 'opBuscaRespResultados',
+                status: 'opBuscaRespStatus',
+                hiddenId: 'responsavelId',
+                nome: 'opRespNome',
+                documento: 'opRespDocumento',
+                telefone: 'opRespTelefone',
+                email: 'opRespEmail',
+                chatwoot: 'opRespChatwootId',
+                btnChatwoot: 'btnBuscarChatwootResp'
+            }
+        };
+
         window.app = {
             sb: null, 
             user: null, 
@@ -1826,8 +1943,9 @@
             ramos: [], 
             seguradoras: [], 
             origens: [],
-            isSelectingContatoModal: false,
+            isSelectingContatoModalRole: null,
             contatoBuscaTimeout: null,
+            responsavelBuscaTimeout: null,
             
             currentSortCol: 'criado_em',
             currentSortAsc: false,
@@ -2044,8 +2162,9 @@
                 }
             },
 
-            buscarChatwoot: async () => {
-                let telRaw = document.getElementById('opTelefone').value;
+            buscarChatwoot: async (role = 'segurado') => {
+                const f = MODAL_CONTATO_FIELDS[role] || MODAL_CONTATO_FIELDS.segurado;
+                let telRaw = document.getElementById(f.telefone).value;
                 if(!telRaw) {
                     return;
                 }
@@ -2064,14 +2183,14 @@
                     return Swal.fire('Integração Ausente', 'Configure a URL e o Token do Chatwoot no menu Configurações > Integrações API.', 'info');
                 }
 
-                const inputCw = document.getElementById('opChatwootId');
+                const inputCw = document.getElementById(f.chatwoot);
                 
                 if (cleanPhone.length === 10 || cleanPhone.length === 11) {
                     cleanPhone = '55' + cleanPhone;
                 }
                 const phoneQuery = '+' + cleanPhone;
 
-                const btnBusca = document.getElementById('btnBuscarChatwoot');
+                const btnBusca = document.getElementById(f.btnChatwoot);
                 const originalBtnText = btnBusca.innerHTML;
                 btnBusca.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                 btnBusca.disabled = true;
@@ -2128,21 +2247,24 @@
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;'),
 
-            onBuscaClienteFocus: () => {
-                const termo = document.getElementById('opBuscaCliente')?.value || '';
+            onBuscaContatoModalFocus: (role) => {
+                const f = MODAL_CONTATO_FIELDS[role];
+                if (!f) return;
+                const termo = document.getElementById(f.busca)?.value || '';
                 if (termo.trim()) {
-                    app.onBuscaClienteInput(termo);
+                    app.onBuscaContatoModalInput(role, termo);
                 }
             },
 
-            onBuscaClienteInput: (termo) => {
-                if (app.contatoBuscaTimeout) {
-                    clearTimeout(app.contatoBuscaTimeout);
+            onBuscaContatoModalInput: (role, termo) => {
+                const timeoutKey = role === 'responsavel' ? 'responsavelBuscaTimeout' : 'contatoBuscaTimeout';
+                if (app[timeoutKey]) {
+                    clearTimeout(app[timeoutKey]);
                 }
 
-                app.contatoBuscaTimeout = setTimeout(() => {
+                app[timeoutKey] = setTimeout(() => {
                     const resultados = app.buscarContatosNoModal(termo);
-                    app.renderBuscaContatosModal(resultados, termo);
+                    app.renderBuscaContatosModal(role, resultados, termo);
                 }, 300);
             },
 
@@ -2181,9 +2303,11 @@
                     .map(m => m.contato);
             },
 
-            renderBuscaContatosModal: (resultados, termo) => {
-                const box = document.getElementById('opBuscaResultados');
-                const status = document.getElementById('opBuscaStatus');
+            renderBuscaContatosModal: (role, resultados, termo) => {
+                const f = MODAL_CONTATO_FIELDS[role];
+                if (!f) return;
+                const box = document.getElementById(f.resultados);
+                const status = document.getElementById(f.status);
                 if (!box || !status) return;
 
                 const query = (termo || '').trim();
@@ -2198,7 +2322,7 @@
                     const safeQuery = app.escapeHtml(query);
                     box.innerHTML = `
                         <div class="px-4 py-3 text-sm text-textMuted">Nenhum cliente encontrado para "<span class="font-semibold text-textMain">${safeQuery}</span>".</div>
-                        <button type="button" onclick="app.usarCadastroNovoModal()" class="w-full text-left px-4 py-3 border-t border-border text-primary hover:bg-blue-50 transition text-sm font-semibold">
+                        <button type="button" onclick="app.usarCadastroNovoModal('${role}')" class="w-full text-left px-4 py-3 border-t border-border text-primary hover:bg-blue-50 transition text-sm font-semibold">
                             <i class="fa-solid fa-user-plus mr-2"></i>Cadastrar novo cliente com os dados digitados
                         </button>
                     `;
@@ -2212,7 +2336,7 @@
                     const doc = c.documento ? ui.maskDoc(c.documento) : '-';
                     const tel = c.telefone ? ui.maskPhone(c.telefone) : '-';
                     return `
-                        <button type="button" onclick="app.selecionarContatoModal(${c.id})" class="w-full text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition">
+                        <button type="button" onclick="app.selecionarContatoModal('${role}', ${c.id})" class="w-full text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition">
                             <div class="text-sm font-semibold text-textMain">${nome}</div>
                             <div class="text-xs text-textMuted mt-0.5 font-mono">${doc} | ${tel}</div>
                         </button>
@@ -2223,67 +2347,116 @@
                 status.innerText = `${resultados.length} cliente(s) encontrado(s).`;
             },
 
-            usarCadastroNovoModal: () => {
-                document.getElementById('contatoId').value = '';
-                const box = document.getElementById('opBuscaResultados');
+            usarCadastroNovoModal: (role) => {
+                const f = MODAL_CONTATO_FIELDS[role];
+                if (!f) return;
+                document.getElementById(f.hiddenId).value = '';
+                const box = document.getElementById(f.resultados);
                 if (box) box.classList.add('hidden');
-                const status = document.getElementById('opBuscaStatus');
+                const status = document.getElementById(f.status);
                 if (status) status.innerText = 'Novo cliente: os dados serão cadastrados ao salvar.';
             },
 
-            selecionarContatoModal: (contatoId) => {
+            selecionarContatoModal: (role, contatoId) => {
+                const f = MODAL_CONTATO_FIELDS[role];
+                if (!f) return;
                 const c = app.contatos.find(ct => ct.id == contatoId);
                 if (!c) return;
 
-                app.isSelectingContatoModal = true;
-                document.getElementById('contatoId').value = c.id;
-                document.getElementById('opNome').value = c.nome || '';
-                document.getElementById('opDocumento').value = c.documento ? ui.maskDoc(c.documento) : '';
-                document.getElementById('opTelefone').value = c.telefone ? ui.maskPhone(c.telefone) : '';
-                document.getElementById('opEmail').value = c.email || '';
-                document.getElementById('opChatwootId').value = c.chatwoot_id || '';
-                document.getElementById('modal-header-nome').value = c.nome || '';
-                document.getElementById('opBuscaCliente').value = c.nome || '';
+                app.isSelectingContatoModalRole = role;
+                document.getElementById(f.hiddenId).value = c.id;
+                document.getElementById(f.nome).value = c.nome || '';
+                document.getElementById(f.documento).value = c.documento ? ui.maskDoc(c.documento) : '';
+                document.getElementById(f.telefone).value = c.telefone ? ui.maskPhone(c.telefone) : '';
+                document.getElementById(f.email).value = c.email || '';
+                document.getElementById(f.chatwoot).value = c.chatwoot_id || '';
+                if (role === 'segurado') {
+                    document.getElementById('modal-header-nome').value = c.nome || '';
+                }
+                document.getElementById(f.busca).value = c.nome || '';
 
-                const box = document.getElementById('opBuscaResultados');
+                const box = document.getElementById(f.resultados);
                 if (box) box.classList.add('hidden');
-                const status = document.getElementById('opBuscaStatus');
-                if (status) status.innerText = `Cliente vinculado: ${c.nome || 'sem nome'}.`;
+                const status = document.getElementById(f.status);
+                if (status) {
+                    const label = role === 'segurado' ? 'Segurado' : 'Responsável';
+                    status.innerText = `${label} vinculado: ${c.nome || 'sem nome'}.`;
+                }
 
-                app.isSelectingContatoModal = false;
+                app.isSelectingContatoModalRole = null;
             },
 
-            handleContatoFieldInput: (fieldName, value) => {
-                if (app.isSelectingContatoModal) return;
+            handleContatoFieldInput: (role, fieldName, value) => {
+                if (app.isSelectingContatoModalRole === role) return;
 
-                const contatoIdInput = document.getElementById('contatoId');
-                const tinhaVinculo = !!(contatoIdInput && contatoIdInput.value);
-                if (contatoIdInput) contatoIdInput.value = '';
+                const f = MODAL_CONTATO_FIELDS[role];
+                if (!f) return;
 
-                const status = document.getElementById('opBuscaStatus');
+                const hidden = document.getElementById(f.hiddenId);
+                const tinhaVinculo = !!(hidden && hidden.value);
+                if (hidden) hidden.value = '';
+
+                const status = document.getElementById(f.status);
                 if (status && tinhaVinculo) {
-                    status.innerText = 'Contato desvinculado por edição manual. Será salvo como novo cliente.';
+                    status.innerText = 'Contato desvinculado por edição manual. Será salvo como novo cadastro.';
                 }
 
                 if (fieldName === 'nome' || fieldName === 'documento' || fieldName === 'telefone') {
-                    app.onBuscaClienteInput(value);
+                    app.onBuscaContatoModalInput(role, value);
                 }
             },
 
-            resetBuscaContatoModal: () => {
-                const inputBusca = document.getElementById('opBuscaCliente');
-                const box = document.getElementById('opBuscaResultados');
-                const status = document.getElementById('opBuscaStatus');
-                if (inputBusca) inputBusca.value = '';
+            limparCamposModalRole: (role) => {
+                const f = MODAL_CONTATO_FIELDS[role];
+                if (!f) return;
+                document.getElementById(f.hiddenId).value = '';
+                document.getElementById(f.busca).value = '';
+                document.getElementById(f.nome).value = '';
+                document.getElementById(f.documento).value = '';
+                document.getElementById(f.telefone).value = '';
+                document.getElementById(f.email).value = '';
+                document.getElementById(f.chatwoot).value = '';
+                const box = document.getElementById(f.resultados);
                 if (box) {
                     box.classList.add('hidden');
                     box.innerHTML = '';
                 }
+                const status = document.getElementById(f.status);
                 if (status) status.innerText = '';
             },
 
-            abrirChatwoot: () => {
-                const cwId = document.getElementById('opChatwootId').value.trim();
+            desvincularSegurado: () => {
+                app.limparCamposModalRole('segurado');
+                document.getElementById('modal-header-nome').value = '';
+            },
+
+            desvincularResponsavel: () => {
+                app.limparCamposModalRole('responsavel');
+            },
+
+            toggleResponsavelMesmo: () => {
+                const mesmo = document.getElementById('opResponsavelMesmo').checked;
+                const bloco = document.getElementById('bloco-responsavel');
+                if (mesmo) {
+                    if (bloco) bloco.classList.add('hidden');
+                    app.desvincularResponsavel();
+                } else {
+                    if (bloco) bloco.classList.remove('hidden');
+                }
+            },
+
+            resetBuscaContatoModal: () => {
+                app.limparCamposModalRole('segurado');
+                app.limparCamposModalRole('responsavel');
+                const chk = document.getElementById('opResponsavelMesmo');
+                if (chk) chk.checked = true;
+                const bloco = document.getElementById('bloco-responsavel');
+                if (bloco) bloco.classList.add('hidden');
+            },
+
+            abrirChatwoot: (role = 'segurado') => {
+                const f = MODAL_CONTATO_FIELDS[role] || MODAL_CONTATO_FIELDS.segurado;
+                const cwId = document.getElementById(f.chatwoot).value.trim();
                 const cwUrl = localStorage.getItem('nexus_cw_url') || config.cwUrl;
                 const cwAccount = localStorage.getItem('nexus_cw_account') || config.cwAccount;
                 
@@ -2573,6 +2746,15 @@
                             op.email_contato = ct.email;          
                             op.telefone_contato = ct.telefone;    
                         }
+
+                        const respCt = op.responsavel_id ? app.contatos.find(c => c.id === op.responsavel_id) : null;
+                        if (respCt) {
+                            op.nome_responsavel = respCt.nome;
+                            op.documento_responsavel = respCt.documento;
+                            op.telefone_responsavel = respCt.telefone;
+                            op.email_responsavel = respCt.email;
+                            op.chatwoot_responsavel = respCt.chatwoot_id;
+                        }
                         
                         const cor = app.corretores.find(c => c.id === op.corretor_id);
                         if (cor) {
@@ -2705,7 +2887,7 @@
             },
 
             openDealByContato: (contatoId) => {
-                const deal = app.oportunidades.find(o => o.contato_id == contatoId);
+                const deal = app.oportunidades.find(o => o.contato_id == contatoId || o.responsavel_id == contatoId);
                 if (deal) {
                     ui.editDeal(deal); 
                 } else {
@@ -2718,7 +2900,8 @@
                 tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center"><i class="fa-solid fa-spinner fa-spin text-textMuted text-xl"></i> Buscando...</td></tr>';
                 
                 try {
-                    const {data} = await app.sb.from('oportunidades').select('*').eq('contato_id', contatoId).order('criado_em', {ascending:false});
+                    const cid = String(contatoId);
+                    const {data} = await app.sb.from('oportunidades').select('*').or(`contato_id.eq.${cid},responsavel_id.eq.${cid}`).order('criado_em', {ascending:false});
                     
                     if (!data || data.length === 0) { 
                         tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-textMuted font-medium">Nenhuma oportunidade anterior encontrada para este cliente.</td></tr>'; 
@@ -2827,7 +3010,21 @@
 
                 const opId = document.getElementById('opId').value;
                 let contatoId = document.getElementById('contatoId').value;
-                
+                const mesmoResp = document.getElementById('opResponsavelMesmo').checked;
+                let responsavelId = document.getElementById('responsavelId').value;
+
+                if (!mesmoResp) {
+                    const nomeResp = document.getElementById('opRespNome').value.trim();
+                    if (!nomeResp) {
+                        Swal.fire('Atenção', 'Informe o nome do responsável pela negociação ou marque que é o mesmo que o segurado.', 'warning');
+                        btnSubmit.innerHTML = originalBtnText;
+                        btnSubmit.disabled = false;
+                        return;
+                    }
+                } else {
+                    responsavelId = '';
+                }
+
                 const contatoData = { 
                     nome: document.getElementById('opNome').value, 
                     documento: document.getElementById('opDocumento').value, 
@@ -2837,9 +3034,10 @@
                     corretor_id: app.user.id 
                 };
 
+                const idsExcluirSeg = [contatoId, (!mesmoResp ? responsavelId : '')].filter(Boolean);
                 const docRaw = contatoData.documento.replace(/\D/g, '');
                 if (docRaw) {
-                    const docExiste = app.contatos.find(c => c.documento && c.documento.replace(/\D/g, '') === docRaw && c.id != contatoId);
+                    const docExiste = app.contatos.find(c => c.documento && c.documento.replace(/\D/g, '') === docRaw && !idsExcluirSeg.some(id => c.id == id));
                     if (docExiste) {
                         Swal.fire('Atenção', 'Já existe um cliente cadastrado com este CPF/CNPJ: ' + docExiste.nome, 'warning');
                         btnSubmit.innerHTML = originalBtnText;
@@ -2848,14 +3046,47 @@
                     }
                 }
                 
-                const telRaw = contatoData.telefone.replace(/\D/g, '');
-                if (telRaw) {
-                    const telExiste = app.contatos.find(c => c.telefone && c.telefone.replace(/\D/g, '') === telRaw && c.id != contatoId);
+                const telRawSeg = contatoData.telefone.replace(/\D/g, '');
+                if (telRawSeg) {
+                    const telExiste = app.contatos.find(c => c.telefone && c.telefone.replace(/\D/g, '') === telRawSeg && !idsExcluirSeg.some(id => c.id == id));
                     if (telExiste) {
                         Swal.fire('Atenção', 'Já existe um cliente cadastrado com este telefone: ' + telExiste.nome, 'warning');
                         btnSubmit.innerHTML = originalBtnText;
                         btnSubmit.disabled = false;
                         return;
+                    }
+                }
+
+                const respData = !mesmoResp ? {
+                    nome: document.getElementById('opRespNome').value, 
+                    documento: document.getElementById('opRespDocumento').value, 
+                    email: document.getElementById('opRespEmail').value, 
+                    telefone: document.getElementById('opRespTelefone').value,
+                    chatwoot_id: document.getElementById('opRespChatwootId').value,
+                    corretor_id: app.user.id 
+                } : null;
+
+                if (respData) {
+                    const idsExcluirResp = [contatoId, responsavelId].filter(Boolean);
+                    const docR = respData.documento.replace(/\D/g, '');
+                    if (docR) {
+                        const docExiste = app.contatos.find(c => c.documento && c.documento.replace(/\D/g, '') === docR && !idsExcluirResp.some(id => c.id == id));
+                        if (docExiste) {
+                            Swal.fire('Atenção', 'Responsável: já existe um cliente com este CPF/CNPJ: ' + docExiste.nome, 'warning');
+                            btnSubmit.innerHTML = originalBtnText;
+                            btnSubmit.disabled = false;
+                            return;
+                        }
+                    }
+                    const telR = respData.telefone.replace(/\D/g, '');
+                    if (telR) {
+                        const telExiste = app.contatos.find(c => c.telefone && c.telefone.replace(/\D/g, '') === telR && !idsExcluirResp.some(id => c.id == id));
+                        if (telExiste) {
+                            Swal.fire('Atenção', 'Responsável: já existe um cliente com este telefone: ' + telExiste.nome, 'warning');
+                            btnSubmit.innerHTML = originalBtnText;
+                            btnSubmit.disabled = false;
+                            return;
+                        }
                     }
                 }
 
@@ -2875,6 +3106,28 @@
                             app.contatos[ctIndex] = {...app.contatos[ctIndex], ...contatoData};
                         }
                         ui.renderContatosTable();
+                    }
+
+                    let responsavelIdFinal = null;
+                    if (!mesmoResp && respData) {
+                        let rid = responsavelId;
+                        if (!rid) {
+                            const {data: newR, error: errR} = await app.sb.from('contatos').insert([respData]).select();
+                            if (errR) {
+                                throw errR;
+                            }
+                            rid = newR[0].id;
+                            app.contatos.push(newR[0]);
+                            ui.renderContatosTable();
+                        } else {
+                            await app.sb.from('contatos').update(respData).eq('id', rid);
+                            const ri = app.contatos.findIndex(c => c.id == rid);
+                            if (ri >= 0) {
+                                app.contatos[ri] = {...app.contatos[ri], ...respData};
+                            }
+                            ui.renderContatosTable();
+                        }
+                        responsavelIdFinal = rid;
                     }
 
                     let tPremio = 0; 
@@ -2905,6 +3158,7 @@
 
                     const deal = { 
                         contato_id: contatoId, 
+                        responsavel_id: responsavelIdFinal,
                         nome_segurado: contatoData.nome, 
                         vigencia: document.getElementById('opVigencia').value || null, 
                         retorno: document.getElementById('opRetorno').value || null,

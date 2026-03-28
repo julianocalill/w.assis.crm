@@ -1662,6 +1662,18 @@
                     badgeStatus.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-700';
                     badgeStatus.classList.remove('hidden');
                     selEtapa.disabled = true;
+                    {
+                        const nomesFunil = new Set(app.etapas.map(e => e.nome));
+                        const ultima = app.getUltimaEtapaNome();
+                        const primeira = app.etapas[0]?.nome;
+                        if (d.etapa_nome && nomesFunil.has(d.etapa_nome)) {
+                            selEtapa.value = d.etapa_nome;
+                        } else if (ultima) {
+                            selEtapa.value = ultima;
+                        } else if (primeira) {
+                            selEtapa.value = primeira;
+                        }
+                    }
                     btnGanhar.classList.add('hidden');
                     btnPerder.classList.add('hidden');
                 } else if (d.status === 'perdido') {
@@ -1670,6 +1682,15 @@
                     badgeStatus.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-red-100 text-red-700';
                     badgeStatus.classList.remove('hidden');
                     selEtapa.disabled = true;
+                    {
+                        const nomesFunil = new Set(app.etapas.map(e => e.nome));
+                        const primeira = app.etapas[0]?.nome;
+                        if (d.etapa_nome && nomesFunil.has(d.etapa_nome)) {
+                            selEtapa.value = d.etapa_nome;
+                        } else if (primeira) {
+                            selEtapa.value = primeira;
+                        }
+                    }
                     btnGanhar.classList.add('hidden');
                     btnPerder.classList.add('hidden');
                 } else {
@@ -2039,6 +2060,14 @@
             
             currentSortCol: 'criado_em',
             currentSortAsc: false,
+
+            getUltimaEtapaNome: () => {
+                if (!app.etapas || app.etapas.length === 0) {
+                    return null;
+                }
+                const sorted = [...app.etapas].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+                return sorted[sorted.length - 1].nome;
+            },
 
             init: async () => {
                 app.sb = supabase.createClient(config.sbUrl, config.sbKey);
@@ -2920,7 +2949,7 @@
                     }
 
                     app.oportunidades = baseOps;
-                    
+
                     app.sortList(app.currentSortCol, true);
                     
                     app.renderKanban(); 
@@ -3269,11 +3298,20 @@
                         const opAtual = app.oportunidades.find(o => o.id == opId);
                         if (opAtual) {
                             st = opAtual.status;
-                            if (st === 'ganho') etapa = 'Fechado Ganho';
-                            if (st === 'perdido') etapa = 'Fechado Perdido';
+                            if (st === 'ganho' || st === 'perdido') {
+                                etapa = opAtual.etapa_nome || etapa;
+                                if (!app.etapas.some(e => e.nome === etapa)) {
+                                    const ultima = app.getUltimaEtapaNome();
+                                    const primeira = app.etapas[0]?.nome;
+                                    if (st === 'ganho' && ultima) {
+                                        etapa = ultima;
+                                    } else if (primeira) {
+                                        etapa = primeira;
+                                    }
+                                }
+                            }
                         }
                     }
-
                     const deal = { 
                         contato_id: contatoId, 
                         responsavel_id: responsavelIdFinal,
@@ -3338,10 +3376,13 @@
                 btn.disabled = true;
 
                 try {
-                    await app.sb.from('oportunidades').update({ 
-                        status: 'ganho', 
-                        etapa_nome: 'Fechado Ganho', 
-                        data_fechamento: new Date().toISOString() 
+                    const opAtual = app.oportunidades.find(o => o.id == opId);
+                    const ultima = app.getUltimaEtapaNome();
+                    const etapaGanho = ultima || (opAtual && opAtual.etapa_nome) || (app.etapas[0] && app.etapas[0].nome) || 'Nova';
+                    await app.sb.from('oportunidades').update({
+                        status: 'ganho',
+                        etapa_nome: etapaGanho,
+                        data_fechamento: new Date().toISOString()
                     }).eq('id', opId);
                     
                     await app.sb.from('contatos').update({ is_segurado: true }).eq('id', contatoId);
@@ -3398,10 +3439,9 @@
                     btn.disabled = true;
 
                     try {
-                        await app.sb.from('oportunidades').update({ 
-                            status: 'perdido', 
-                            motivo_perda: motivo, 
-                            etapa_nome: 'Fechado Perdido',
+                        await app.sb.from('oportunidades').update({
+                            status: 'perdido',
+                            motivo_perda: motivo,
                             data_fechamento: new Date().toISOString()
                         }).eq('id', opId);
                         

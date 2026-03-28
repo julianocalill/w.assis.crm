@@ -1,0 +1,5 @@
+{"sessionId":"0a507f","runId":"post-fix","hypothesisId":"B","location":"index:loadData","message":"sample ganho from memory after fetch","data":{"id":13,"etapa_nome":"Fechado Ganho","status":"ganho"},"timestamp":1774716146894}
+{"sessionId":"0a507f","runId":"post-fix","hypothesisId":"C","location":"index:renderListTable","message":"list row etapa cell source","data":{"id":13,"etapa_nome":"Fechado Ganho"},"timestamp":1774716146896}
+{"sessionId":"0a507f","runId":"post-fix","hypothesisId":"B","location":"index:loadData","message":"sample ganho from memory after fetch","data":{"id":13,"etapa_nome":"Fechado Ganho","status":"ganho"},"timestamp":1774716172511}
+{"sessionId":"0a507f","runId":"post-fix","hypothesisId":"A","location":"index:marcarGanho","message":"payload before supabase update","data":{"opId":"14","etapa_nome_sent":"Orçamento enviado","ultimaEtapaDisponivel":"Orçamento enviado"},"timestamp":1774716175638}
+{"sessionId":"0a507f","runId":"post-fix","hypothesisId":"B","location":"index:loadData","message":"sample ganho from memory after fetch","data":{"id":14,"etapa_nome":"Orçamento enviado","status":"ganho"},"timestamp":1774716176915}

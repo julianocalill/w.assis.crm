@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS oportunidades (
     motivo_perda TEXT,
     data_fechamento TIMESTAMP WITH TIME ZONE,
     excluido BOOLEAN DEFAULT FALSE,
+    is_checked BOOLEAN NOT NULL DEFAULT FALSE,
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
@@ -145,3 +146,174 @@ INSERT INTO etapas_funil (funil_id, nome, cor, ordem) VALUES
 
 -- Insere alguns Ramos Padrão
 INSERT INTO ramos (nome) VALUES ('Automóvel'), ('Vida'), ('Residencial'), ('Empresarial'), ('Saúde') ON CONFLICT DO NOTHING;
+
+-- ==============================================================================
+-- MIGRACAO: is_checked (conferência pelo gerente). Execute se a tabela já existir:
+-- ALTER TABLE oportunidades ADD COLUMN IF NOT EXISTS is_checked BOOLEAN NOT NULL DEFAULT FALSE;
+-- ==============================================================================
+
+-- ==============================================================================
+-- RLS — Gerente vs Vendedor (corretores.perfil = 'Gerente' vê todas as oportunidades)
+-- Funis / etapas_funil / cadastros auxiliares: RLS não habilitada aqui; cliente só com JWT autenticado.
+-- ==============================================================================
+
+CREATE OR REPLACE FUNCTION public.is_gerente()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE(
+    (SELECT c.perfil = 'Gerente' FROM public.corretores c WHERE c.id = auth.uid()),
+    false
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_gerente() TO authenticated;
+
+-- Vendedor não altera is_checked (apenas gerente); reforço no UPDATE.
+CREATE OR REPLACE FUNCTION public.oportunidades_trg_preservar_is_checked()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF TG_OP = 'UPDATE' AND NOT public.is_gerente() THEN
+    IF NEW.is_checked IS DISTINCT FROM OLD.is_checked THEN
+      NEW.is_checked := OLD.is_checked;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tr_oportunidades_preservar_is_checked ON public.oportunidades;
+CREATE TRIGGER tr_oportunidades_preservar_is_checked
+  BEFORE UPDATE ON public.oportunidades
+  FOR EACH ROW
+  EXECUTE PROCEDURE public.oportunidades_trg_preservar_is_checked();
+
+ALTER TABLE public.corretores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.contatos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.oportunidades ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.historico_oportunidades ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.anexos ENABLE ROW LEVEL SECURITY;
+
+-- corretores
+DROP POLICY IF EXISTS "corretores_select_authenticated" ON public.corretores;
+CREATE POLICY "corretores_select_authenticated" ON public.corretores
+  FOR SELECT TO authenticated
+  USING (id = auth.uid() OR public.is_gerente());
+
+DROP POLICY IF EXISTS "corretores_update_authenticated" ON public.corretores;
+CREATE POLICY "corretores_update_authenticated" ON public.corretores
+  FOR UPDATE TO authenticated
+  USING (id = auth.uid() OR public.is_gerente())
+  WITH CHECK (id = auth.uid() OR public.is_gerente());
+
+-- contatos
+DROP POLICY IF EXISTS "contatos_select_authenticated" ON public.contatos;
+CREATE POLICY "contatos_select_authenticated" ON public.contatos
+  FOR SELECT TO authenticated
+  USING (public.is_gerente() OR corretor_id = auth.uid());
+
+DROP POLICY IF EXISTS "contatos_insert_authenticated" ON public.contatos;
+CREATE POLICY "contatos_insert_authenticated" ON public.contatos
+  FOR INSERT TO authenticated
+  WITH CHECK (public.is_gerente() OR corretor_id = auth.uid());
+
+DROP POLICY IF EXISTS "contatos_update_authenticated" ON public.contatos;
+CREATE POLICY "contatos_update_authenticated" ON public.contatos
+  FOR UPDATE TO authenticated
+  USING (public.is_gerente() OR corretor_id = auth.uid())
+  WITH CHECK (public.is_gerente() OR corretor_id = auth.uid());
+
+DROP POLICY IF EXISTS "contatos_delete_authenticated" ON public.contatos;
+CREATE POLICY "contatos_delete_authenticated" ON public.contatos
+  FOR DELETE TO authenticated
+  USING (public.is_gerente());
+
+-- oportunidades
+DROP POLICY IF EXISTS "oportunidades_select_authenticated" ON public.oportunidades;
+CREATE POLICY "oportunidades_select_authenticated" ON public.oportunidades
+  FOR SELECT TO authenticated
+  USING (public.is_gerente() OR corretor_id = auth.uid());
+
+DROP POLICY IF EXISTS "oportunidades_insert_authenticated" ON public.oportunidades;
+CREATE POLICY "oportunidades_insert_authenticated" ON public.oportunidades
+  FOR INSERT TO authenticated
+  WITH CHECK (public.is_gerente() OR corretor_id = auth.uid());
+
+DROP POLICY IF EXISTS "oportunidades_update_gerente" ON public.oportunidades;
+CREATE POLICY "oportunidades_update_gerente" ON public.oportunidades
+  FOR UPDATE TO authenticated
+  USING (public.is_gerente())
+  WITH CHECK (public.is_gerente());
+
+DROP POLICY IF EXISTS "oportunidades_update_vendedor" ON public.oportunidades;
+CREATE POLICY "oportunidades_update_vendedor" ON public.oportunidades
+  FOR UPDATE TO authenticated
+  USING (
+    auth.uid() = corretor_id
+    AND (COALESCE(status, 'aberto') NOT IN ('ganho', 'perdido'))
+  )
+  WITH CHECK (auth.uid() = corretor_id);
+
+-- historico (acesso quando a oportunidade é visível)
+DROP POLICY IF EXISTS "historico_select_authenticated" ON public.historico_oportunidades;
+CREATE POLICY "historico_select_authenticated" ON public.historico_oportunidades
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.oportunidades o
+      WHERE o.id = historico_oportunidades.oportunidade_id
+        AND (public.is_gerente() OR o.corretor_id = auth.uid())
+    )
+  );
+
+DROP POLICY IF EXISTS "historico_insert_authenticated" ON public.historico_oportunidades;
+CREATE POLICY "historico_insert_authenticated" ON public.historico_oportunidades
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.oportunidades o
+      WHERE o.id = historico_oportunidades.oportunidade_id
+        AND (public.is_gerente() OR o.corretor_id = auth.uid())
+    )
+    AND criado_por = auth.uid()
+  );
+
+-- anexos
+DROP POLICY IF EXISTS "anexos_select_authenticated" ON public.anexos;
+CREATE POLICY "anexos_select_authenticated" ON public.anexos
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.oportunidades o
+      WHERE o.id = anexos.oportunidade_id
+        AND (public.is_gerente() OR o.corretor_id = auth.uid())
+    )
+  );
+
+DROP POLICY IF EXISTS "anexos_insert_authenticated" ON public.anexos;
+CREATE POLICY "anexos_insert_authenticated" ON public.anexos
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.oportunidades o
+      WHERE o.id = anexos.oportunidade_id
+        AND (public.is_gerente() OR o.corretor_id = auth.uid())
+    )
+    AND criado_por = auth.uid()
+  );
+
+DROP POLICY IF EXISTS "anexos_delete_authenticated" ON public.anexos;
+CREATE POLICY "anexos_delete_authenticated" ON public.anexos
+  FOR DELETE TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.oportunidades o
+      WHERE o.id = anexos.oportunidade_id
+        AND (public.is_gerente() OR o.corretor_id = auth.uid())
+    )
+  );

@@ -87,8 +87,8 @@
         }
         
         .kanban-col.collapsed { 
-            min-width: 64px; 
-            width: 64px; 
+            min-width: 52px; 
+            width: 52px; 
             background-color: #F1F5F9; 
             border: 1px dashed #CBD5E1; 
             border-radius: 1rem; 
@@ -290,7 +290,7 @@
         </nav>
         
         <div class="p-4 border-t border-border sidebar-footer">
-            <button type="button" onclick="ui.openSettingsModal()" title="Configurações" class="sidebar-footer-btn flex items-center gap-3 w-full px-4 py-3 rounded-xl text-textMuted hover:bg-slate-100 transition">
+            <button type="button" id="sidebar-settings-btn" onclick="ui.openSettingsModal()" title="Configurações" class="sidebar-footer-btn flex items-center gap-3 w-full px-4 py-3 rounded-xl text-textMuted hover:bg-slate-100 transition">
                 <i class="fa-solid fa-gear w-5 text-center shrink-0"></i><span class="nav-label whitespace-nowrap">Configurações</span>
             </button>
             
@@ -507,7 +507,7 @@
                     </div>
                 </div>
                 
-                <div id="board-kanban" class="flex-1 overflow-x-auto overflow-y-hidden flex p-6 gap-4 items-start custom-scrollbar bg-slate-100/50">
+                <div id="board-kanban" class="flex-1 min-h-0 overflow-x-auto overflow-y-hidden flex p-6 gap-4 items-stretch custom-scrollbar bg-slate-100/50">
                     </div>
                 
                 <div id="board-lista" class="hidden flex-1 overflow-y-auto p-6 custom-scrollbar bg-bg">
@@ -518,7 +518,9 @@
                                     <th class="px-6 py-4 cursor-pointer hover:bg-slate-100 transition" onclick="app.sortList('nome_segurado')">
                                         Segurado <i class="fa-solid fa-sort ml-1 text-slate-300"></i>
                                     </th>
-                                    <th class="px-6 py-4">Ramo(s)</th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-slate-100 transition" onclick="app.sortList('ramo')">
+                                        Ramo(s) <i class="fa-solid fa-sort ml-1 text-slate-300"></i>
+                                    </th>
                                     <th class="px-6 py-4 cursor-pointer hover:bg-slate-100 transition" onclick="app.sortList('etapa_nome')">
                                         Etapa <i class="fa-solid fa-sort ml-1 text-slate-300"></i>
                                     </th>
@@ -1000,6 +1002,7 @@
                     <button onclick="ui.switchSettingsTab('ramos')" id="settings-tab-ramos" class="settings-tab-btn"><i class="fa-regular fa-file-lines w-5"></i> Ramos de Seguro</button>
                     <button onclick="ui.switchSettingsTab('seguradoras')" id="settings-tab-seguradoras" class="settings-tab-btn"><i class="fa-regular fa-building w-5"></i> Seguradoras</button>
                     <button onclick="ui.switchSettingsTab('origens')" id="settings-tab-origens" class="settings-tab-btn"><i class="fa-solid fa-share-nodes w-5"></i> Origens do Lead</button>
+                    <button onclick="ui.switchSettingsTab('motivos_perda')" id="settings-tab-motivos_perda" class="settings-tab-btn"><i class="fa-solid fa-circle-xmark w-5"></i> Motivos de Perda</button>
                     <div class="my-2 border-t border-border"></div>
                     <button onclick="ui.switchSettingsTab('integracoes')" id="settings-tab-integracoes" class="settings-tab-btn text-primary"><i class="fa-solid fa-plug w-5"></i> Integrações API</button>
                     <button onclick="ui.switchSettingsTab('usuarios')" id="settings-tab-usuarios" class="settings-tab-btn"><i class="fa-solid fa-users w-5"></i> Usuários & Acessos</button>
@@ -1015,16 +1018,49 @@
                                 <button onclick="app.createPipeline()" class="bg-primary hover:bg-blue-700 text-white px-5 rounded-lg font-bold text-xs transition flex items-center gap-2 shadow-sm"><i class="fa-solid fa-plus text-xs"></i> Criar</button>
                             </div>
                         </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div class="lg:col-span-1 bg-slate-50 p-4 rounded-xl border border-border shadow-sm max-h-[360px] overflow-y-auto custom-scrollbar">
+                                <label class="text-[11px] uppercase font-bold text-textMuted mb-2 block tracking-wider">Todos os funis</label>
+                                <p class="text-[10px] text-textMuted mb-3">Selecione um funil para editar nome, tipo e etapas — sem trocar o funil ativo do Kanban.</p>
+                                <div id="settings-funis-list" class="space-y-1.5">
+                                </div>
+                            </div>
+                            <div class="lg:col-span-2 space-y-4">
+                                <div class="bg-white p-4 rounded-xl border border-border shadow-sm space-y-3">
+                                    <label class="text-[11px] uppercase font-bold text-emerald-600 block tracking-wider">Dados do funil selecionado</label>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div class="sm:col-span-2 space-y-1">
+                                            <label class="text-[10px] text-textMuted font-medium">Nome do funil</label>
+                                            <input type="text" id="settingsFunilNome" class="w-full bg-white border border-border rounded-lg p-2 text-textMain outline-none text-xs focus:border-emerald-600 shadow-sm" placeholder="Nome...">
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-[10px] text-textMuted font-medium">Tipo do funil</label>
+                                            <select id="settingsFunilTipo" class="w-full bg-white border border-border rounded-lg p-2 text-textMain outline-none text-xs cursor-pointer focus:border-emerald-600 shadow-sm">
+                                                <option value="novos">Novos (aquisição)</option>
+                                                <option value="renovacao">Renovação</option>
+                                                <option value="pos_venda">Pós-venda (Fase 2 — uso limitado)</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex items-end">
+                                            <button type="button" onclick="app.saveFunilMeta()" class="w-full bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-emerald-700 transition shadow-sm">
+                                                <i class="fa-solid fa-floppy-disk mr-1.5"></i> Salvar nome e tipo
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         
                         <div class="relative flex items-center py-2">
                             <div class="flex-grow border-t border-border"></div>
-                            <span class="flex-shrink mx-4 text-textMuted text-[10px] uppercase font-bold tracking-widest">Edição do Funil Ativo</span>
+                            <span class="flex-shrink mx-4 text-textMuted text-[10px] uppercase font-bold tracking-widest">Etapas do funil selecionado</span>
                             <div class="flex-grow border-t border-border"></div>
                         </div>
                         
                         <div>
                             <div class="flex justify-between items-center mb-3">
-                                <label id="manager-current-pipe-name" class="text-sm font-bold text-textMain">Etapas Atuais</label>
+                                <label id="manager-current-pipe-name" class="text-sm font-bold text-textMain">Etapas</label>
                                 <span class="text-[10px] text-textMuted bg-slate-100 border border-border px-2 py-0.5 rounded">Arraste pelo ícone <i class="fa-solid fa-grip-lines-vertical mx-0.5"></i> para reordenar</span>
                             </div>
                             
@@ -1105,6 +1141,7 @@
                                 <div>
                                     <label class="text-xs font-bold text-textMuted uppercase mb-1 block">Webhook: Negócio Ganho (Pós-Venda)</label>
                                     <input type="text" id="configN8nGanho" placeholder="Ex: https://n8n.sua-empresa.com/webhook/ganho" class="w-full border border-border rounded-md px-4 py-2.5 text-sm outline-none focus:border-primary shadow-sm">
+                                    <p class="text-[10px] text-textMuted mt-1 leading-relaxed">Também recebe fechamento com JSON estendido (<code class="text-[10px]">event</code>, <code class="text-[10px]">outcome</code> ganho/perdido, <code class="text-[10px]">tipo_funil</code>, <code class="text-[10px]">fila</code> com e-mail e anexos em Base64).</p>
                                 </div>
                                 
                                 <div>
@@ -1158,6 +1195,103 @@
                     </div>
 
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fase 1: modais da fila de fechamento comercial -->
+    <div id="modalEmailProposta" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center z-[110] backdrop-blur-sm sm:p-6 overflow-y-auto custom-scrollbar">
+        <div class="bg-white rounded-xl shadow-2xl border border-border w-full max-w-lg my-auto p-6 space-y-4">
+            <h3 class="text-lg font-bold text-textMain">Enviar proposta por e-mail</h3>
+            <div>
+                <label class="text-xs font-bold text-textMain block mb-1">Assunto:</label>
+                <input type="text" id="emailPropostaAssunto" class="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-textMain block mb-1">OBS:</label>
+                <textarea id="emailPropostaObs" rows="4" placeholder="Coloque alguma observação necessária" class="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-y"></textarea>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-textMuted block mb-1">Anexos (máx. 5)</label>
+                <div id="emailPropostaDrop" class="border-2 border-dashed border-border rounded-lg p-6 text-center text-xs text-textMuted cursor-pointer hover:bg-slate-50 transition">
+                    Clique para escolher ou arraste os arquivos (Máx 5 arquivos)
+                </div>
+                <input type="file" id="emailPropostaFiles" class="hidden" multiple accept="*/*">
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 justify-end pt-2">
+                <button type="button" id="btnEmailPropostaCancel" class="px-4 py-2 rounded-lg border border-border text-sm font-bold text-textMuted hover:bg-slate-50">Cancelar</button>
+                <button type="button" id="btnEmailPropostaSkip" class="px-4 py-2 rounded-lg border border-amber-200 text-amber-800 text-sm font-bold hover:bg-amber-50">Pular envio</button>
+                <button type="button" id="btnEmailPropostaSend" class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-bold hover:bg-blue-700 shadow-sm"><i class="fa-solid fa-paper-plane mr-2"></i>Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalEmailErp" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center z-[110] backdrop-blur-sm sm:p-6 overflow-y-auto custom-scrollbar">
+        <div class="bg-white rounded-xl shadow-2xl border border-border w-full max-w-lg my-auto p-6 space-y-4">
+            <h3 class="text-lg font-bold text-textMain">E-mail interno (ERP — perda renovação)</h3>
+            <div>
+                <label class="text-xs font-bold text-textMain block mb-1">Destinatário (opcional)</label>
+                <input type="email" id="emailErpDestinatario" placeholder="caixa.interna@empresa.com.br" class="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-textMain block mb-1">Assunto:</label>
+                <input type="text" id="emailErpAssunto" class="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-textMain block mb-1">OBS:</label>
+                <textarea id="emailErpObs" rows="4" placeholder="Coloque alguma observação necessária" class="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-y"></textarea>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-textMuted block mb-1">Anexos (máx. 5)</label>
+                <div id="emailErpDrop" class="border-2 border-dashed border-border rounded-lg p-6 text-center text-xs text-textMuted cursor-pointer hover:bg-slate-50 transition">
+                    Clique para escolher ou arraste os arquivos (Máx 5 arquivos)
+                </div>
+                <input type="file" id="emailErpFiles" class="hidden" multiple accept="*/*">
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 justify-end pt-2">
+                <button type="button" id="btnEmailErpCancel" class="px-4 py-2 rounded-lg border border-border text-sm font-bold text-textMuted hover:bg-slate-50">Cancelar</button>
+                <button type="button" id="btnEmailErpSkip" class="px-4 py-2 rounded-lg border border-amber-200 text-amber-800 text-sm font-bold hover:bg-amber-50">Pular envio</button>
+                <button type="button" id="btnEmailErpSend" class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-bold hover:bg-blue-700 shadow-sm"><i class="fa-solid fa-paper-plane mr-2"></i>Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalMotivoPerda" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center z-[110] backdrop-blur-sm sm:p-6 overflow-y-auto custom-scrollbar">
+        <div class="bg-white rounded-xl shadow-2xl border border-border w-full max-w-lg my-auto p-6 space-y-4">
+            <h3 class="text-lg font-bold text-textMain">Motivo da perda</h3>
+            <div>
+                <label class="text-xs font-bold text-textMain block mb-1">Motivo padronizado <span class="text-red-600">*</span></label>
+                <select id="motivoPerdaSelect" class="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                    <option value="">Selecione um motivo...</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-textMain block mb-1">Observação (opcional)</label>
+                <textarea id="motivoPerdaText" rows="4" placeholder="Explique brevemente por que perdemos esse negócio..." class="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-y"></textarea>
+            </div>
+            <div class="flex gap-2 justify-end pt-2">
+                <button type="button" id="btnMotivoPerdaCancel" class="px-4 py-2 rounded-lg border border-border text-sm font-bold text-textMuted hover:bg-slate-50">Cancelar</button>
+                <button type="button" id="btnMotivoPerdaOk" class="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-bold hover:bg-red-700">Confirmar perda</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalReagendamento" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center z-[110] backdrop-blur-sm sm:p-6 overflow-y-auto custom-scrollbar">
+        <div class="bg-white rounded-xl shadow-2xl border border-border w-full max-w-2xl my-auto p-6 space-y-4">
+            <div id="reagResumoHtml" class="text-sm text-textMain space-y-1 border border-border rounded-lg p-4 bg-slate-50 max-h-48 overflow-y-auto custom-scrollbar"></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-bold text-textMain block mb-1">Nova vigência:</label>
+                    <input type="date" id="reagVigencia" class="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-textMain block mb-1">Novo retorno:</label>
+                    <input type="date" id="reagRetorno" class="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 justify-end pt-2">
+                <button type="button" id="btnReagNaoCriar" class="px-4 py-2 rounded-lg border-2 border-red-200 text-red-700 text-sm font-bold hover:bg-red-50">Não criar</button>
+                <button type="button" id="btnReagCriar" class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-bold hover:bg-blue-700">Criar oportunidade</button>
             </div>
         </div>
     </div>
@@ -1332,12 +1466,17 @@
             },
 
             switchSettingsTab: (tabName) => {
+                if (!app.isGerente) {
+                    Swal.fire('Acesso negado', 'Somente gerente pode acessar Configurações.', 'warning');
+                    return;
+                }
                 ui.currentSettingsTab = tabName;
                 const tabs = [
                     'funis', 
                     'ramos', 
                     'seguradoras', 
                     'origens', 
+                    'motivos_perda',
                     'integracoes',
                     'usuarios' // SPRINT 4
                 ];
@@ -1357,6 +1496,7 @@
 
                 if (tabName === 'funis') {
                     document.getElementById('settings-content-funis').classList.remove('hidden');
+                    window.app.refreshSettingsFunisPanel();
                 } else if (tabName === 'integracoes') {
                     document.getElementById('settings-content-integracoes').classList.remove('hidden');
                     
@@ -1376,7 +1516,8 @@
                     const titles = { 
                         'ramos': 'Adicionar Ramo de Seguro', 
                         'seguradoras': 'Adicionar Seguradora', 
-                        'origens': 'Adicionar Origem do Lead' 
+                        'origens': 'Adicionar Origem do Lead',
+                        'motivos_perda': 'Adicionar Motivo de Perda'
                     };
                     
                     document.getElementById('settings-generic-add-title').innerText = titles[tabName];
@@ -1465,6 +1606,10 @@
                     data = app.origens; 
                     tableName = 'origens'; 
                 }
+                if (ui.currentSettingsTab === 'motivos_perda') {
+                    data = app.motivosPerda;
+                    tableName = 'motivos_perda';
+                }
 
                 if (data.length === 0) {
                     listEl.innerHTML = `<div class="p-4 text-center text-textMuted bg-slate-50 border border-dashed rounded-lg">Nenhum item cadastrado.</div>`;
@@ -1475,11 +1620,71 @@
                     <div class="flex justify-between items-center bg-white border border-border p-3 rounded-lg shadow-sm">
                         <span class="font-bold text-textMain">${item.nome}</span>
                         <div>
-                            <button onclick="app.editConfigItem('${tableName}', ${item.id}, '${item.nome}')" class="text-slate-400 hover:text-primary transition mr-3"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="app.deleteConfigItem('${tableName}', ${item.id})" class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="app.editConfigItem('${tableName}', '${item.id}', '${item.nome}')" class="text-slate-400 hover:text-primary transition mr-3"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="app.deleteConfigItem('${tableName}', '${item.id}')" class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
                 `).join('');
+            },
+
+            getTipoFunilDealModalContext: () => {
+                const opId = document.getElementById('opId')?.value;
+                if (opId) {
+                    const o = app.oportunidades.find(x => String(x.id) === String(opId));
+                    if (o && o.funil_id != null) {
+                        return app.getTipoFunilForFunilId(o.funil_id);
+                    }
+                }
+                return app.getTipoFunilForFunilId(config.activePipeline);
+            },
+
+            applyProdutoTipoFromFunil: () => {
+                if (!ui.produtos.length) {
+                    return;
+                }
+                const tf = ui.getTipoFunilDealModalContext();
+                if (tf === 'novos') {
+                    ui.produtos[0].tipo = 'Novo';
+                } else if (tf === 'renovacao') {
+                    ui.produtos[0].tipo = 'Renovação';
+                } else if (tf === 'pos_venda') {
+                    ui.produtos[0].tipo = 'Novo';
+                }
+            },
+
+            fmtPctBR: (n) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(parseFloat(n) || 0),
+
+            buildPropostaAssuntoDefault: () => {
+                const p = ui.produtos[0] || {};
+                const nome = (document.getElementById('modal-header-nome')?.value || document.getElementById('opNome')?.value || '').trim();
+                const tipo = p.tipo || 'Novo';
+                const c = ui.fmtPctBR(p.comissao);
+                const a = ui.fmtPctBR(p.agenciamento);
+                const seguradora = (document.getElementById('opSeguradora')?.value || '').trim();
+                const parts = [nome, tipo, `${c}%`, `${a}%`, seguradora].filter(Boolean);
+                return parts.join(' - ');
+            },
+
+            buildErpAssuntoDefault: () => {
+                const p = ui.produtos[0] || {};
+                const nome = (document.getElementById('modal-header-nome')?.value || document.getElementById('opNome')?.value || '').trim();
+                const seguradora = (document.getElementById('opSeguradora')?.value || '').trim();
+                return `[ERP] Perda renovação — ${nome}${seguradora ? ' — ' + seguradora : ''}`;
+            },
+
+            buildReagendamentoResumoHtml: () => {
+                const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                const p = ui.produtos[0] || {};
+                const nome = esc((document.getElementById('modal-header-nome')?.value || document.getElementById('opNome')?.value || '-').trim());
+                const email = esc((document.getElementById('opEmail')?.value || '-').trim());
+                const doc = esc((document.getElementById('opDocumento')?.value || '-').trim());
+                const origem = esc((document.getElementById('opOrigem')?.value || '-').trim());
+                const ramo = esc(p.ramo || '-');
+                const tipo = esc(p.tipo || '-');
+                const seguradora = esc((document.getElementById('opSeguradora')?.value || '-').trim());
+                const premio = formatBRL(parseFloat(p.premio) || 0);
+                const com = ui.fmtPctBR(p.comissao);
+                return `<p><strong>Nome:</strong> ${nome}</p><p><strong>E-mail:</strong> ${email}</p><p><strong>CPF/CNPJ:</strong> ${doc}</p><p><strong>Origem:</strong> ${origem}</p><p><strong>Ramo:</strong> ${ramo}</p><p><strong>Novo?</strong> ${tipo}</p><p><strong>Seguradora:</strong> ${seguradora}</p><p><strong>Prêmio líquido:</strong> ${premio}</p><p><strong>Comissão (%):</strong> ${com}%</p>`;
             },
 
             addProduto: () => {
@@ -1547,8 +1752,10 @@
             },
             
             renderProdutos: () => {
+                ui.applyProdutoTipoFromFunil();
                 const container = document.getElementById('produtos-list');
                 const ramoOptionsHtml = app.ramos.map(r => `<option value="${r.nome}">${r.nome}</option>`).join('');
+                const tf = ui.getTipoFunilDealModalContext();
 
                 const produtosParaRenderizar = ui.produtos.slice(0, 1);
 
@@ -1564,6 +1771,27 @@
                         selectRamoFormatado = selectRamoFormatado.replace(`value="${p.ramo}"`, `value="${p.ramo}" selected`);
                     }
 
+                    let tipoBlock = '';
+                    if (tf === 'novos') {
+                        tipoBlock = `
+                        <div class="w-1/5">
+                            <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Tipo</label>
+                            <div class="text-xs font-semibold text-textMain py-2 px-2 border border-dashed border-border rounded bg-slate-50">Novo</div>
+                        </div>`;
+                    } else if (tf === 'renovacao') {
+                        tipoBlock = `
+                        <div class="w-1/5">
+                            <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Tipo</label>
+                            <div class="text-xs font-semibold text-textMain py-2 px-2 border border-dashed border-border rounded bg-slate-50">Renovação</div>
+                        </div>`;
+                    } else {
+                        tipoBlock = `
+                        <div class="w-1/5">
+                            <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Tipo</label>
+                            <div class="text-xs font-semibold text-textMuted py-2 px-2 border border-dashed border-border rounded bg-slate-50">Pós-venda</div>
+                        </div>`;
+                    }
+
                     return `
                     <div class="flex gap-3 items-center bg-white p-3 rounded-lg border border-border relative shadow-sm">
                         <div class="w-1/4">
@@ -1572,13 +1800,7 @@
                                 ${selectRamoFormatado}
                             </select>
                         </div>
-                        <div class="w-1/5">
-                            <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Tipo</label>
-                            <select onchange="ui.updateProduto(${index}, 'tipo', this.value)" class="w-full border border-border rounded px-2 py-1.5 text-xs outline-none focus:border-primary">
-                                <option value="Novo" ${p.tipo==='Novo'?'selected':''}>Novo</option>
-                                <option value="Renovação" ${p.tipo==='Renovação'?'selected':''}>Renovação</option>
-                            </select>
-                        </div>
+                        ${tipoBlock}
                         <div class="w-24">
                             <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Prêmio (R$)</label>
                             <input type="number" step="0.01" placeholder="Prêmio Liq" value="${p.premio||''}" oninput="ui.updateProduto(${index}, 'premio', this.value)" class="w-full border border-border rounded px-2 py-1.5 text-xs outline-none focus:border-primary text-center">
@@ -1726,6 +1948,10 @@
             },
 
             openSettingsModal: () => { 
+                if (!app.isGerente) {
+                    Swal.fire('Acesso negado', 'Somente gerente pode acessar Configurações.', 'warning');
+                    return;
+                }
                 const modal = document.getElementById('settingsModal'); 
                 modal.classList.remove('hidden'); 
                 
@@ -1735,11 +1961,6 @@
                 }, 10);
                 
                 ui.switchSettingsTab('funis');
-                
-                const activePipeName = app.funis.find(p => p.id == config.activePipeline)?.nome || 'Funil Padrão';
-                document.getElementById('manager-current-pipe-name').innerText = `Etapas de "${activePipeName}"`;
-                
-                window.app.renderManagerStages(); 
             },
             
             closeSettingsModal: () => { 
@@ -1979,7 +2200,7 @@
             buildColumnHTML: (nome, cor, group, isFixed = false) => {
                 const col = document.createElement('div');
                 const fixedStyle = isFixed ? 'border-l-2 border-dashed border-slate-300 pl-4' : '';
-                col.className = `flex flex-col kanban-col max-h-full shrink-0 transition-all ${fixedStyle}`;
+                col.className = `flex flex-col kanban-col h-full min-h-0 max-h-full shrink-0 transition-all ${fixedStyle}`;
                 
                 col.innerHTML = `
                     <div class="col-header-full flex justify-between mb-4 px-2 items-center shrink-0 w-full">
@@ -1992,12 +2213,12 @@
                             <i class="fa-solid fa-compress-alt text-[10px]"></i>
                         </button>
                     </div>
-                    <div class="col-header-collapsed hidden flex-col items-center py-4 h-full cursor-pointer hover:bg-slate-200/50 rounded-xl transition w-full" onclick="window.ui.toggleColumn(this)">
-                        <span class="bg-primary text-white px-2 py-1 rounded-md text-[10px] font-bold count-collapsed shadow-sm mb-4">0</span>
-                        <span class="w-3 h-3 rounded-full ${cor} mb-4 shadow-sm"></span>
-                        <h3 class="vertical-text text-xs uppercase font-bold text-textMuted flex-1">${nome}</h3>
+                    <div class="col-header-collapsed hidden flex-col items-center py-2 h-full cursor-pointer hover:bg-slate-200/50 rounded-xl transition w-full" onclick="window.ui.toggleColumn(this)">
+                        <span class="bg-primary text-white px-1.5 py-1 rounded-md text-[10px] font-bold count-collapsed shadow-sm mb-3">0</span>
+                        <span class="w-3 h-3 rounded-full ${cor} mb-3 shadow-sm"></span>
+                        <h3 class="vertical-text text-xs uppercase font-bold text-textMuted flex-1 w-full flex items-center justify-center text-center">${nome}</h3>
                     </div>
-                    <div class="kanban-list flex-1 space-y-3 overflow-y-auto pb-10 custom-scrollbar w-full" data-stage="${nome}"></div>
+                    <div class="kanban-list flex-1 min-h-[45vh] space-y-3 overflow-y-auto pb-10 custom-scrollbar w-full" data-stage="${nome}"></div>
                 `;
                 return col;
             },
@@ -2030,13 +2251,28 @@
                 const val = ui.oportunidadeReceitaEstimada(d);
 
                 let rightBadge = '';
-                if (d.status === 'aberto' && d.retorno) {
-                    const retTxt = formatKanbanRetorno(d.retorno);
-                    rightBadge = `
-                        <span class="text-[8px] font-bold uppercase px-2 py-0.5 rounded-md bg-orange-100 text-orange-800 flex items-center gap-1 max-w-[55%] shrink-0 truncate" title="TAREFA: RETORNO ${retTxt}">
-                            <i class="fa-regular fa-calendar-days shrink-0"></i>
-                            <span class="truncate">TAREFA: RETORNO ${retTxt}</span>
-                        </span>`;
+                if (d.status === 'aberto') {
+                    const dateRows = [];
+                    if (d.retorno) {
+                        dateRows.push({ label: 'TAREFA: RETORNO', value: formatKanbanRetorno(d.retorno) });
+                    }
+                    if (d.vigencia) {
+                        dateRows.push({ label: 'VIGÊNCIA', value: formatKanbanRetorno(d.vigencia) });
+                    }
+                    if (dateRows.length > 0) {
+                        const titleTxt = dateRows.map(r => `${r.label} ${r.value}`).join(' | ').replace(/"/g, '&quot;');
+                        const dateRowsHtml = dateRows.map((r, idx) => `
+                            <span class="flex items-center gap-1 min-w-0 ${idx > 0 ? 'mt-0.5' : ''}">
+                                <i class="fa-regular fa-calendar-days shrink-0"></i>
+                                <span class="uppercase shrink-0">${r.label}</span>
+                                <span class="truncate">${r.value}</span>
+                            </span>
+                        `).join('');
+                        rightBadge = `
+                            <span class="text-[8px] font-bold px-2 py-1 rounded-md bg-orange-100 text-orange-800 flex flex-col items-start max-w-[55%] shrink-0 leading-tight overflow-hidden" title="${titleTxt}">
+                                ${dateRowsHtml}
+                            </span>`;
+                    }
                 }
 
                 const vendedorNome = (d.nome_corretor || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -2231,8 +2467,12 @@
                 }).join('');
             },
 
-            openPipelineManager: () => {
+            openPipelineManager: async () => {
                 const modal = document.getElementById('pipelineManagerModal');
+                if (!modal) {
+                    ui.openSettingsModal();
+                    return;
+                }
                 modal.classList.remove('hidden');
                 
                 setTimeout(() => {
@@ -2240,6 +2480,8 @@
                     modal.querySelector('.bg-surface').classList.remove('scale-95');
                 }, 10);
                 
+                app.settingsEditingFunilId = config.activePipeline;
+                await app.loadSettingsFunilEtapas(config.activePipeline);
                 const activePipeName = app.funis.find(p => p.id == config.activePipeline)?.nome || 'Funil Padrão';
                 
                 const managerTitle = document.getElementById('manager-current-pipe-name');
@@ -2247,7 +2489,6 @@
                     managerTitle.innerText = `Etapas de "${activePipeName}"`;
                 }
                 
-                window.app.renderManagerStages();
             },
             
             closePipelineManager: () => {
@@ -2299,6 +2540,7 @@
             ramos: [], 
             seguradoras: [], 
             origens: [],
+            motivosPerda: [],
             isSelectingContatoModalRole: null,
             contatoBuscaTimeout: null,
             responsavelBuscaTimeout: null,
@@ -2306,6 +2548,132 @@
             currentSortCol: 'criado_em',
             currentSortAsc: false,
             isGerente: false,
+
+            settingsEditingFunilId: null,
+            settingsEtapas: [],
+
+            normalizeTipoFunil: (v) => {
+                const t = String(v || 'novos').toLowerCase();
+                if (t === 'renovacao' || t === 'renovação') return 'renovacao';
+                if (t === 'pos_venda' || t === 'pos-venda') return 'pos_venda';
+                return 'novos';
+            },
+
+            getTipoFunilForFunilId: (fid) => {
+                const f = app.funis.find(p => String(p.id) === String(fid));
+                return app.normalizeTipoFunil(f?.tipo_funil);
+            },
+
+            getTipoFunilAtivo: () => app.getTipoFunilForFunilId(config.activePipeline),
+
+            loadSettingsFunilEtapas: async (funilId) => {
+                if (!funilId) {
+                    app.settingsEtapas = [];
+                    window.app.renderManagerStages();
+                    return;
+                }
+                try {
+                    const { data, error } = await app.sb.from('etapas_funil').select('*').eq('funil_id', funilId).order('ordem');
+                    if (error) {
+                        throw error;
+                    }
+                    app.settingsEtapas = data || [];
+                } catch (e) {
+                    console.error(e);
+                    app.settingsEtapas = [];
+                }
+                window.app.renderManagerStages();
+            },
+
+            renderSettingsFunisList: () => {
+                const box = document.getElementById('settings-funis-list');
+                if (!box) {
+                    return;
+                }
+                const cur = app.settingsEditingFunilId;
+                if (!app.funis.length) {
+                    box.innerHTML = '<p class=\"text-xs text-textMuted\">Nenhum funil cadastrado.</p>';
+                    return;
+                }
+                box.innerHTML = app.funis.map(p => {
+                    const sel = String(p.id) === String(cur);
+                    const tf = app.normalizeTipoFunil(p.tipo_funil);
+                    const tfLabel = tf === 'renovacao' ? 'Renovação' : (tf === 'pos_venda' ? 'Pós-venda' : 'Novos');
+                    return `
+                        <button type=\"button\" onclick=\"app.selectFunilForSettings(${p.id})\"
+                            class=\"w-full text-left px-3 py-2.5 rounded-lg border text-xs transition ${sel ? 'border-primary bg-primary/5 font-bold text-primary' : 'border-border bg-white hover:bg-slate-50 text-textMain'}\">
+                            <span class=\"block truncate\">${p.nome}</span>
+                            <span class=\"block text-[10px] text-textMuted font-medium mt-0.5\">${tfLabel}</span>
+                        </button>`;
+                }).join('');
+            },
+
+            syncSettingsFunilMetaForm: () => {
+                const id = app.settingsEditingFunilId;
+                const f = app.funis.find(p => String(p.id) === String(id));
+                const nomeEl = document.getElementById('settingsFunilNome');
+                const tipoEl = document.getElementById('settingsFunilTipo');
+                if (nomeEl) {
+                    nomeEl.value = f ? (f.nome || '') : '';
+                }
+                if (tipoEl) {
+                    const tf = app.normalizeTipoFunil(f?.tipo_funil);
+                    tipoEl.value = tf === 'pos_venda' ? 'pos_venda' : (tf === 'renovacao' ? 'renovacao' : 'novos');
+                }
+            },
+
+            selectFunilForSettings: async (id) => {
+                app.settingsEditingFunilId = id;
+                await app.loadSettingsFunilEtapas(id);
+                app.renderSettingsFunisList();
+                app.syncSettingsFunilMetaForm();
+                const f = app.funis.find(p => String(p.id) === String(id));
+                const lbl = document.getElementById('manager-current-pipe-name');
+                if (lbl) {
+                    lbl.innerText = `Etapas de "${f?.nome || ''}"`;
+                }
+            },
+
+            refreshSettingsFunisPanel: async () => {
+                await app.loadPipelines();
+                if (!app.settingsEditingFunilId && config.activePipeline) {
+                    app.settingsEditingFunilId = config.activePipeline;
+                }
+                if (app.settingsEditingFunilId) {
+                    await app.loadSettingsFunilEtapas(app.settingsEditingFunilId);
+                }
+                app.renderSettingsFunisList();
+                app.syncSettingsFunilMetaForm();
+                const f = app.funis.find(p => String(p.id) === String(app.settingsEditingFunilId));
+                const lbl = document.getElementById('manager-current-pipe-name');
+                if (lbl && f) {
+                    lbl.innerText = `Etapas de "${f.nome}"`;
+                }
+            },
+
+            saveFunilMeta: async () => {
+                const id = app.settingsEditingFunilId;
+                if (!id) {
+                    return Swal.fire('Aviso', 'Selecione um funil.', 'warning');
+                }
+                const nome = document.getElementById('settingsFunilNome').value.trim();
+                const tipo_funil = app.normalizeTipoFunil(document.getElementById('settingsFunilTipo').value);
+                if (!nome) {
+                    return Swal.fire('Aviso', 'Digite o nome do funil.', 'warning');
+                }
+                try {
+                    const { error } = await app.sb.from('funis').update({ nome, tipo_funil }).eq('id', id);
+                    if (error) {
+                        throw error;
+                    }
+                    await app.loadPipelines();
+                    app.renderSettingsFunisList();
+                    app.syncSettingsFunilMetaForm();
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Funil atualizado', showConfirmButton: false, timer: 2000 });
+                } catch (e) {
+                    Swal.fire('Erro', e.message, 'error');
+                }
+            },
 
             getUltimaEtapaNome: () => {
                 if (!app.etapas || app.etapas.length === 0) {
@@ -2451,6 +2819,10 @@
                     const tabUsers = document.getElementById('settings-tab-usuarios');
                     if (tabUsers && !isGerente) {
                         tabUsers.classList.add('hidden');
+                    }
+                    const sidebarSettingsBtn = document.getElementById('sidebar-settings-btn');
+                    if (sidebarSettingsBtn && !isGerente) {
+                        sidebarSettingsBtn.classList.add('hidden');
                     }
 
                     app.isGerente = isGerente;
@@ -2872,15 +3244,18 @@
                     const resRamos = await app.sb.from('ramos').select('*').order('nome');
                     const resSeguradoras = await app.sb.from('seguradoras').select('*').order('nome');
                     const resOrigens = await app.sb.from('origens').select('*').order('nome');
+                    const resMotivosPerda = await app.sb.from('motivos_perda').select('*').eq('ativo', true).order('nome');
 
                     app.ramos = resRamos.data || [];
                     app.seguradoras = resSeguradoras.data || [];
                     app.origens = resOrigens.data || [];
+                    app.motivosPerda = resMotivosPerda.data || [];
                 } catch(e) {
                     console.error("Aviso: Tabelas de configuração customizadas não carregadas.", e);
                     app.ramos = [];
                     app.seguradoras = [];
                     app.origens = [];
+                    app.motivosPerda = [];
                 }
                 ui.populateDropdowns();
             },
@@ -3059,6 +3434,11 @@
                     
                     if (!config.activePipeline && app.funis.length > 0) {
                         config.activePipeline = app.funis[0].id;
+                        try {
+                            localStorage.setItem('nexus_active_pipe', String(config.activePipeline));
+                        } catch (e) {
+                            /* ignore */
+                        }
                     }
                     
                     const html = app.funis.map(p => {
@@ -3081,7 +3461,12 @@
             },
 
             switchPipeline: (id) => { 
-                config.activePipeline = id; 
+                config.activePipeline = id;
+                try {
+                    localStorage.setItem('nexus_active_pipe', String(id));
+                } catch (e) {
+                    /* ignore */
+                }
                 app.loadPipelines(); 
                 app.loadData(); 
                 
@@ -3249,6 +3634,13 @@
                 app.oportunidades.sort((a, b) => {
                     let valA = a[col] || '';
                     let valB = b[col] || '';
+
+                    if (col === 'ramo') {
+                        const ramoA = String(ui.oportunidadeRamoExibicao(a) || '');
+                        const ramoB = String(ui.oportunidadeRamoExibicao(b) || '');
+                        const cmp = ramoA.localeCompare(ramoB, 'pt-BR');
+                        return app.currentSortAsc ? cmp : -cmp;
+                    }
                     
                     if (col === 'etapa_nome') {
                         const etapaA = app.etapas.find(e => e.nome === a.etapa_nome);
@@ -3305,8 +3697,15 @@
                 });
                 
                 let pendentesCount = 0;
-                
-                app.oportunidades.forEach(d => {
+
+                const oportunidadesOrdenadas = [...app.oportunidades].sort((a, b) => {
+                    const dataA = a.retorno ? new Date(`${a.retorno}T12:00:00`).getTime() : Number.POSITIVE_INFINITY;
+                    const dataB = b.retorno ? new Date(`${b.retorno}T12:00:00`).getTime() : Number.POSITIVE_INFINITY;
+                    if (dataA !== dataB) return dataA - dataB;
+                    return String(a.nome_segurado || '').localeCompare(String(b.nome_segurado || ''), 'pt-BR');
+                });
+
+                oportunidadesOrdenadas.forEach(d => {
                     if (d.excluido) {
                         return;
                     }
@@ -3689,6 +4088,49 @@
                 }
             },
 
+            insertReagendamentoOportunidade: async (opOrigem, reag) => {
+                const p0 = ui.produtos[0] || {};
+                const contatoId = opOrigem.contato_id;
+                const responsavelIdFinal = opOrigem.responsavel_id || null;
+                const { data: etapasRows } = await app.sb.from('etapas_funil').select('nome').eq('funil_id', opOrigem.funil_id).order('ordem').limit(1);
+                const primeiraEtapa = etapasRows?.[0]?.nome || 'Nova';
+                const defaultRamo = app.ramos.length > 0 ? app.ramos[0].nome : 'Automóvel';
+                const premioLiq = parseFloat(p0.premio) || parseFloat(opOrigem.premio_liquido) || 0;
+                const comissPct = parseFloat(p0.comissao) || parseFloat(opOrigem.comissao_percentual) || 0;
+                const agencPct = parseFloat(p0.agenciamento) || parseFloat(opOrigem.agenciamento_percentual) || 0;
+
+                const deal = {
+                    contato_id: contatoId,
+                    responsavel_id: responsavelIdFinal,
+                    nome_segurado: opOrigem.nome_segurado,
+                    vigencia: reag.vigencia || null,
+                    retorno: reag.retorno || null,
+                    ativo: true,
+                    origem: opOrigem.origem,
+                    seguradora: opOrigem.seguradora || '',
+                    ramo_seguro: p0.ramo || opOrigem.ramo_seguro || defaultRamo,
+                    tipo_seguro: p0.tipo || opOrigem.tipo_seguro || 'Novo',
+                    premio_liquido: premioLiq,
+                    comissao_percentual: comissPct,
+                    agenciamento_percentual: agencPct,
+                    gerente_id: opOrigem.gerente_id || null,
+                    indicador: opOrigem.indicador || null,
+                    corretor_id: opOrigem.corretor_id,
+                    etapa_nome: primeiraEtapa,
+                    status: 'aberto',
+                    funil_id: opOrigem.funil_id
+                };
+                const { data: ins, error } = await app.sb.from('oportunidades').insert([deal]).select('id');
+                if (error) {
+                    throw error;
+                }
+                const nid = ins?.[0]?.id;
+                if (nid) {
+                    await app.logTimeline(nid, 'Criação', 'Oportunidade reagendada após perda.');
+                }
+                return nid || null;
+            },
+
             marcarGanho: async () => {
                 const opId = document.getElementById('opId').value;
                 const contatoId = document.getElementById('contatoId').value;
@@ -3699,11 +4141,24 @@
                     return;
                 }
 
+                const tf = ui.getTipoFunilDealModalContext();
+                if (tf === 'pos_venda') {
+                    return Swal.fire('Pós-venda', 'O fluxo de fechamento para funil de pós-venda será disponibilizado na fase 2.', 'info');
+                }
+
                 const btn = document.getElementById('btnGanharDeal');
+                const prevBtn = btn.innerHTML;
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                 btn.disabled = true;
 
                 try {
+                    const emailStep = await closeFlowModals.openEmailProposta();
+                    if (emailStep.cancelled) {
+                        btn.innerHTML = prevBtn;
+                        btn.disabled = false;
+                        return;
+                    }
+
                     const opAtual = app.oportunidades.find(o => o.id == opId);
                     const ultima = app.getUltimaEtapaNome();
                     const etapaGanho = ultima || (opAtual && opAtual.etapa_nome) || (app.etapas[0] && app.etapas[0].nome) || 'Nova';
@@ -3716,28 +4171,37 @@
                     await app.sb.from('contatos').update({ is_segurado: true }).eq('id', contatoId);
                     await app.logTimeline(opId, 'Movimentação', `Negócio GANHO com sucesso!`);
                     
+                    const { data: opRowArr } = await app.sb.from('oportunidades').select('*').eq('id', opId);
+                    const opRow = opRowArr?.[0];
+                    const { data: contArr } = await app.sb.from('contatos').select('*').eq('id', contatoId);
+                    const cData = contArr?.[0];
+
                     ui.closeDealModal();
-                    confetti({particleCount: 150, spread: 70, origin: {y: 0.6}, colors: ['#10B981', '#047857']});
+                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#10B981', '#047857'] });
                     
                     await app.loadContatos();
                     await app.loadData();
                     
-                    // SPRINT 4: Disparo do Webhook do N8N (Pós-Venda)
-                    const n8nGanhoUrl = localStorage.getItem('nexus_n8n_ganho');
-                    if (n8nGanhoUrl) {
-                        const opData = app.oportunidades.find(o => o.id == opId);
-                        const cData = app.contatos.find(c => c.id == contatoId);
-                        
-                        fetch(n8nGanhoUrl, {
+                    const n8nUrl = localStorage.getItem('nexus_n8n_ganho');
+                    if (n8nUrl) {
+                        fetch(n8nUrl, {
                             method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ oportunidade: opData, contato: cData })
-                        }).catch(e => console.error("Webhook N8N Ganho falhou", e));
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                event: 'fechamento',
+                                outcome: 'ganho',
+                                tipo_funil: tf,
+                                fila: { emailProposta: emailStep.email },
+                                oportunidade: opRow,
+                                contato: cData
+                            })
+                        }).catch(e => console.error('Webhook N8N falhou', e));
                     }
                     
                 } catch(e) {
                     Swal.fire('Erro', e.message, 'error');
-                    btn.innerHTML = '<i class="fa-solid fa-trophy mr-2"></i>Ganho';
+                } finally {
+                    btn.innerHTML = prevBtn;
                     btn.disabled = false;
                 }
             },
@@ -3751,43 +4215,89 @@
                     return;
                 }
 
-                const { value: motivo } = await Swal.fire({
-                    title: 'Motivo da Perda',
-                    input: 'textarea',
-                    inputPlaceholder: 'Explique brevemente por que perdemos esse negócio...',
-                    showCancelButton: true,
-                    confirmButtonText: 'Confirmar Perda',
-                    cancelButtonText: 'Cancelar',
-                    confirmButtonColor: '#DC2626',
-                    inputValidator: (value) => {
-                        if (!value) {
-                            return 'Você precisa informar o motivo!';
-                        }
-                    }
-                });
+                const tf = ui.getTipoFunilDealModalContext();
+                if (tf === 'pos_venda') {
+                    return Swal.fire('Pós-venda', 'O fluxo de fechamento para funil de pós-venda será disponibilizado na fase 2.', 'info');
+                }
 
-                if (motivo) {
-                    const btn = document.getElementById('btnPerderDeal');
+                const btn = document.getElementById('btnPerderDeal');
+                const prevHtml = btn.innerHTML;
+
+                try {
+                    const motivoStep = await closeFlowModals.openMotivoPerda();
+                    if (motivoStep.cancelled) {
+                        return;
+                    }
+
+                    let emailErpPayload = null;
+                    if (tf === 'renovacao') {
+                        const erp = await closeFlowModals.openEmailErp();
+                        if (erp.cancelled) {
+                            return;
+                        }
+                        emailErpPayload = erp.email;
+                    }
+
+                    const motivoResumo = motivoStep.observacao
+                        ? `${motivoStep.nome}: ${motivoStep.observacao}`
+                        : motivoStep.nome;
+                    const vigenciaBaseOportunidade = (document.getElementById('opVigencia').value || '').trim() || opEx?.vigencia || null;
+                    const reag = await closeFlowModals.openReagendamento(motivoResumo, vigenciaBaseOportunidade);
+                    
                     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                     btn.disabled = true;
 
-                    try {
-                        await app.sb.from('oportunidades').update({
-                            status: 'perdido',
-                            motivo_perda: motivo,
-                            data_fechamento: new Date().toISOString()
-                        }).eq('id', opId);
-                        
-                        await app.logTimeline(opId, 'Movimentação', `Negócio PERDIDO. Motivo: ${motivo}`);
-                        
-                        ui.closeDealModal();
-                        await app.loadData();
-                        Swal.fire({toast: true, position: 'top-end', icon: 'info', title: 'Negócio arquivado como perdido.', showConfirmButton: false, timer: 2000});
-                    } catch(e) {
-                        Swal.fire('Erro', e.message, 'error');
-                        btn.innerHTML = '<i class="fa-solid fa-thumbs-down mr-2"></i>Perdido';
-                        btn.disabled = false;
+                    await app.sb.from('oportunidades').update({
+                        status: 'perdido',
+                        motivo_perda_id: motivoStep.id,
+                        motivo_perda: motivoStep.observacao,
+                        data_fechamento: new Date().toISOString()
+                    }).eq('id', opId);
+                    
+                    await app.logTimeline(opId, 'Movimentação', `Negócio PERDIDO. Motivo: ${motivoResumo}`);
+
+                    let novaOportunidadeId = null;
+                    if (reag.criar) {
+                        novaOportunidadeId = await app.insertReagendamentoOportunidade(opEx, reag);
                     }
+
+                    const { data: opRowArr } = await app.sb.from('oportunidades').select('*').eq('id', opId);
+                    const opRow = opRowArr?.[0];
+                    const cid = opEx.contato_id;
+                    const { data: contArr } = await app.sb.from('contatos').select('*').eq('id', cid);
+                    const cData = contArr?.[0];
+
+                    ui.closeDealModal();
+                    await app.loadData();
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Negócio arquivado como perdido.', showConfirmButton: false, timer: 2000 });
+
+                    const n8nUrl = localStorage.getItem('nexus_n8n_ganho');
+                    if (n8nUrl) {
+                        fetch(n8nUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                event: 'fechamento',
+                                outcome: 'perdido',
+                                tipo_funil: tf,
+                                fila: {
+                                    motivoId: motivoStep.id,
+                                    motivoNome: motivoStep.nome,
+                                    motivoObservacao: motivoStep.observacao,
+                                    emailErp: emailErpPayload,
+                                    reagendamento: reag
+                                },
+                                oportunidade: opRow,
+                                contato: cData,
+                                nova_oportunidade_id: novaOportunidadeId
+                            })
+                        }).catch(e => console.error('Webhook N8N falhou', e));
+                    }
+                } catch(e) {
+                    Swal.fire('Erro', e.message, 'error');
+                } finally {
+                    btn.innerHTML = prevHtml;
+                    btn.disabled = false;
                 }
             },
 
@@ -4138,13 +4648,16 @@
                 }
                 
                 try {
-                    const {data, error} = await app.sb.from('funis').insert([{nome}]).select();
+                    const {data, error} = await app.sb.from('funis').insert([{ nome, tipo_funil: 'novos' }]).select();
                     if (error) {
                         throw error;
                     }
                     
                     document.getElementById('newPipeName').value = '';
-                    setTimeout(() => app.switchPipeline(data[0].id), 1500);
+                    await app.loadPipelines();
+                    await app.selectFunilForSettings(data[0].id);
+                    ui.openSettingsModal();
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Funil criado. Edite etapas abaixo.', showConfirmButton: false, timer: 2500 });
                 } catch(e) {
                     Swal.fire('Erro', e.message, 'error');
                 }
@@ -4157,10 +4670,14 @@
                     return Swal.fire('Atenção', 'Digite o nome da etapa', 'warning');
                 }
                 
+                const fid = app.settingsEditingFunilId || config.activePipeline;
                 try {
-                    await app.sb.from('etapas_funil').insert([{ funil_id: config.activePipeline, nome, cor, ordem: app.etapas.length + 1 }]);
+                    await app.sb.from('etapas_funil').insert([{ funil_id: fid, nome, cor, ordem: (app.settingsEtapas || []).length + 1 }]);
                     document.getElementById('newStageName').value = '';
-                    await app.loadData();
+                    await app.loadSettingsFunilEtapas(fid);
+                    if (String(fid) === String(config.activePipeline)) {
+                        await app.loadData();
+                    }
                     window.ui.openSettingsModal();
                 } catch(e) {
                     Swal.fire('Erro', e.message, 'error');
@@ -4193,11 +4710,15 @@
                     try {
                         await app.sb.from('etapas_funil').update({ nome: v.n, cor: v.c }).eq('id', id);
                         
+                        const fid = app.settingsEditingFunilId || config.activePipeline;
                         if (oldName !== v.n) {
-                            await app.sb.from('oportunidades').update({ etapa_nome: v.n }).eq('etapa_nome', oldName).eq('funil_id', config.activePipeline);
+                            await app.sb.from('oportunidades').update({ etapa_nome: v.n }).eq('etapa_nome', oldName).eq('funil_id', fid);
                         }
                         
-                        await app.loadData();
+                        await app.loadSettingsFunilEtapas(fid);
+                        if (String(fid) === String(config.activePipeline)) {
+                            await app.loadData();
+                        }
                         window.ui.openSettingsModal();
                     } catch(e) {
                         Swal.fire('Erro', e.message, 'error');
@@ -4217,7 +4738,11 @@
                     for (const o of u) {
                         await app.sb.from('etapas_funil').update({ ordem: o.ordem }).eq('id', o.id);
                     }
-                    await app.loadData();
+                    const fid = app.settingsEditingFunilId || config.activePipeline;
+                    await app.loadSettingsFunilEtapas(fid);
+                    if (String(fid) === String(config.activePipeline)) {
+                        await app.loadData();
+                    }
                 } catch(e) {
                     console.error("Ordem error", e);
                 }
@@ -4226,8 +4751,12 @@
             deleteStage: async (id) => {
                 if (confirm('Excluir esta etapa do funil? Oportunidades aqui ficarão sem coluna visível.')) {
                     try {
+                        const fid = app.settingsEditingFunilId || config.activePipeline;
                         await app.sb.from('etapas_funil').delete().eq('id', id);
-                        await app.loadData();
+                        await app.loadSettingsFunilEtapas(fid);
+                        if (String(fid) === String(config.activePipeline)) {
+                            await app.loadData();
+                        }
                         window.ui.openSettingsModal();
                     } catch(e) {
                         Swal.fire('Erro', e.message, 'error');
@@ -4237,11 +4766,15 @@
             
             renderManagerStages: () => {
                 const list = document.getElementById('stages-list-manager');
+                if (!list) {
+                    return;
+                }
+                const stages = app.settingsEtapas || [];
                 
-                if (app.etapas.length === 0) {
+                if (!stages.length) {
                     list.innerHTML = '<div class="p-6 text-center text-textMuted bg-slate-50 border border-dashed rounded-lg">Funil sem etapas configuradas.</div>';
                 } else {
-                    list.innerHTML = app.etapas.map(s => `
+                    list.innerHTML = stages.map(s => `
                         <div class="flex justify-between items-center bg-white border border-border p-3 mb-2 rounded-lg shadow-sm" data-id="${s.id}">
                             <div class="flex items-center gap-3">
                                 <div class="handle cursor-grab text-slate-300 hover:text-textMain transition px-1"><i class="fa-solid fa-grip-lines-vertical"></i></div>
@@ -4273,8 +4806,241 @@
             }
         };
 
+        const closeFlowModals = {
+            show(id, vis) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.toggle('hidden', !vis);
+                }
+            },
+
+            setupFileDrop(dropId, inputId) {
+                const drop = document.getElementById(dropId);
+                const inp = document.getElementById(inputId);
+                if (!drop || !inp) {
+                    return;
+                }
+                const labelHtml = 'Clique para escolher ou arraste os arquivos (Máx 5 arquivos)';
+                drop.onclick = () => inp.click();
+                drop.ondragover = (e) => { e.preventDefault(); drop.classList.add('bg-slate-100'); };
+                drop.ondragleave = () => drop.classList.remove('bg-slate-100');
+                drop.ondrop = (e) => {
+                    e.preventDefault();
+                    drop.classList.remove('bg-slate-100');
+                    const files = Array.from(e.dataTransfer.files || []).slice(0, 5);
+                    if (files.length) {
+                        const dt = new DataTransfer();
+                        files.forEach(f => dt.items.add(f));
+                        inp.files = dt.files;
+                        drop.innerHTML = `${files.length} arquivo(s) selecionado(s)`;
+                    }
+                };
+                inp.onchange = () => {
+                    const n = inp.files?.length || 0;
+                    drop.innerHTML = n ? `${n} arquivo(s) selecionado(s)` : labelHtml;
+                };
+            },
+
+            resetEmailModal(inpId, dropId) {
+                const inp = document.getElementById(inpId);
+                if (inp) {
+                    inp.value = '';
+                }
+                const drop = document.getElementById(dropId);
+                if (drop) {
+                    drop.innerHTML = 'Clique para escolher ou arraste os arquivos (Máx 5 arquivos)';
+                }
+            },
+
+            async filesToPayload(inpId) {
+                const inp = document.getElementById(inpId);
+                const files = Array.from(inp?.files || []).slice(0, 5);
+                const out = [];
+                for (const f of files) {
+                    const entry = await new Promise((resolve, reject) => {
+                        const fr = new FileReader();
+                        fr.onload = () => {
+                            const s = fr.result;
+                            const i = s.indexOf(',');
+                            resolve({ name: f.name, mime: f.type || 'application/octet-stream', base64: i >= 0 ? s.slice(i + 1) : s });
+                        };
+                        fr.onerror = () => reject(fr.error);
+                        fr.readAsDataURL(f);
+                    });
+                    out.push(entry);
+                }
+                return out;
+            },
+
+            openEmailProposta() {
+                return new Promise((resolve) => {
+                    closeFlowModals.resetEmailModal('emailPropostaFiles', 'emailPropostaDrop');
+                    const m = 'modalEmailProposta';
+                    const assunto = document.getElementById('emailPropostaAssunto');
+                    const obs = document.getElementById('emailPropostaObs');
+                    assunto.value = ui.buildPropostaAssuntoDefault();
+                    obs.value = '';
+                    const finish = (payload) => {
+                        document.getElementById('btnEmailPropostaCancel').onclick = null;
+                        document.getElementById('btnEmailPropostaSkip').onclick = null;
+                        document.getElementById('btnEmailPropostaSend').onclick = null;
+                        closeFlowModals.show(m, false);
+                        resolve(payload);
+                    };
+                    document.getElementById('btnEmailPropostaCancel').onclick = () => finish({ cancelled: true });
+                    document.getElementById('btnEmailPropostaSkip').onclick = () => finish({
+                        cancelled: false,
+                        email: { skipped: true, assunto: assunto.value.trim(), obs: obs.value.trim(), anexos: [] }
+                    });
+                    document.getElementById('btnEmailPropostaSend').onclick = async () => {
+                        const anexos = await closeFlowModals.filesToPayload('emailPropostaFiles');
+                        finish({
+                            cancelled: false,
+                            email: { skipped: false, assunto: assunto.value.trim(), obs: obs.value.trim(), anexos }
+                        });
+                    };
+                    closeFlowModals.show(m, true);
+                });
+            },
+
+            openEmailErp() {
+                return new Promise((resolve) => {
+                    closeFlowModals.resetEmailModal('emailErpFiles', 'emailErpDrop');
+                    const m = 'modalEmailErp';
+                    const dest = document.getElementById('emailErpDestinatario');
+                    const assunto = document.getElementById('emailErpAssunto');
+                    const obs = document.getElementById('emailErpObs');
+                    dest.value = '';
+                    assunto.value = ui.buildErpAssuntoDefault();
+                    obs.value = '';
+                    const finish = (payload) => {
+                        document.getElementById('btnEmailErpCancel').onclick = null;
+                        document.getElementById('btnEmailErpSkip').onclick = null;
+                        document.getElementById('btnEmailErpSend').onclick = null;
+                        closeFlowModals.show(m, false);
+                        resolve(payload);
+                    };
+                    document.getElementById('btnEmailErpCancel').onclick = () => finish({ cancelled: true });
+                    document.getElementById('btnEmailErpSkip').onclick = () => finish({
+                        cancelled: false,
+                        email: {
+                            skipped: true,
+                            destinatario: dest.value.trim(),
+                            assunto: assunto.value.trim(),
+                            obs: obs.value.trim(),
+                            anexos: []
+                        }
+                    });
+                    document.getElementById('btnEmailErpSend').onclick = async () => {
+                        const anexos = await closeFlowModals.filesToPayload('emailErpFiles');
+                        finish({
+                            cancelled: false,
+                            email: {
+                                skipped: false,
+                                destinatario: dest.value.trim(),
+                                assunto: assunto.value.trim(),
+                                obs: obs.value.trim(),
+                                anexos
+                            }
+                        });
+                    };
+                    closeFlowModals.show(m, true);
+                });
+            },
+
+            openMotivoPerda() {
+                return new Promise((resolve) => {
+                    const sel = document.getElementById('motivoPerdaSelect');
+                    const ta = document.getElementById('motivoPerdaText');
+                    const opts = ['<option value="">Selecione um motivo...</option>']
+                        .concat((app.motivosPerda || []).map(m => `<option value="${m.id}">${m.nome}</option>`));
+                    sel.innerHTML = opts.join('');
+                    sel.value = '';
+                    ta.value = '';
+                    const m = 'modalMotivoPerda';
+                    const finish = (payload) => {
+                        document.getElementById('btnMotivoPerdaCancel').onclick = null;
+                        document.getElementById('btnMotivoPerdaOk').onclick = null;
+                        closeFlowModals.show(m, false);
+                        resolve(payload);
+                    };
+                    document.getElementById('btnMotivoPerdaCancel').onclick = () => finish({ cancelled: true });
+                    document.getElementById('btnMotivoPerdaOk').onclick = () => {
+                        const selectedId = sel.value;
+                        if (!selectedId) {
+                            Swal.fire('Atenção', 'Selecione um motivo da perda para continuar.', 'warning');
+                            return;
+                        }
+                        const motivoObj = (app.motivosPerda || []).find(motivo => String(motivo.id) === String(selectedId));
+                        finish({
+                            cancelled: false,
+                            id: selectedId,
+                            nome: motivoObj?.nome || 'Motivo não identificado',
+                            observacao: ta.value.trim()
+                        });
+                    };
+                    closeFlowModals.show(m, true);
+                });
+            },
+
+            openReagendamento(motivoText, vigenciaBaseIso) {
+                return new Promise((resolve) => {
+                    const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                    const toDateInputValue = (date) => {
+                        const y = date.getFullYear();
+                        const m = String(date.getMonth() + 1).padStart(2, '0');
+                        const d = String(date.getDate()).padStart(2, '0');
+                        return `${y}-${m}-${d}`;
+                    };
+                    const parseVigenciaBase = (raw) => {
+                        if (raw == null || typeof raw !== 'string') return null;
+                        const t = raw.trim().split('T')[0];
+                        if (!t) return null;
+                        const parts = t.split('-');
+                        if (parts.length !== 3) return null;
+                        const y = parseInt(parts[0], 10);
+                        const mo = parseInt(parts[1], 10);
+                        const da = parseInt(parts[2], 10);
+                        if (Number.isNaN(y) || Number.isNaN(mo) || Number.isNaN(da)) return null;
+                        const dt = new Date(y, mo - 1, da);
+                        if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== da) return null;
+                        return dt;
+                    };
+                    let html = ui.buildReagendamentoResumoHtml();
+                    if (motivoText) {
+                        html += `<p class="mt-2"><strong>Motivo:</strong> ${esc(motivoText)}</p>`;
+                    }
+                    document.getElementById('reagResumoHtml').innerHTML = html;
+                    const baseDate = parseVigenciaBase(String(vigenciaBaseIso || '')) || new Date();
+                    const vigenciaDefaultDate = new Date(baseDate);
+                    vigenciaDefaultDate.setFullYear(vigenciaDefaultDate.getFullYear() + 1);
+                    const retornoDefaultDate = new Date(vigenciaDefaultDate);
+                    retornoDefaultDate.setDate(retornoDefaultDate.getDate() - 15);
+                    document.getElementById('reagVigencia').value = toDateInputValue(vigenciaDefaultDate);
+                    document.getElementById('reagRetorno').value = toDateInputValue(retornoDefaultDate);
+                    const m = 'modalReagendamento';
+                    const finish = (payload) => {
+                        document.getElementById('btnReagNaoCriar').onclick = null;
+                        document.getElementById('btnReagCriar').onclick = null;
+                        closeFlowModals.show(m, false);
+                        resolve(payload);
+                    };
+                    document.getElementById('btnReagNaoCriar').onclick = () => finish({ criar: false });
+                    document.getElementById('btnReagCriar').onclick = () => finish({
+                        criar: true,
+                        vigencia: document.getElementById('reagVigencia').value || null,
+                        retorno: document.getElementById('reagRetorno').value || null
+                    });
+                    closeFlowModals.show(m, true);
+                });
+            }
+        };
+
         // Inicia o app quando o DOM estiver pronto
         document.addEventListener('DOMContentLoaded', () => {
+            closeFlowModals.setupFileDrop('emailPropostaDrop', 'emailPropostaFiles');
+            closeFlowModals.setupFileDrop('emailErpDrop', 'emailErpFiles');
+
             ui.initSidebar();
             app.init();
 

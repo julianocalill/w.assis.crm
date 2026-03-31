@@ -460,3 +460,58 @@ CREATE POLICY "anexos_delete_authenticated" ON public.anexos
         AND (public.is_gerente() OR o.corretor_id = auth.uid())
     )
   );
+
+-- ==============================================================================
+-- STORAGE CONFIGURATION (LGPD Compliance)
+-- ==============================================================================
+-- Configure the arquivos_crm bucket manually here if you haven't via Dashboard.
+-- Requires `storage` schema access.
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('arquivos_crm', 'arquivos_crm', false)
+ON CONFLICT (id) DO UPDATE SET public = false;
+
+DROP POLICY IF EXISTS "Acesso Livre 14atd39_0" ON storage.objects;
+DROP POLICY IF EXISTS "Acesso Livre 14atd39_1" ON storage.objects;
+DROP POLICY IF EXISTS "Acesso Livre 14atd39_2" ON storage.objects;
+DROP POLICY IF EXISTS "Acesso Livre 14atd39_3" ON storage.objects;
+
+DROP POLICY IF EXISTS "arquivos_crm_select_authenticated" ON storage.objects;
+CREATE POLICY "arquivos_crm_select_authenticated" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (bucket_id = 'arquivos_crm');
+
+DROP POLICY IF EXISTS "arquivos_crm_insert_authenticated" ON storage.objects;
+CREATE POLICY "arquivos_crm_insert_authenticated" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'arquivos_crm');
+
+DROP POLICY IF EXISTS "arquivos_crm_update_authenticated" ON storage.objects;
+CREATE POLICY "arquivos_crm_update_authenticated" ON storage.objects
+  FOR UPDATE TO authenticated
+  USING (bucket_id = 'arquivos_crm')
+  WITH CHECK (bucket_id = 'arquivos_crm');
+
+DROP POLICY IF EXISTS "arquivos_crm_delete_authenticated" ON storage.objects;
+CREATE POLICY "arquivos_crm_delete_authenticated" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = 'arquivos_crm');
+
+-- Configure the avatares bucket (public for UI display)
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('avatares', 'avatares', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "avatares_public_read" ON storage.objects;
+CREATE POLICY "avatares_public_read" ON storage.objects
+  FOR SELECT TO public
+  USING (bucket_id = 'avatares');
+
+DROP POLICY IF EXISTS "avatares_insert_auth" ON storage.objects;
+CREATE POLICY "avatares_insert_auth" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'avatares');
+
+DROP POLICY IF EXISTS "avatares_update_auth" ON storage.objects;
+CREATE POLICY "avatares_update_auth" ON storage.objects
+  FOR UPDATE TO authenticated
+  USING (bucket_id = 'avatares');

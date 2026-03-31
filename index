@@ -260,6 +260,9 @@
                     Entrar no Sistema
                 </button>
             </form>
+            <div id="loginLoading" class="hidden text-center text-sm text-textMuted font-semibold py-6">
+                Carregando perfil...
+            </div>
         </div>
     </div>
 
@@ -272,16 +275,16 @@
         </div>
         
         <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto overflow-x-hidden">
-            <button type="button" onclick="app.navigate('dashboard')" id="nav-dashboard" title="Analytics" class="nav-item active flex items-center gap-3 w-full px-4 py-3 rounded-xl text-textMuted hover:bg-slate-100 transition">
-                <i class="fa-solid fa-chart-pie w-5 text-center shrink-0"></i><span class="nav-label whitespace-nowrap">Analytics</span>
-            </button>
-            
-            <button type="button" onclick="app.navigate('oportunidades')" id="nav-oportunidades" title="Oportunidades" class="nav-item flex items-center gap-3 w-full px-4 py-3 rounded-xl text-textMuted hover:bg-slate-100 transition">
+            <button type="button" onclick="app.navigate('oportunidades')" id="nav-oportunidades" title="Oportunidades" class="nav-item active flex items-center gap-3 w-full px-4 py-3 rounded-xl text-textMuted hover:bg-slate-100 transition">
                 <i class="fa-solid fa-handshake w-5 text-center shrink-0"></i><span class="nav-label whitespace-nowrap">Oportunidades</span>
             </button>
             
             <button type="button" onclick="app.navigate('contatos')" id="nav-contatos" title="Contatos" class="nav-item flex items-center gap-3 w-full px-4 py-3 rounded-xl text-textMuted hover:bg-slate-100 transition">
                 <i class="fa-regular fa-address-book w-5 text-center shrink-0"></i><span class="nav-label whitespace-nowrap">Contatos</span>
+            </button>
+
+            <button type="button" onclick="app.navigate('dashboard')" id="nav-dashboard" title="Analytics" class="nav-item flex items-center gap-3 w-full px-4 py-3 rounded-xl text-textMuted hover:bg-slate-100 transition">
+                <i class="fa-solid fa-chart-pie w-5 text-center shrink-0"></i><span class="nav-label whitespace-nowrap">Analytics</span>
             </button>
             
             <button type="button" onclick="app.navigate('segurados')" id="nav-segurados" title="Segurados ativos" class="nav-item flex items-center gap-3 w-full px-4 py-3 rounded-xl text-textMuted hover:bg-slate-100 transition">
@@ -303,9 +306,26 @@
     <main class="flex-1 flex flex-col h-full bg-bg relative min-w-0">
         
         <header class="h-20 bg-surface border-b border-border px-8 flex justify-between items-center z-10 shadow-sm shrink-0">
-            <div class="relative w-96 hidden md:block">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-textMuted"></i>
-                <input type="text" placeholder="Buscar no sistema..." class="w-full bg-slate-100 border border-transparent focus:border-border rounded-full py-2.5 pl-11 pr-4 text-sm outline-none transition focus:bg-white">
+            <div id="globalSearchWrap" class="relative w-96 hidden md:block">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-textMuted pointer-events-none z-[1]" aria-hidden="true"></i>
+                <input id="globalSearchInput" type="search" autocomplete="off"
+                    placeholder="Buscar no sistema..."
+                    aria-label="Buscar contatos e oportunidades"
+                    aria-expanded="false"
+                    aria-controls="globalSearchPanel"
+                    aria-autocomplete="list"
+                    class="w-full bg-slate-100 border border-transparent focus:border-border rounded-full py-2.5 pl-11 pr-4 text-sm outline-none transition focus:bg-white relative z-[1]">
+                <div id="globalSearchPanel" class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-border rounded-xl shadow-xl z-[100] max-h-[min(70vh,28rem)] overflow-y-auto hidden text-left" role="listbox" aria-label="Resultados da busca">
+                    <div id="globalSearchSummary" class="px-4 py-2.5 border-b border-border text-xs text-textMuted font-medium hidden"></div>
+                    <div class="px-3 py-2">
+                        <p class="text-[10px] font-bold text-textMuted uppercase tracking-wider mb-1.5">Oportunidades (este funil)</p>
+                        <div id="globalSearchOps" class="space-y-0.5"></div>
+                    </div>
+                    <div class="px-3 py-2 border-t border-border">
+                        <p class="text-[10px] font-bold text-textMuted uppercase tracking-wider mb-1.5">Contatos</p>
+                        <div id="globalSearchContatos" class="space-y-0.5"></div>
+                    </div>
+                </div>
             </div>
             
             <div class="flex items-center gap-6 ml-auto">
@@ -323,7 +343,7 @@
 
         <div class="flex-1 overflow-hidden relative">
             
-            <div id="view-dashboard" class="h-full overflow-y-auto p-8">
+            <div id="view-dashboard" class="h-full overflow-y-auto p-8 hidden">
                 <div class="flex justify-between items-end mb-8">
                     <div>
                         <h2 class="text-3xl font-extrabold text-textMain">Painel Executivo</h2>
@@ -400,7 +420,7 @@
                 </div>
             </div>
 
-            <div id="view-oportunidades" class="h-full flex flex-col hidden">
+            <div id="view-oportunidades" class="h-full flex flex-col">
                 
                 <div class="px-6 py-4 bg-surface border-b border-border shrink-0">
                     <div class="flex justify-between items-center mb-4">
@@ -426,7 +446,15 @@
                         </div>
                     </div>
                     
-                    <div class="bg-slate-50 p-3 rounded-lg border border-border flex flex-wrap gap-3 items-end shadow-inner">
+                    <div class="rounded-lg border border-border bg-slate-50 shadow-inner overflow-hidden">
+                        <div class="flex items-center justify-between gap-2 px-3 py-2 border-b border-border/70 bg-slate-100/90">
+                            <span class="text-[10px] font-bold text-textMuted uppercase tracking-wide">Filtros</span>
+                            <button type="button" id="btn-toggle-oportunidades-filtros" onclick="ui.toggleOportunidadesFiltros()" aria-controls="oportunidades-filtros-body" aria-expanded="true" class="text-textMuted hover:text-primary transition text-xs font-bold flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-white/90 border border-transparent hover:border-border">
+                                <i id="icon-oportunidades-filtros" class="fa-solid fa-chevron-up text-[10px]"></i>
+                                <span id="label-oportunidades-filtros">Recolher filtros</span>
+                            </button>
+                        </div>
+                        <div id="oportunidades-filtros-body" class="p-3 flex flex-wrap gap-3 items-end">
                         <div class="flex-1 min-w-[140px]">
                             <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Datas por</label>
                             <select id="filter-data-campo" class="w-full text-xs p-2 rounded border border-border outline-none focus:border-primary bg-white">
@@ -504,6 +532,7 @@
                         <button onclick="app.loadData()" class="bg-slate-800 text-white px-6 py-2 rounded text-xs font-bold hover:bg-slate-700 transition shadow-sm h-[34px]">
                             Filtrar
                         </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -675,6 +704,7 @@
                     <input type="text" id="modal-header-nome" readonly placeholder="NOME DO SEGURADO AQUI" class="text-lg font-bold text-textMain uppercase outline-none bg-transparent w-full truncate">
                     <div class="flex items-center gap-2 mt-1">
                         <p class="text-xs text-textMuted font-bold" id="modal-header-status">NOVO NEGÓCIO</p>
+                        <span id="modal-header-op-id" class="hidden text-[11px] font-extrabold text-primary bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">#-</span>
                         <span id="badge-status-deal" class="hidden px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider"></span>
                     </div>
                 </div>
@@ -853,7 +883,7 @@
                                     <p class="text-lg font-bold text-textMain" id="total-premio-geral">R$ 0,00</p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-[10px] font-bold text-emerald-600 uppercase">Receita Total</p>
+                                    <p class="text-[10px] font-bold text-emerald-600">Comissão do negócio</p>
                                     <p class="text-xl font-extrabold text-emerald-600" id="total-receita-geral">R$ 0,00</p>
                                 </div>
                             </div>
@@ -940,16 +970,17 @@
                         <table class="w-full text-center border-collapse">
                             <thead class="bg-slate-100 text-[11px] uppercase tracking-wider font-bold text-textMuted border-b border-border sticky top-0">
                                 <tr>
-                                    <th class="py-4 px-2">Vigência</th>
-                                    <th class="px-2">Ramo(s)</th>
-                                    <th class="px-2">Status Produto</th>
-                                    <th class="px-2">Produtor</th>
-                                    <th class="px-2">Retorno</th>
-                                    <th class="px-2">Status Final</th>
+                                    <th class="py-4 px-2 cursor-pointer select-none hover:text-textMain transition" onclick="app.sortHistoricoOps('vigencia')">Vigência <i id="hist-sort-vigencia" class="fa-solid fa-sort ml-1 text-slate-300"></i></th>
+                                    <th class="px-2 cursor-pointer select-none hover:text-textMain transition" onclick="app.sortHistoricoOps('ramo')">Ramo(s) <i id="hist-sort-ramo" class="fa-solid fa-sort ml-1 text-slate-300"></i></th>
+                                    <th class="px-2 cursor-pointer select-none hover:text-textMain transition" onclick="app.sortHistoricoOps('tipo')">Status Produto <i id="hist-sort-tipo" class="fa-solid fa-sort ml-1 text-slate-300"></i></th>
+                                    <th class="px-2 cursor-pointer select-none hover:text-textMain transition" onclick="app.sortHistoricoOps('etapa')">Etapa <i id="hist-sort-etapa" class="fa-solid fa-sort ml-1 text-slate-300"></i></th>
+                                    <th class="px-2 cursor-pointer select-none hover:text-textMain transition" onclick="app.sortHistoricoOps('produtor')">Produtor <i id="hist-sort-produtor" class="fa-solid fa-sort ml-1 text-slate-300"></i></th>
+                                    <th class="px-2 cursor-pointer select-none hover:text-textMain transition" onclick="app.sortHistoricoOps('retorno')">Retorno <i id="hist-sort-retorno" class="fa-solid fa-sort ml-1 text-slate-300"></i></th>
+                                    <th class="px-2 cursor-pointer select-none hover:text-textMain transition" onclick="app.sortHistoricoOps('status')">Status Final <i id="hist-sort-status" class="fa-solid fa-sort ml-1 text-slate-300"></i></th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-historico-ops" class="text-sm text-textMain font-medium divide-y divide-border bg-white">
-                                <tr><td colspan="6" class="py-10 text-textMuted">Nenhuma oportunidade anterior encontrada para este cliente.</td></tr>
+                                <tr><td colspan="7" class="py-10 text-textMuted">Nenhuma oportunidade anterior encontrada para este cliente.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1213,6 +1244,7 @@
             </div>
             <div>
                 <label class="text-xs font-bold text-textMuted block mb-1">Anexos (máx. 5)</label>
+                <div id="emailPropostaFileList" class="space-y-1.5 mb-2 empty:hidden"></div>
                 <div id="emailPropostaDrop" class="border-2 border-dashed border-border rounded-lg p-6 text-center text-xs text-textMuted cursor-pointer hover:bg-slate-50 transition">
                     Clique para escolher ou arraste os arquivos (Máx 5 arquivos)
                 </div>
@@ -1220,7 +1252,6 @@
             </div>
             <div class="flex flex-col sm:flex-row gap-2 justify-end pt-2">
                 <button type="button" id="btnEmailPropostaCancel" class="px-4 py-2 rounded-lg border border-border text-sm font-bold text-textMuted hover:bg-slate-50">Cancelar</button>
-                <button type="button" id="btnEmailPropostaSkip" class="px-4 py-2 rounded-lg border border-amber-200 text-amber-800 text-sm font-bold hover:bg-amber-50">Pular envio</button>
                 <button type="button" id="btnEmailPropostaSend" class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-bold hover:bg-blue-700 shadow-sm"><i class="fa-solid fa-paper-plane mr-2"></i>Enviar</button>
             </div>
         </div>
@@ -1228,11 +1259,7 @@
 
     <div id="modalEmailErp" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center z-[110] backdrop-blur-sm sm:p-6 overflow-y-auto custom-scrollbar">
         <div class="bg-white rounded-xl shadow-2xl border border-border w-full max-w-lg my-auto p-6 space-y-4">
-            <h3 class="text-lg font-bold text-textMain">E-mail interno (ERP — perda renovação)</h3>
-            <div>
-                <label class="text-xs font-bold text-textMain block mb-1">Destinatário (opcional)</label>
-                <input type="email" id="emailErpDestinatario" placeholder="caixa.interna@empresa.com.br" class="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
-            </div>
+            <h3 class="text-lg font-bold text-textMain">Enviar proposta por e-mail</h3>
             <div>
                 <label class="text-xs font-bold text-textMain block mb-1">Assunto:</label>
                 <input type="text" id="emailErpAssunto" class="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
@@ -1243,6 +1270,7 @@
             </div>
             <div>
                 <label class="text-xs font-bold text-textMuted block mb-1">Anexos (máx. 5)</label>
+                <div id="emailErpFileList" class="space-y-1.5 mb-2 empty:hidden"></div>
                 <div id="emailErpDrop" class="border-2 border-dashed border-border rounded-lg p-6 text-center text-xs text-textMuted cursor-pointer hover:bg-slate-50 transition">
                     Clique para escolher ou arraste os arquivos (Máx 5 arquivos)
                 </div>
@@ -1250,7 +1278,6 @@
             </div>
             <div class="flex flex-col sm:flex-row gap-2 justify-end pt-2">
                 <button type="button" id="btnEmailErpCancel" class="px-4 py-2 rounded-lg border border-border text-sm font-bold text-textMuted hover:bg-slate-50">Cancelar</button>
-                <button type="button" id="btnEmailErpSkip" class="px-4 py-2 rounded-lg border border-amber-200 text-amber-800 text-sm font-bold hover:bg-amber-50">Pular envio</button>
                 <button type="button" id="btnEmailErpSend" class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-bold hover:bg-blue-700 shadow-sm"><i class="fa-solid fa-paper-plane mr-2"></i>Enviar</button>
             </div>
         </div>
@@ -1276,9 +1303,9 @@
         </div>
     </div>
 
-    <div id="modalReagendamento" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center z-[110] backdrop-blur-sm sm:p-6 overflow-y-auto custom-scrollbar">
-        <div class="bg-white rounded-xl shadow-2xl border border-border w-full max-w-2xl my-auto p-6 space-y-4">
-            <div id="reagResumoHtml" class="text-sm text-textMain space-y-1 border border-border rounded-lg p-4 bg-slate-50 max-h-48 overflow-y-auto custom-scrollbar"></div>
+    <div id="modalReagendamento" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center z-[110] backdrop-blur-sm p-3 sm:p-6 overflow-y-auto custom-scrollbar">
+        <div class="bg-white rounded-xl shadow-2xl border border-border w-full max-w-3xl my-auto p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div id="reagResumoHtml" class="text-sm text-textMain border border-border rounded-lg p-4 bg-slate-50"></div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs font-bold text-textMain block mb-1">Nova vigência:</label>
@@ -1307,6 +1334,52 @@
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
         };
 
+        const formatDecimalBR2 = (n) => {
+            return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(parseFloat(n) || 0);
+        };
+
+        const parseDecimalBR = (s) => {
+            if (s == null || String(s).trim() === '') return 0;
+            const norm = String(s).replace(/\./g, '').replace(',', '.');
+            const num = parseFloat(norm);
+            if (!Number.isFinite(num)) return 0;
+            return Math.round(num * 100) / 100;
+        };
+
+        const maskDecimalBRInput = (raw) => {
+            if (raw == null) return '';
+            const str = String(raw);
+            const commaIdx = str.indexOf(',');
+            let head;
+            let tail;
+            let hasComma;
+            if (commaIdx === -1) {
+                head = str;
+                tail = '';
+                hasComma = false;
+            } else {
+                head = str.slice(0, commaIdx);
+                tail = str.slice(commaIdx + 1);
+                hasComma = true;
+            }
+            const intDigits = head.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+            const decDigits = tail.replace(/\D/g, '').slice(0, 2);
+
+            if (!hasComma && intDigits === '' && str.replace(/\D/g, '') === '') return '';
+
+            const addThousands = (d) => {
+                if (!d) return '';
+                return d.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            };
+
+            if (!hasComma) {
+                if (intDigits === '') return '';
+                return addThousands(intDigits);
+            }
+            const intShow = intDigits === '' ? '0' : addThousands(intDigits);
+            return `${intShow},${decDigits}`;
+        };
+
         const formatKanbanRetorno = (iso) => {
             if (!iso || typeof iso !== 'string') return '';
             const parts = iso.split('-');
@@ -1328,7 +1401,7 @@
             initSidebar: () => {
                 const el = document.getElementById('app-sidebar');
                 if (!el) return;
-                if (localStorage.getItem('nexus_sidebar_collapsed') === '1') {
+                if (localStorage.getItem('nexus_sidebar_collapsed') !== '0') {
                     el.classList.add('sidebar-collapsed');
                 }
                 ui.syncSidebarToggle();
@@ -1353,6 +1426,37 @@
                 if (icon) {
                     icon.className = collapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-angles-left';
                 }
+            },
+
+            initOportunidadesFiltros: () => {
+                const body = document.getElementById('oportunidades-filtros-body');
+                if (!body) return;
+                if (localStorage.getItem('nexus_oportunidades_filtros_collapsed') === '1') {
+                    body.classList.add('hidden');
+                } else {
+                    body.classList.remove('hidden');
+                }
+                ui.syncOportunidadesFiltrosToggle();
+            },
+
+            toggleOportunidadesFiltros: () => {
+                const body = document.getElementById('oportunidades-filtros-body');
+                if (!body) return;
+                body.classList.toggle('hidden');
+                localStorage.setItem('nexus_oportunidades_filtros_collapsed', body.classList.contains('hidden') ? '1' : '0');
+                ui.syncOportunidadesFiltrosToggle();
+            },
+
+            syncOportunidadesFiltrosToggle: () => {
+                const body = document.getElementById('oportunidades-filtros-body');
+                const icon = document.getElementById('icon-oportunidades-filtros');
+                const label = document.getElementById('label-oportunidades-filtros');
+                const btn = document.getElementById('btn-toggle-oportunidades-filtros');
+                if (!body || !icon || !label) return;
+                const collapsed = body.classList.contains('hidden');
+                icon.className = collapsed ? 'fa-solid fa-chevron-down text-[10px]' : 'fa-solid fa-chevron-up text-[10px]';
+                label.textContent = collapsed ? 'Mostrar filtros' : 'Recolher filtros';
+                if (btn) btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
             },
 
             maskDoc: (v) => {
@@ -1656,35 +1760,82 @@
 
             buildPropostaAssuntoDefault: () => {
                 const p = ui.produtos[0] || {};
-                const nome = (document.getElementById('modal-header-nome')?.value || document.getElementById('opNome')?.value || '').trim();
-                const tipo = p.tipo || 'Novo';
-                const c = ui.fmtPctBR(p.comissao);
-                const a = ui.fmtPctBR(p.agenciamento);
-                const seguradora = (document.getElementById('opSeguradora')?.value || '').trim();
-                const parts = [nome, tipo, `${c}%`, `${a}%`, seguradora].filter(Boolean);
+                const pid = document.getElementById('opProdutor')?.value;
+                let vendedor = '';
+                if (pid) {
+                    const cor = app.corretores.find(c => String(c.id) === String(pid));
+                    vendedor = (cor?.nome_completo || '').trim();
+                }
+                if (!vendedor && app.user?.id) {
+                    const corUser = app.corretores.find(c => String(c.id) === String(app.user.id));
+                    vendedor = (corUser?.nome_completo || '').trim();
+                }
+                const tipo = (p.tipo || 'Novo').trim();
+                const comFmt = ui.fmtPctBR(p.comissao);
+                const segurado = (document.getElementById('modal-header-nome')?.value || document.getElementById('opNome')?.value || '').trim();
+                const parts = [vendedor, tipo, `${comFmt}%`, segurado].filter(Boolean);
                 return parts.join(' - ');
             },
 
             buildErpAssuntoDefault: () => {
                 const p = ui.produtos[0] || {};
-                const nome = (document.getElementById('modal-header-nome')?.value || document.getElementById('opNome')?.value || '').trim();
-                const seguradora = (document.getElementById('opSeguradora')?.value || '').trim();
-                return `[ERP] Perda renovação — ${nome}${seguradora ? ' — ' + seguradora : ''}`;
+                const pid = document.getElementById('opProdutor')?.value;
+                let vendedor = '';
+                if (pid) {
+                    const cor = app.corretores.find(c => String(c.id) === String(pid));
+                    vendedor = (cor?.nome_completo || '').trim();
+                }
+                if (!vendedor && app.user?.id) {
+                    const corUser = app.corretores.find(c => String(c.id) === String(app.user.id));
+                    vendedor = (corUser?.nome_completo || '').trim();
+                }
+                const comFmt = ui.fmtPctBR(p.comissao);
+                const segurado = (document.getElementById('modal-header-nome')?.value || document.getElementById('opNome')?.value || '').trim();
+                return `${vendedor || '-'} - Não renovado - ${comFmt}% - ${segurado || '-'}`;
             },
 
             buildReagendamentoResumoHtml: () => {
                 const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                const fmtDateBR = (iso) => {
+                    if (!iso || typeof iso !== 'string') return '-';
+                    const t = iso.trim().split('T')[0];
+                    if (!t) return '-';
+                    const parts = t.split('-');
+                    if (parts.length !== 3) return '-';
+                    const y = parseInt(parts[0], 10);
+                    const mo = parseInt(parts[1], 10);
+                    const da = parseInt(parts[2], 10);
+                    if (Number.isNaN(y) || Number.isNaN(mo) || Number.isNaN(da)) return '-';
+                    const dt = new Date(y, mo - 1, da);
+                    if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== da) return '-';
+                    return dt.toLocaleDateString('pt-BR');
+                };
                 const p = ui.produtos[0] || {};
                 const nome = esc((document.getElementById('modal-header-nome')?.value || document.getElementById('opNome')?.value || '-').trim());
                 const email = esc((document.getElementById('opEmail')?.value || '-').trim());
                 const doc = esc((document.getElementById('opDocumento')?.value || '-').trim());
+                const telefone = esc((document.getElementById('opTelefone')?.value || '-').trim());
                 const origem = esc((document.getElementById('opOrigem')?.value || '-').trim());
+                const vigencia = esc(fmtDateBR(document.getElementById('opVigencia')?.value || '-'));
                 const ramo = esc(p.ramo || '-');
                 const tipo = esc(p.tipo || '-');
                 const seguradora = esc((document.getElementById('opSeguradora')?.value || '-').trim());
                 const premio = formatBRL(parseFloat(p.premio) || 0);
                 const com = ui.fmtPctBR(p.comissao);
-                return `<p><strong>Nome:</strong> ${nome}</p><p><strong>E-mail:</strong> ${email}</p><p><strong>CPF/CNPJ:</strong> ${doc}</p><p><strong>Origem:</strong> ${origem}</p><p><strong>Ramo:</strong> ${ramo}</p><p><strong>Novo?</strong> ${tipo}</p><p><strong>Seguradora:</strong> ${seguradora}</p><p><strong>Prêmio líquido:</strong> ${premio}</p><p><strong>Comissão (%):</strong> ${com}%</p>`;
+                const rows = [
+                    ['Nome', nome],
+                    ['E-mail', email],
+                    ['Telefone', telefone],
+                    ['CPF/CNPJ', doc],
+                    ['Origem', origem],
+                    ['Vigência', vigencia],
+                    ['Ramo', ramo],
+                    ['Novo?', tipo],
+                    ['Seguradora', seguradora],
+                    ['Prêmio líquido', premio],
+                    ['Comissão (%)', `${com}%`]
+                ];
+                return `<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">${rows.map(([label, value]) => `<p class="leading-relaxed"><strong>${label}:</strong> ${value}</p>`).join('')}</div>`;
             },
 
             addProduto: () => {
@@ -1732,6 +1883,31 @@
                     const rec = premio * ((comissao + agenciamento) / 100);
                     row.querySelector('.receita-text').innerText = formatBRL(rec);
                 }
+            },
+
+            syncProdutoRowReceita: (index) => {
+                ui.calcTotalProdutos();
+                const row = document.getElementById('produtos-list').children[index];
+                if (row) {
+                    const premio = parseFloat(ui.produtos[index].premio) || 0;
+                    const comissao = parseFloat(ui.produtos[index].comissao) || 0;
+                    const agenciamento = parseFloat(ui.produtos[index].agenciamento) || 0;
+                    const rec = premio * ((comissao + agenciamento) / 100);
+                    row.querySelector('.receita-text').innerText = formatBRL(rec);
+                }
+            },
+
+            updateProdutoDecimal: (index, field, el) => {
+                el.value = maskDecimalBRInput(el.value);
+                ui.produtos[index][field] = parseDecimalBR(el.value);
+                ui.syncProdutoRowReceita(index);
+            },
+
+            blurProdutoDecimal: (index, field, el) => {
+                const n = parseDecimalBR(el.value);
+                ui.produtos[index][field] = n;
+                el.value = formatDecimalBR2(n);
+                ui.syncProdutoRowReceita(index);
             },
             
             calcTotalProdutos: () => {
@@ -1803,15 +1979,15 @@
                         ${tipoBlock}
                         <div class="w-24">
                             <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Prêmio (R$)</label>
-                            <input type="number" step="0.01" placeholder="Prêmio Liq" value="${p.premio||''}" oninput="ui.updateProduto(${index}, 'premio', this.value)" class="w-full border border-border rounded px-2 py-1.5 text-xs outline-none focus:border-primary text-center">
+                            <input type="text" inputmode="decimal" placeholder="0,00" value="${formatDecimalBR2(premio)}" oninput="ui.updateProdutoDecimal(${index}, 'premio', this)" onblur="ui.blurProdutoDecimal(${index}, 'premio', this)" class="w-full border border-border rounded px-2 py-1.5 text-xs outline-none focus:border-primary text-center">
                         </div>
                         <div class="w-20">
                             <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">% Comis.</label>
-                            <input type="number" step="0.01" placeholder="% Com." value="${p.comissao||''}" oninput="ui.updateProduto(${index}, 'comissao', this.value)" class="w-full border border-border rounded px-2 py-1.5 text-xs outline-none focus:border-primary text-center">
+                            <input type="text" inputmode="decimal" placeholder="0,00" value="${formatDecimalBR2(comissao)}" oninput="ui.updateProdutoDecimal(${index}, 'comissao', this)" onblur="ui.blurProdutoDecimal(${index}, 'comissao', this)" class="w-full border border-border rounded px-2 py-1.5 text-xs outline-none focus:border-primary text-center">
                         </div>
                         <div class="w-20">
                             <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">% Agenc.</label>
-                            <input type="number" step="0.01" placeholder="% Agen." value="${p.agenciamento||''}" oninput="ui.updateProduto(${index}, 'agenciamento', this.value)" class="w-full border border-border rounded px-2 py-1.5 text-xs outline-none focus:border-primary text-center">
+                            <input type="text" inputmode="decimal" placeholder="0,00" value="${formatDecimalBR2(agenciamento)}" oninput="ui.updateProdutoDecimal(${index}, 'agenciamento', this)" onblur="ui.blurProdutoDecimal(${index}, 'agenciamento', this)" class="w-full border border-border rounded px-2 py-1.5 text-xs outline-none focus:border-primary text-center">
                         </div>
                         <div class="flex-1 text-right pt-4 pr-2">
                             <div class="text-sm font-bold text-emerald-600 receita-text">${formatBRL(receita)}</div>
@@ -1832,6 +2008,11 @@
                 app.resetBuscaContatoModal();
                 
                 document.getElementById('modal-header-status').innerText = 'NOVO NEGÓCIO';
+                const headerOpId = document.getElementById('modal-header-op-id');
+                if (headerOpId) {
+                    headerOpId.innerText = '#-';
+                    headerOpId.classList.add('hidden');
+                }
                 document.getElementById('badge-status-deal').classList.add('hidden');
                 
                 document.getElementById('opEtapaHeader').disabled = false;
@@ -1991,6 +2172,11 @@
 
             editDeal: (d) => {
                 document.getElementById('opId').value = d.id;
+                const headerOpId = document.getElementById('modal-header-op-id');
+                if (headerOpId) {
+                    headerOpId.innerText = `#${d.id}`;
+                    headerOpId.classList.remove('hidden');
+                }
                 document.getElementById('contatoId').value = d.contato_id || '';
                 
                 document.getElementById('opDocumento').value = d.documento_contato ? ui.maskDoc(d.documento_contato) : ''; 
@@ -2254,22 +2440,28 @@
                 if (d.status === 'aberto') {
                     const dateRows = [];
                     if (d.retorno) {
-                        dateRows.push({ label: 'TAREFA: RETORNO', value: formatKanbanRetorno(d.retorno) });
+                        dateRows.push({ kind: 'tarefa', label: 'TAREFA', value: formatKanbanRetorno(d.retorno) });
                     }
                     if (d.vigencia) {
-                        dateRows.push({ label: 'VIGÊNCIA', value: formatKanbanRetorno(d.vigencia) });
+                        dateRows.push({ kind: 'vigencia', label: 'VIGÊNCIA', value: formatKanbanRetorno(d.vigencia) });
                     }
                     if (dateRows.length > 0) {
                         const titleTxt = dateRows.map(r => `${r.label} ${r.value}`).join(' | ').replace(/"/g, '&quot;');
-                        const dateRowsHtml = dateRows.map((r, idx) => `
-                            <span class="flex items-center gap-1 min-w-0 ${idx > 0 ? 'mt-0.5' : ''}">
-                                <i class="fa-regular fa-calendar-days shrink-0"></i>
-                                <span class="uppercase shrink-0">${r.label}</span>
-                                <span class="truncate">${r.value}</span>
-                            </span>
-                        `).join('');
+                        const dateRowsHtml = dateRows.map((r) => {
+                            const iconClass = r.kind === 'vigencia'
+                                ? 'fa-regular fa-calendar-days shrink-0 text-emerald-700'
+                                : 'fa-solid fa-bell shrink-0 text-blue-700';
+                            const rowWrap = r.kind === 'vigencia'
+                                ? 'border-l-2 border-emerald-500 pl-1.5 bg-emerald-50/70'
+                                : 'border-l-2 border-blue-500 pl-1.5 bg-blue-50/70';
+                            return `<span class="flex items-center gap-1 min-w-0 w-full ${rowWrap} py-0.5 leading-tight">
+                                    <i class="${iconClass}"></i>
+                                    <span class="uppercase shrink-0">${r.label}</span>
+                                    <span class="truncate">${r.value}</span>
+                                </span>`;
+                        }).join('');
                         rightBadge = `
-                            <span class="text-[8px] font-bold px-2 py-1 rounded-md bg-orange-100 text-orange-800 flex flex-col items-start max-w-[55%] shrink-0 leading-tight overflow-hidden" title="${titleTxt}">
+                            <span class="text-[8px] font-bold px-2 py-1 rounded-md bg-orange-100 text-orange-800 flex flex-col gap-0 items-stretch max-w-[55%] shrink-0 leading-tight overflow-hidden" title="${titleTxt}">
                                 ${dateRowsHtml}
                             </span>`;
                     }
@@ -2305,8 +2497,8 @@
                             </div>
                         </div>
                         <div class="text-right shrink-0">
-                            <p class="text-[8px] font-bold text-textMuted uppercase tracking-wide leading-none mb-0.5">Comissão do Negócio</p>
-                            <p class="font-extrabold text-textMain text-xs leading-none">${formatBRL(val)}</p>
+                            <p class="text-[10px] font-bold text-emerald-600 tracking-wide leading-none mb-0.5">Comissão do negócio</p>
+                            <p class="font-extrabold text-emerald-600 text-xs leading-none">${formatBRL(val)}</p>
                         </div>
                     </div>
                 `;
@@ -2544,9 +2736,14 @@
             isSelectingContatoModalRole: null,
             contatoBuscaTimeout: null,
             responsavelBuscaTimeout: null,
+            globalSearchTimeout: null,
+            _globalSearchBound: false,
             
             currentSortCol: 'criado_em',
             currentSortAsc: false,
+            historicoOpsSortKey: 'vigencia',
+            historicoOpsSortAsc: true,
+            historicoOpsLastContatoId: null,
             isGerente: false,
 
             settingsEditingFunilId: null,
@@ -2689,9 +2886,10 @@
                 
                 if (session) {
                     app.user = session.user;
-                    document.getElementById('loginOverlay').classList.add('hidden');
+                    app.showLoginLoading(true);
                     app.initApp();
                 } else {
+                    app.showLoginLoading(false);
                     document.getElementById('loginOverlay').classList.remove('hidden');
                 }
             },
@@ -2708,7 +2906,7 @@
                     }
                     
                     app.user = data.user;
-                    document.getElementById('loginOverlay').classList.add('hidden');
+                    app.showLoginLoading(true);
                     app.initApp();
                 } catch (err) {
                     let msg = 'E-mail ou senha incorretos.';
@@ -2717,6 +2915,16 @@
                     }
                     Swal.fire('Acesso Negado', msg, 'error');
                 }
+            },
+
+            showLoginLoading: (isLoading) => {
+                const overlay = document.getElementById('loginOverlay');
+                const form = document.getElementById('loginForm');
+                const loading = document.getElementById('loginLoading');
+                if (!overlay || !form || !loading) return;
+                overlay.classList.remove('hidden');
+                form.classList.toggle('hidden', !!isLoading);
+                loading.classList.toggle('hidden', !isLoading);
             },
 
             logout: async () => {
@@ -2824,6 +3032,14 @@
                     if (sidebarSettingsBtn && !isGerente) {
                         sidebarSettingsBtn.classList.add('hidden');
                     }
+                    const navDashboardBtn = document.getElementById('nav-dashboard');
+                    if (navDashboardBtn) {
+                        navDashboardBtn.classList.toggle('hidden', !isGerente);
+                    }
+                    const navSeguradosBtn = document.getElementById('nav-segurados');
+                    if (navSeguradosBtn) {
+                        navSeguradosBtn.classList.toggle('hidden', !isGerente);
+                    }
 
                     app.isGerente = isGerente;
                     
@@ -2832,7 +3048,9 @@
                     await app.loadData();
                     ui.renderContatosTable();
                     
-                    app.navigate('dashboard');
+                    app.navigate('oportunidades');
+                    document.getElementById('loginOverlay').classList.add('hidden');
+                    app.setupGlobalSearch();
                     
                     app.sb.channel('db-changes').on('postgres_changes', { event: '*', schema: 'public' }, () => {
                         app.loadData();
@@ -2840,6 +3058,7 @@
                     }).subscribe();
 
                 } catch (error) {
+                    app.showLoginLoading(false);
                     console.error("ERRO CRÍTICO INICIALIZAÇÃO:", error);
                     Swal.fire({
                         title: 'Aviso',
@@ -2996,6 +3215,250 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;'),
+
+            hideGlobalSearchPanel: () => {
+                const panel = document.getElementById('globalSearchPanel');
+                const input = document.getElementById('globalSearchInput');
+                if (panel) {
+                    panel.classList.add('hidden');
+                }
+                if (input) {
+                    input.setAttribute('aria-expanded', 'false');
+                }
+            },
+
+            setupGlobalSearch: () => {
+                if (app._globalSearchBound) {
+                    return;
+                }
+                app._globalSearchBound = true;
+                const wrap = document.getElementById('globalSearchWrap');
+                const input = document.getElementById('globalSearchInput');
+                if (!wrap || !input) {
+                    return;
+                }
+                input.addEventListener('input', () => {
+                    if (app.globalSearchTimeout) {
+                        clearTimeout(app.globalSearchTimeout);
+                    }
+                    app.globalSearchTimeout = setTimeout(() => {
+                        app.refreshGlobalSearchPanel();
+                    }, 300);
+                });
+                input.addEventListener('focus', () => {
+                    app.refreshGlobalSearchPanel();
+                });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        app.hideGlobalSearchPanel();
+                        input.blur();
+                    }
+                });
+                document.addEventListener('mousedown', (e) => {
+                    if (!wrap.contains(e.target)) {
+                        app.hideGlobalSearchPanel();
+                    }
+                });
+            },
+
+            buscarOportunidadesGlobalSearch: (termo) => {
+                const qText = app.normalizeText(termo);
+                const qDigits = app.normalizeDigits(termo);
+                if (!qText && !qDigits) {
+                    return [];
+                }
+                if (!qDigits && qText.length < 2) {
+                    return [];
+                }
+
+                const scoreOp = (op) => {
+                    let score = 0;
+                    const nomeSeg = app.normalizeText(op.nome_segurado);
+                    const ct = op.contato_id ? app.contatos.find(c => c.id === op.contato_id) : null;
+                    const docCt = app.normalizeDigits(op.documento_contato ?? ct?.documento);
+                    const telCt = app.normalizeDigits(op.telefone_contato ?? ct?.telefone);
+                    const nomeCt = app.normalizeText(ct?.nome || '');
+                    const nomeResp = app.normalizeText(op.nome_responsavel || '');
+                    const docResp = app.normalizeDigits(op.documento_responsavel || '');
+                    const telResp = app.normalizeDigits(op.telefone_responsavel || '');
+
+                    if (qDigits && (qDigits.length === 11 || qDigits.length === 14)) {
+                        if (docCt === qDigits || docResp === qDigits) {
+                            score = Math.max(score, 100);
+                        }
+                    }
+                    if (qDigits && telCt && (telCt === qDigits || (qDigits.length >= 8 && telCt.startsWith(qDigits)))) {
+                        score = Math.max(score, 90);
+                    }
+                    if (qDigits && telResp && (telResp === qDigits || (qDigits.length >= 8 && telResp.startsWith(qDigits)))) {
+                        score = Math.max(score, 88);
+                    }
+                    if (qText && nomeSeg.includes(qText)) {
+                        score = Math.max(score, 85);
+                    }
+                    if (qText && nomeCt && nomeCt.includes(qText)) {
+                        score = Math.max(score, 82);
+                    }
+                    if (qText && nomeResp.includes(qText)) {
+                        score = Math.max(score, 78);
+                    }
+                    if (qDigits && docCt && docCt.includes(qDigits)) {
+                        score = Math.max(score, 70);
+                    }
+                    if (qDigits && telCt && telCt.includes(qDigits)) {
+                        score = Math.max(score, 68);
+                    }
+                    if (qDigits && docResp && docResp.includes(qDigits)) {
+                        score = Math.max(score, 67);
+                    }
+                    if (qDigits && telResp && telResp.includes(qDigits)) {
+                        score = Math.max(score, 66);
+                    }
+                    return score;
+                };
+
+                return (app.oportunidades || [])
+                    .map(op => ({ op, score: scoreOp(op) }))
+                    .filter(x => x.score > 0)
+                    .sort((a, b) => b.score - a.score || String(a.op.nome_segurado || '').localeCompare(String(b.op.nome_segurado || ''), 'pt-BR'))
+                    .slice(0, 8)
+                    .map(x => x.op);
+            },
+
+            refreshGlobalSearchPanel: () => {
+                const input = document.getElementById('globalSearchInput');
+                const panel = document.getElementById('globalSearchPanel');
+                const summary = document.getElementById('globalSearchSummary');
+                const boxOps = document.getElementById('globalSearchOps');
+                const boxCt = document.getElementById('globalSearchContatos');
+                if (!input || !panel || !summary || !boxOps || !boxCt) {
+                    return;
+                }
+
+                const termo = (input.value || '').trim();
+                const qText = app.normalizeText(termo);
+                const qDigits = app.normalizeDigits(termo);
+                const queryInvalid = (!qText && !qDigits) || (!qDigits && qText.length < 2);
+
+                if (queryInvalid) {
+                    panel.classList.add('hidden');
+                    summary.classList.add('hidden');
+                    summary.innerHTML = '';
+                    boxOps.innerHTML = '';
+                    boxCt.innerHTML = '';
+                    input.setAttribute('aria-expanded', 'false');
+                    return;
+                }
+
+                const opsMatches = app.buscarOportunidadesGlobalSearch(termo);
+                const contatosMatches = app.buscarContatosNoModal(termo);
+
+                let summaryHtml = '';
+                if (opsMatches.length > 0) {
+                    const totalRec = opsMatches.reduce((s, o) => s + (ui.oportunidadeReceitaEstimada(o) || 0), 0);
+                    summaryHtml = `${opsMatches.length} oportunidade(s) encontrada(s): <span class="text-textMain font-semibold">${formatBRL(totalRec)}</span> (receita estimada)`;
+                } else if (contatosMatches.length > 0) {
+                    summaryHtml = `${contatosMatches.length} contato(s) encontrado(s)`;
+                } else {
+                    const safeQ = app.escapeHtml(termo);
+                    summaryHtml = `Nenhum resultado para "<span class="text-textMain font-semibold">${safeQ}</span>"`;
+                }
+                summary.innerHTML = summaryHtml;
+                summary.classList.remove('hidden');
+
+                if (opsMatches.length === 0) {
+                    boxOps.innerHTML = '<p class="text-xs text-textMuted py-2 px-1">Nenhuma oportunidade neste funil corresponde ao termo.</p>';
+                } else {
+                    boxOps.innerHTML = opsMatches.map(op => {
+                        const title = app.escapeHtml(op.nome_segurado || 'Sem nome');
+                        const etapa = app.escapeHtml(op.etapa_nome || '—');
+                        const ct = op.contato_id ? app.contatos.find(c => c.id === op.contato_id) : null;
+                        const subParts = [];
+                        if (ct && ct.nome && app.normalizeText(ct.nome) !== app.normalizeText(op.nome_segurado)) {
+                            subParts.push(app.escapeHtml(ct.nome));
+                        }
+                        if (op.documento_contato || ct?.documento) {
+                            const raw = op.documento_contato || ct.documento;
+                            subParts.push(ui.maskDoc(String(raw).replace(/\D/g, '')));
+                        }
+                        const subtitle = subParts.length ? subParts.join(' · ') : '';
+                        return `
+                            <button type="button" role="option" onclick="app.openGlobalSearchOportunidade(${op.id})"
+                                class="w-full text-left px-3 py-2.5 rounded-lg border border-transparent hover:bg-slate-50 hover:border-border transition">
+                                <div class="text-sm font-semibold text-textMain">${title}</div>
+                                <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">${etapa}</span>
+                                ${subtitle ? `<div class="text-xs text-textMuted mt-1">${subtitle}</div>` : ''}
+                            </button>`;
+                    }).join('');
+                }
+
+                if (contatosMatches.length === 0) {
+                    boxCt.innerHTML = '<p class="text-xs text-textMuted py-2 px-1">Nenhum contato corresponde ao termo.</p>';
+                } else {
+                    boxCt.innerHTML = contatosMatches.map(c => {
+                        const nome = app.escapeHtml(c.nome || 'Sem nome');
+                        const doc = c.documento ? ui.maskDoc(c.documento) : '-';
+                        const tel = c.telefone ? ui.maskPhone(c.telefone) : '-';
+                        return `
+                            <button type="button" role="option" onclick="app.openGlobalSearchContato(${c.id})"
+                                class="w-full text-left px-3 py-2.5 rounded-lg border border-transparent hover:bg-slate-50 hover:border-border transition">
+                                <div class="text-sm font-semibold text-textMain">${nome}</div>
+                                <div class="text-xs text-textMuted mt-0.5 font-mono">${doc} | ${tel}</div>
+                            </button>`;
+                    }).join('');
+                }
+
+                panel.classList.remove('hidden');
+                input.setAttribute('aria-expanded', 'true');
+            },
+
+            openGlobalSearchContato: (contatoId) => {
+                app.hideGlobalSearchPanel();
+                ui.openContatoModal(contatoId);
+            },
+
+            openGlobalSearchOportunidade: async (opId) => {
+                const id = Number(opId);
+                let opSnapshot = app.oportunidades.find(o => Number(o.id) === id);
+                if (!opSnapshot && Number.isFinite(id)) {
+                    try {
+                        const { data: opArr } = await app.sb.from('oportunidades').select('*').eq('id', id).limit(1);
+                        opSnapshot = opArr?.[0] || null;
+                    } catch (e) {
+                        console.error('Falha ao carregar oportunidade por ID', e);
+                    }
+                }
+                if (!opSnapshot) {
+                    return;
+                }
+                app.hideGlobalSearchPanel();
+                const inp = document.getElementById('globalSearchInput');
+                if (inp) {
+                    inp.blur();
+                }
+
+                if (String(opSnapshot.funil_id) !== String(config.activePipeline)) {
+                    config.activePipeline = opSnapshot.funil_id;
+                    try {
+                        localStorage.setItem('nexus_active_pipe', String(opSnapshot.funil_id));
+                    } catch (e) {
+                        /* ignore */
+                    }
+                    await app.loadPipelines();
+                    await app.loadData();
+                    if (!document.getElementById('view-dashboard').classList.contains('hidden')) {
+                        app.updateDashboard();
+                    }
+                }
+
+                const op = app.oportunidades.find(o => Number(o.id) === id);
+                if (op) {
+                    app.navigate('oportunidades');
+                    ui.editDeal(op);
+                    return;
+                }
+                Swal.fire('Aviso', 'Não foi possível abrir a oportunidade selecionada.', 'warning');
+            },
 
             onBuscaContatoModalFocus: (role) => {
                 const f = MODAL_CONTATO_FIELDS[role];
@@ -3349,14 +3812,14 @@
                     let avatarUrl = null;
                     if (fileInput.files.length > 0) {
                         const file = fileInput.files[0];
-                        const fileName = `avatars/${app.user.id}_${Date.now()}.${file.name.split('.').pop()}`;
+                        const fileName = `${app.user.id}_${Date.now()}.${file.name.split('.').pop()}`;
                         
-                        const {error: upErr} = await app.sb.storage.from('arquivos_crm').upload(fileName, file);
+                        const {error: upErr} = await app.sb.storage.from('avatares').upload(fileName, file);
                         if (upErr) {
                             throw new Error("Sem permissão para upload da foto. Verifique a Policy do bucket.");
                         }
                         
-                        avatarUrl = app.sb.storage.from('arquivos_crm').getPublicUrl(fileName).data.publicUrl;
+                        avatarUrl = app.sb.storage.from('avatares').getPublicUrl(fileName).data.publicUrl;
                     }
 
                     const updateData = { nome_completo: novoNome };
@@ -3401,6 +3864,9 @@
             },
 
             navigate: (view) => {
+                if (view === 'dashboard' && !app.isGerente) {
+                    view = 'oportunidades';
+                }
                 document.querySelectorAll('.nav-item').forEach(b => {
                     b.classList.remove('active');
                 });
@@ -3737,21 +4203,120 @@
                 }
             },
 
+            sortHistoricoOps: (key) => {
+                if (app.historicoOpsSortKey === key) {
+                    app.historicoOpsSortAsc = !app.historicoOpsSortAsc;
+                } else {
+                    app.historicoOpsSortKey = key;
+                    app.historicoOpsSortAsc = true;
+                }
+                if (app.historicoOpsLastContatoId != null) {
+                    app.loadOportunidadesDoContato(app.historicoOpsLastContatoId);
+                } else {
+                    app.updateHistoricoOpsSortIcons();
+                }
+            },
+
+            updateHistoricoOpsSortIcons: () => {
+                const map = {
+                    vigencia: 'hist-sort-vigencia',
+                    ramo: 'hist-sort-ramo',
+                    tipo: 'hist-sort-tipo',
+                    etapa: 'hist-sort-etapa',
+                    produtor: 'hist-sort-produtor',
+                    retorno: 'hist-sort-retorno',
+                    status: 'hist-sort-status'
+                };
+                Object.values(map).forEach((id) => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.className = 'fa-solid fa-sort ml-1 text-slate-300';
+                    }
+                });
+                const activeId = map[app.historicoOpsSortKey];
+                const active = activeId ? document.getElementById(activeId) : null;
+                if (active) {
+                    active.className = `fa-solid ${app.historicoOpsSortAsc ? 'fa-sort-up' : 'fa-sort-down'} ml-1 text-primary`;
+                }
+            },
+
             loadOportunidadesDoContato: async (contatoId) => {
                 const tbody = document.getElementById('tbody-historico-ops');
-                tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center"><i class="fa-solid fa-spinner fa-spin text-textMuted text-xl"></i> Buscando...</td></tr>';
+                app.historicoOpsLastContatoId = contatoId;
+                const currentOpId = String(document.getElementById('opId')?.value || '');
+                const fmtDateBR = (iso) => {
+                    if (!iso || typeof iso !== 'string') return '-';
+                    const t = iso.trim().split('T')[0];
+                    const parts = t.split('-');
+                    if (parts.length !== 3) return '-';
+                    const y = parseInt(parts[0], 10);
+                    const mo = parseInt(parts[1], 10);
+                    const da = parseInt(parts[2], 10);
+                    if (Number.isNaN(y) || Number.isNaN(mo) || Number.isNaN(da)) return '-';
+                    const dt = new Date(y, mo - 1, da);
+                    if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== da) return '-';
+                    return dt.toLocaleDateString('pt-BR');
+                };
+                const dateSortValue = (iso) => {
+                    if (!iso || typeof iso !== 'string') return Number.NEGATIVE_INFINITY;
+                    const t = iso.trim().split('T')[0];
+                    const parts = t.split('-');
+                    if (parts.length !== 3) return Number.NEGATIVE_INFINITY;
+                    const y = parseInt(parts[0], 10);
+                    const mo = parseInt(parts[1], 10);
+                    const da = parseInt(parts[2], 10);
+                    if (Number.isNaN(y) || Number.isNaN(mo) || Number.isNaN(da)) return Number.NEGATIVE_INFINITY;
+                    return Date.UTC(y, mo - 1, da);
+                };
+                tbody.innerHTML = '<tr><td colspan="7" class="py-10 text-center"><i class="fa-solid fa-spinner fa-spin text-textMuted text-xl"></i> Buscando...</td></tr>';
                 
                 try {
                     const cid = String(contatoId);
                     const {data} = await app.sb.from('oportunidades').select('*').or(`contato_id.eq.${cid},responsavel_id.eq.${cid}`).order('criado_em', {ascending:false});
-                    
-                    if (!data || data.length === 0) { 
-                        tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-textMuted font-medium">Nenhuma oportunidade anterior encontrada para este cliente.</td></tr>'; 
+                    const visibleData = (data || []).filter(o => o.excluido !== true);
+                    app.updateHistoricoOpsSortIcons();
+                    if (!visibleData.length) { 
+                        tbody.innerHTML = '<tr><td colspan="7" class="py-10 text-center text-textMuted font-medium">Nenhuma oportunidade anterior encontrada para este cliente.</td></tr>'; 
                         return; 
                     }
-                    
-                    tbody.innerHTML = data.map(o => {
+                    const sortedData = [...visibleData].sort((a, b) => {
+                        const sortKey = app.historicoOpsSortKey;
+                        const dir = app.historicoOpsSortAsc ? 1 : -1;
+                        const corretorA = app.corretores.find(c => c.id === a.corretor_id)?.nome_completo || 'Corretor';
+                        const corretorB = app.corretores.find(c => c.id === b.corretor_id)?.nome_completo || 'Corretor';
+                        const valA = (() => {
+                            switch (sortKey) {
+                                case 'vigencia': return dateSortValue(a.vigencia);
+                                case 'ramo': return (ui.oportunidadeRamoExibicao(a) || '-').toLowerCase();
+                                case 'tipo': return (a.tipo_seguro || '-').toLowerCase();
+                                case 'etapa': return (a.etapa_nome || '-').toLowerCase();
+                                case 'produtor': return corretorA.toLowerCase();
+                                case 'retorno': return dateSortValue(a.retorno);
+                                case 'status': return (a.status || '-').toLowerCase();
+                                default: return '';
+                            }
+                        })();
+                        const valB = (() => {
+                            switch (sortKey) {
+                                case 'vigencia': return dateSortValue(b.vigencia);
+                                case 'ramo': return (ui.oportunidadeRamoExibicao(b) || '-').toLowerCase();
+                                case 'tipo': return (b.tipo_seguro || '-').toLowerCase();
+                                case 'etapa': return (b.etapa_nome || '-').toLowerCase();
+                                case 'produtor': return corretorB.toLowerCase();
+                                case 'retorno': return dateSortValue(b.retorno);
+                                case 'status': return (b.status || '-').toLowerCase();
+                                default: return '';
+                            }
+                        })();
+                        if (typeof valA === 'number' && typeof valB === 'number') {
+                            return (valA - valB) * dir;
+                        }
+                        return String(valA).localeCompare(String(valB), 'pt-BR', { sensitivity: 'base' }) * dir;
+                    });
+
+                    tbody.innerHTML = sortedData.map(o => {
                         const ramosText = ui.oportunidadeRamoExibicao(o);
+                        const isCurrent = currentOpId && String(o.id) === currentOpId;
                         
                         const corretorNome = app.corretores.find(c => c.id === o.corretor_id)?.nome_completo || 'Corretor';
                         
@@ -3762,20 +4327,28 @@
                         if (o.status === 'perdido') {
                             statusColor = 'text-red-500';
                         }
+                        const rowClass = isCurrent
+                            ? 'bg-blue-50/70 ring-1 ring-inset ring-blue-200'
+                            : 'hover:bg-slate-50';
+                        const etapaNome = o.etapa_nome || '-';
+                        const atualBadge = isCurrent
+                            ? '<span class="ml-2 inline-flex items-center rounded-full bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">Atual</span>'
+                            : '';
 
                         return `
-                            <tr class="hover:bg-slate-50 transition cursor-pointer" onclick="ui.editDealById(${o.id})">
-                                <td class="py-4 text-textMuted">${o.vigencia ? new Date(o.vigencia).toLocaleDateString('pt-BR') : '-'}</td>
+                            <tr class="transition cursor-pointer ${rowClass}" onclick="app.openGlobalSearchOportunidade(${o.id})">
+                                <td class="py-4 text-textMuted">${fmtDateBR(o.vigencia)}${atualBadge}</td>
                                 <td class="py-4 text-textMain font-bold text-xs">${ramosText}</td>
                                 <td class="py-4 text-textMuted">${o.tipo_seguro || '-'}</td>
+                                <td class="py-4 text-xs text-textMuted"><span class="inline-block bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">${etapaNome}</span></td>
                                 <td class="py-4 text-xs text-textMuted">${corretorNome}</td>
-                                <td class="py-4 text-textMuted">${o.retorno ? new Date(o.retorno).toLocaleDateString('pt-BR') : '-'}</td>
+                                <td class="py-4 text-textMuted">${fmtDateBR(o.retorno)}</td>
                                 <td class="py-4 font-bold ${statusColor} uppercase text-[10px] tracking-wider">${o.status}</td>
                             </tr>
                         `;
                     }).join('');
                 } catch (e) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-red-500">Erro ao buscar histórico do cliente.</td></tr>'; 
+                    tbody.innerHTML = '<tr><td colspan="7" class="py-10 text-center text-red-500">Erro ao buscar histórico do cliente.</td></tr>'; 
                 }
             },
 
@@ -4092,7 +4665,9 @@
                 const p0 = ui.produtos[0] || {};
                 const contatoId = opOrigem.contato_id;
                 const responsavelIdFinal = opOrigem.responsavel_id || null;
-                const { data: etapasRows } = await app.sb.from('etapas_funil').select('nome').eq('funil_id', opOrigem.funil_id).order('ordem').limit(1);
+                const funilNovos = (app.funis || []).find(f => app.normalizeTipoFunil(f?.tipo_funil) === 'novos');
+                const funilDestinoId = funilNovos?.id || opOrigem.funil_id;
+                const { data: etapasRows } = await app.sb.from('etapas_funil').select('nome').eq('funil_id', funilDestinoId).order('ordem').limit(1);
                 const primeiraEtapa = etapasRows?.[0]?.nome || 'Nova';
                 const defaultRamo = app.ramos.length > 0 ? app.ramos[0].nome : 'Automóvel';
                 const premioLiq = parseFloat(p0.premio) || parseFloat(opOrigem.premio_liquido) || 0;
@@ -4109,7 +4684,7 @@
                     origem: opOrigem.origem,
                     seguradora: opOrigem.seguradora || '',
                     ramo_seguro: p0.ramo || opOrigem.ramo_seguro || defaultRamo,
-                    tipo_seguro: p0.tipo || opOrigem.tipo_seguro || 'Novo',
+                    tipo_seguro: 'Novo',
                     premio_liquido: premioLiq,
                     comissao_percentual: comissPct,
                     agenciamento_percentual: agencPct,
@@ -4118,7 +4693,7 @@
                     corretor_id: opOrigem.corretor_id,
                     etapa_nome: primeiraEtapa,
                     status: 'aberto',
-                    funil_id: opOrigem.funil_id
+                    funil_id: funilDestinoId
                 };
                 const { data: ins, error } = await app.sb.from('oportunidades').insert([deal]).select('id');
                 if (error) {
@@ -4154,6 +4729,11 @@
                 try {
                     const emailStep = await closeFlowModals.openEmailProposta();
                     if (emailStep.cancelled) {
+                        btn.innerHTML = prevBtn;
+                        btn.disabled = false;
+                        return;
+                    }
+                    if (!emailStep.email || emailStep.email.skipped) {
                         btn.innerHTML = prevBtn;
                         btn.disabled = false;
                         return;
@@ -4284,6 +4864,7 @@
                                     motivoId: motivoStep.id,
                                     motivoNome: motivoStep.nome,
                                     motivoObservacao: motivoStep.observacao,
+                                    emailProposta: emailErpPayload,
                                     emailErp: emailErpPayload,
                                     reagendamento: reag
                                 },
@@ -4427,7 +5008,7 @@
                                 </div>
                             </div> 
                             <div class="flex gap-2">
-                                <a href="${arq.url_arquivo}" target="_blank" class="text-textMuted hover:text-primary bg-slate-50 p-2.5 rounded shadow-sm border border-border transition" title="Baixar/Visualizar">
+                                <a href="#" onclick="app.abrirAnexoSeguro('${arq.url_arquivo}'); return false;" class="text-textMuted hover:text-primary bg-slate-50 p-2.5 rounded shadow-sm border border-border transition" title="Baixar/Visualizar Seguramente">
                                     <i class="fa-solid fa-download"></i>
                                 </a>
                                 <button type="button" onclick="app.deleteArquivo(${arq.id}, '${arq.nome_arquivo}')" class="text-textMuted hover:text-red-500 bg-slate-50 p-2.5 rounded shadow-sm border border-border transition" title="Excluir">
@@ -4438,6 +5019,28 @@
                     `).join('');
                 } catch(e) {
                     listaEl.innerHTML = '<li class="text-red-500 text-xs py-4 text-center">Erro ao buscar arquivos.</li>'; 
+                }
+            },
+
+            abrirAnexoSeguro: async (urlAntiga) => {
+                try {
+                    let path = urlAntiga;
+                    if (urlAntiga.includes('/arquivos_crm/')) {
+                        path = urlAntiga.split('/arquivos_crm/')[1];
+                    }
+                    
+                    const { data, error } = await app.sb.storage.from('arquivos_crm').createSignedUrl(path, 60);
+                    
+                    if (error || !data) {
+                        console.error("Erro gerar URL:", error);
+                        Swal.fire('Acesso Negado', 'Você não tem permissão para acessar este arquivo protegido ou ele não existe mais.', 'error');
+                        return;
+                    }
+                    
+                    window.open(data.signedUrl, '_blank');
+                } catch (e) {
+                    console.error("Erro ao assinar URL:", e);
+                    Swal.fire('Erro', 'Ocorreu um problema ao baixar o arquivo seguro.', 'error');
                 }
             },
 
@@ -4852,6 +5455,141 @@
                 }
             },
 
+            resetPropostaEmailUpload() {
+                closeFlowModals.resetManagedEmailUpload('emailPropostaFiles', 'emailPropostaDrop', 'emailPropostaFileList', '_propostaFiles');
+            },
+
+            resetErpEmailUpload() {
+                closeFlowModals.resetManagedEmailUpload('emailErpFiles', 'emailErpDrop', 'emailErpFileList', '_erpFiles');
+            },
+
+            resetManagedEmailUpload(inpId, dropId, listId, storeKey) {
+                const inp = document.getElementById(inpId);
+                const drop = document.getElementById(dropId);
+                const listEl = document.getElementById(listId);
+                const labelHtml = 'Clique para escolher ou arraste os arquivos (Máx 5 arquivos)';
+                if (inp) {
+                    inp.value = '';
+                    inp[storeKey] = [];
+                }
+                if (listEl) {
+                    listEl.innerHTML = '';
+                }
+                if (drop) {
+                    drop.innerHTML = labelHtml;
+                }
+            },
+
+            setupFileDropProposta() {
+                closeFlowModals.setupManagedFileDrop({
+                    dropId: 'emailPropostaDrop',
+                    inputId: 'emailPropostaFiles',
+                    listId: 'emailPropostaFileList',
+                    storeKey: '_propostaFiles',
+                    removeAttr: 'data-proposta-file-remove'
+                });
+            },
+
+            setupFileDropErp() {
+                closeFlowModals.setupManagedFileDrop({
+                    dropId: 'emailErpDrop',
+                    inputId: 'emailErpFiles',
+                    listId: 'emailErpFileList',
+                    storeKey: '_erpFiles',
+                    removeAttr: 'data-erp-file-remove'
+                });
+            },
+
+            setupManagedFileDrop({ dropId, inputId, listId, storeKey, removeAttr }) {
+                const MAX = 5;
+                const drop = document.getElementById(dropId);
+                const inp = document.getElementById(inputId);
+                const listEl = document.getElementById(listId);
+                if (!drop || !inp || !listEl) {
+                    return;
+                }
+                const labelHtml = 'Clique para escolher ou arraste os arquivos (Máx 5 arquivos)';
+                const fileKey = (f) => `${f.name}|${f.size}|${f.lastModified}`;
+                const escAttr = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+
+                const getStore = () => {
+                    if (!Array.isArray(inp[storeKey])) {
+                        inp[storeKey] = [];
+                    }
+                    return inp[storeKey];
+                };
+
+                const syncInput = () => {
+                    const store = getStore();
+                    const dt = new DataTransfer();
+                    store.forEach((f) => dt.items.add(f));
+                    inp.files = dt.files;
+                };
+
+                const renderList = () => {
+                    const store = getStore();
+                    if (store.length === 0) {
+                        listEl.innerHTML = '';
+                        return;
+                    }
+                    listEl.innerHTML = store.map((f, i) => `
+                        <div class="flex items-center justify-between gap-2 text-xs border border-border rounded-lg px-3 py-2 bg-slate-50">
+                            <span class="truncate text-textMain font-medium" title="${escAttr(f.name)}">${escAttr(f.name)}</span>
+                            <button type="button" class="shrink-0 text-red-600 hover:text-red-700 font-bold px-2 py-0.5 rounded border border-transparent hover:border-red-200" ${removeAttr}="${i}" aria-label="Remover anexo">Excluir</button>
+                        </div>
+                    `).join('');
+                    listEl.querySelectorAll(`[${removeAttr}]`).forEach((btn) => {
+                        btn.onclick = () => {
+                            const idx = parseInt(btn.getAttribute(removeAttr), 10);
+                            const st = getStore();
+                            if (!Number.isNaN(idx) && idx >= 0 && idx < st.length) {
+                                st.splice(idx, 1);
+                                syncInput();
+                                renderList();
+                            }
+                        };
+                    });
+                };
+
+                const mergeIncoming = (rawList) => {
+                    const store = getStore();
+                    const existing = new Set(store.map(fileKey));
+                    const novel = rawList.filter((f) => !existing.has(fileKey(f)));
+                    const room = MAX - store.length;
+                    if (novel.length > room) {
+                        Swal.fire('Atenção', 'É permitido no máximo 5 anexos.', 'warning');
+                    }
+                    novel.slice(0, room).forEach((f) => store.push(f));
+                    syncInput();
+                    renderList();
+                };
+
+                drop.innerHTML = labelHtml;
+                drop.onclick = () => inp.click();
+                drop.ondragover = (e) => {
+                    e.preventDefault();
+                    drop.classList.add('bg-slate-100');
+                };
+                drop.ondragleave = () => drop.classList.remove('bg-slate-100');
+                drop.ondrop = (e) => {
+                    e.preventDefault();
+                    drop.classList.remove('bg-slate-100');
+                    const files = Array.from(e.dataTransfer.files || []);
+                    if (files.length) {
+                        mergeIncoming(files);
+                    }
+                };
+                inp.onchange = () => {
+                    const picked = Array.from(inp.files || []);
+                    if (!picked.length) {
+                        return;
+                    }
+                    mergeIncoming(picked);
+                    inp.value = '';
+                    syncInput();
+                };
+            },
+
             async filesToPayload(inpId) {
                 const inp = document.getElementById(inpId);
                 const files = Array.from(inp?.files || []).slice(0, 5);
@@ -4874,7 +5612,7 @@
 
             openEmailProposta() {
                 return new Promise((resolve) => {
-                    closeFlowModals.resetEmailModal('emailPropostaFiles', 'emailPropostaDrop');
+                    closeFlowModals.resetPropostaEmailUpload();
                     const m = 'modalEmailProposta';
                     const assunto = document.getElementById('emailPropostaAssunto');
                     const obs = document.getElementById('emailPropostaObs');
@@ -4882,16 +5620,11 @@
                     obs.value = '';
                     const finish = (payload) => {
                         document.getElementById('btnEmailPropostaCancel').onclick = null;
-                        document.getElementById('btnEmailPropostaSkip').onclick = null;
                         document.getElementById('btnEmailPropostaSend').onclick = null;
                         closeFlowModals.show(m, false);
                         resolve(payload);
                     };
                     document.getElementById('btnEmailPropostaCancel').onclick = () => finish({ cancelled: true });
-                    document.getElementById('btnEmailPropostaSkip').onclick = () => finish({
-                        cancelled: false,
-                        email: { skipped: true, assunto: assunto.value.trim(), obs: obs.value.trim(), anexos: [] }
-                    });
                     document.getElementById('btnEmailPropostaSend').onclick = async () => {
                         const anexos = await closeFlowModals.filesToPayload('emailPropostaFiles');
                         finish({
@@ -4905,39 +5638,25 @@
 
             openEmailErp() {
                 return new Promise((resolve) => {
-                    closeFlowModals.resetEmailModal('emailErpFiles', 'emailErpDrop');
+                    closeFlowModals.resetErpEmailUpload();
                     const m = 'modalEmailErp';
-                    const dest = document.getElementById('emailErpDestinatario');
                     const assunto = document.getElementById('emailErpAssunto');
                     const obs = document.getElementById('emailErpObs');
-                    dest.value = '';
                     assunto.value = ui.buildErpAssuntoDefault();
                     obs.value = '';
                     const finish = (payload) => {
                         document.getElementById('btnEmailErpCancel').onclick = null;
-                        document.getElementById('btnEmailErpSkip').onclick = null;
                         document.getElementById('btnEmailErpSend').onclick = null;
                         closeFlowModals.show(m, false);
                         resolve(payload);
                     };
                     document.getElementById('btnEmailErpCancel').onclick = () => finish({ cancelled: true });
-                    document.getElementById('btnEmailErpSkip').onclick = () => finish({
-                        cancelled: false,
-                        email: {
-                            skipped: true,
-                            destinatario: dest.value.trim(),
-                            assunto: assunto.value.trim(),
-                            obs: obs.value.trim(),
-                            anexos: []
-                        }
-                    });
                     document.getElementById('btnEmailErpSend').onclick = async () => {
                         const anexos = await closeFlowModals.filesToPayload('emailErpFiles');
                         finish({
                             cancelled: false,
                             email: {
                                 skipped: false,
-                                destinatario: dest.value.trim(),
                                 assunto: assunto.value.trim(),
                                 obs: obs.value.trim(),
                                 anexos
@@ -5008,7 +5727,7 @@
                     };
                     let html = ui.buildReagendamentoResumoHtml();
                     if (motivoText) {
-                        html += `<p class="mt-2"><strong>Motivo:</strong> ${esc(motivoText)}</p>`;
+                        html += `<div class="mt-3 pt-3 border-t border-border"><p class="leading-relaxed"><strong>Motivo:</strong> ${esc(motivoText)}</p></div>`;
                     }
                     document.getElementById('reagResumoHtml').innerHTML = html;
                     const baseDate = parseVigenciaBase(String(vigenciaBaseIso || '')) || new Date();
@@ -5038,10 +5757,11 @@
 
         // Inicia o app quando o DOM estiver pronto
         document.addEventListener('DOMContentLoaded', () => {
-            closeFlowModals.setupFileDrop('emailPropostaDrop', 'emailPropostaFiles');
-            closeFlowModals.setupFileDrop('emailErpDrop', 'emailErpFiles');
+            closeFlowModals.setupFileDropProposta();
+            closeFlowModals.setupFileDropErp();
 
             ui.initSidebar();
+            ui.initOportunidadesFiltros();
             app.init();
 
             document.addEventListener('keydown', (e) => {

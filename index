@@ -687,6 +687,18 @@
                     <label class="block text-[11px] font-bold text-textMuted uppercase tracking-wider mb-1">ChatWoot ID</label>
                     <input type="text" id="editContatoChatwoot" class="w-full border border-border rounded-lg p-2.5 outline-none focus:border-primary text-sm bg-slate-50 font-mono text-textMuted">
                 </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-textMuted uppercase tracking-wider mb-1">Gerente</label>
+                    <div class="flex items-center gap-3">
+                        <div id="editContatoGerenteAvatar" class="w-10 h-10 rounded-full bg-slate-200 border border-border flex items-center justify-center shadow-sm shrink-0 bg-cover bg-center">
+                            <i class="fa-solid fa-user text-textMuted"></i>
+                        </div>
+                        <select id="editContatoGerente" class="flex-1 border border-border rounded-lg p-2.5 outline-none focus:border-primary text-sm cursor-pointer">
+                            <option value="">Selecione o Gerente...</option>
+                        </select>
+                    </div>
+                </div>
                 
                 <div class="pt-6 border-t border-border flex justify-end gap-3 mt-6">
                     <button type="button" onclick="ui.closeContatoModal()" class="px-5 py-2 font-semibold text-textMuted hover:bg-slate-200 rounded-lg transition">Cancelar</button>
@@ -699,19 +711,24 @@
     <div id="dealModal" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center z-[100] backdrop-blur-sm sm:p-6 overflow-y-auto custom-scrollbar">
         <div class="bg-surface shadow-2xl w-full max-w-4xl flex flex-col border border-border my-auto relative rounded-xl overflow-hidden min-h-[600px]">
             
-            <div class="flex justify-between items-center p-5 border-b border-border bg-white sticky top-0 z-20 shadow-sm">
-                <div class="w-1/2">
-                    <input type="text" id="modal-header-nome" readonly placeholder="NOME DO SEGURADO AQUI" class="text-lg font-bold text-textMain uppercase outline-none bg-transparent w-full truncate">
-                    <div class="flex items-center gap-2 mt-1">
-                        <p class="text-xs text-textMuted font-bold" id="modal-header-status">NOVO NEGÓCIO</p>
-                        <span id="modal-header-op-id" class="hidden text-[11px] font-extrabold text-primary bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">#-</span>
-                        <span id="badge-status-deal" class="hidden px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider"></span>
+            <div class="flex justify-between items-center gap-3 px-4 py-2.5 border-b border-border bg-white sticky top-0 z-20 shadow-sm">
+                <div class="w-1/2 min-w-0 pr-2 flex flex-col gap-1">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span id="modal-header-op-id" class="hidden shrink-0 text-[10px] font-extrabold text-primary bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded leading-none">#-</span>
+                        <input type="text" id="opNomeOportunidade" form="dealForm" placeholder="Nome da oportunidade" aria-label="Nome da oportunidade" class="flex-1 min-w-0 text-sm font-semibold text-textMain border border-border rounded-md px-2.5 py-1.5 outline-none focus:border-primary">
+                        <span id="badge-status-deal" class="hidden shrink-0 px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider leading-none max-w-[5.5rem] truncate"></span>
+                    </div>
+                    <input type="hidden" id="modal-header-nome" value="">
+                    <div id="deal-header-segurado-wrap" class="hidden flex items-center gap-1.5 min-w-0">
+                        <span id="modal-header-nome-display" class="text-sm font-bold text-textMain uppercase leading-none truncate min-w-0 max-w-[58%]"></span>
+                        <span id="modal-header-segurado-sep" class="hidden shrink-0 text-[10px] text-textMuted leading-none">·</span>
+                        <span id="modal-header-segurado-contato" class="hidden flex-1 min-w-0 text-[10px] text-textMuted leading-none truncate"></span>
                     </div>
                 </div>
-                <div class="flex items-center gap-3 flex-wrap justify-end">
-                    <select id="opEtapaHeader" class="text-sm font-bold text-primary outline-none border border-blue-200 rounded-lg px-4 py-2 bg-blue-50 min-w-[200px] cursor-pointer hover:bg-blue-100 transition">
+                <div class="flex items-center gap-2 flex-wrap justify-end shrink-0">
+                    <select id="opEtapaHeader" class="text-sm font-bold text-primary outline-none border border-blue-200 rounded-lg px-3 py-1.5 bg-blue-50 min-w-[180px] cursor-pointer hover:bg-blue-100 transition">
                     </select>
-                    <select id="opStatusFechado" class="hidden text-xs font-bold text-textMain outline-none border border-slate-200 rounded-lg px-3 py-2 bg-white min-w-[120px] cursor-pointer">
+                    <select id="opStatusFechado" class="hidden text-xs font-bold text-textMain outline-none border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white min-w-[112px] cursor-pointer">
                         <option value="aberto">Aberto</option>
                         <option value="ganho">Ganho</option>
                         <option value="perdido">Perdido</option>
@@ -724,7 +741,7 @@
                 </div>
             </div>
 
-            <form id="dealForm" onsubmit="app.saveDeal(event)" class="flex flex-col flex-1 bg-white">
+            <form id="dealForm" onsubmit="app.saveDeal(event)" class="flex flex-col flex-1 bg-white" autocomplete="off">
                 
                 <input type="hidden" id="opId">
                 <input type="hidden" id="contatoId">
@@ -750,24 +767,25 @@
                                 </div>
                                 <button type="button" onclick="app.desvincularSegurado()" class="shrink-0 text-[10px] font-bold uppercase text-red-600 hover:bg-red-50 px-2 py-1.5 rounded-lg border border-red-100 transition outline-none">Desvincular</button>
                             </div>
-                            <div class="relative">
+                            <div id="segurado-busca-wrap" class="relative">
                                 <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Buscar segurado</label>
                                 <input type="text" id="opBuscaCliente" oninput="app.onBuscaContatoModalInput('segurado', this.value)" onfocus="app.onBuscaContatoModalFocus('segurado')" placeholder="Nome, CPF, CNPJ ou telefone..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition">
                                 <div id="opBuscaResultados" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-border rounded-lg shadow-xl z-30 max-h-64 overflow-y-auto"></div>
                                 <p id="opBuscaStatus" class="text-[11px] text-textMuted mt-1"></p>
                             </div>
+                            <div id="segurado-dados-wrap" class="hidden space-y-4">
                             <div>
                                 <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">CNPJ / CPF</label>
                                 <input type="text" id="opDocumento" oninput="this.value = window.ui.maskDoc(this.value); app.handleContatoFieldInput('segurado', 'documento', this.value)" placeholder="Apenas números..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono">
                             </div>
                             <div>
                                 <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Razão Social / Nome Completo <span class="text-red-500">*</span></label>
-                                <input type="text" id="opNome" oninput="document.getElementById('modal-header-nome').value = this.value; app.handleContatoFieldInput('segurado', 'nome', this.value)" required placeholder="Nome do segurado..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition">
+                                <input type="text" id="opNome" oninput="app.handleContatoFieldInput('segurado', 'nome', this.value); app.syncDealModalSeguradoHeader();" placeholder="Nome do segurado..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition">
                             </div>
                             <div>
                                 <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Telefone</label>
                                 <div class="flex gap-2">
-                                    <input type="text" id="opTelefone" placeholder="(00) 00000-0000" oninput="this.value = window.ui.maskPhone(this.value); app.handleContatoFieldInput('segurado', 'telefone', this.value)" onblur="app.buscarChatwoot('segurado')" class="flex-1 border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono">
+                                    <input type="text" id="opTelefone" placeholder="(00) 00000-0000" oninput="this.value = window.ui.maskPhone(this.value); app.handleContatoFieldInput('segurado', 'telefone', this.value); app.syncDealModalSeguradoHeader();" onblur="app.buscarChatwoot('segurado')" class="flex-1 border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono">
                                     <button type="button" id="btnBuscarChatwoot" onclick="app.buscarChatwoot('segurado')" class="bg-slate-100 hover:bg-slate-200 text-textMain border border-border transition px-5 rounded-lg font-bold whitespace-nowrap outline-none shadow-sm flex items-center">
                                         <i class="fa-solid fa-magnifying-glass mr-2"></i> Buscar Conversa
                                     </button>
@@ -775,7 +793,7 @@
                             </div>
                             <div>
                                 <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">E-mail</label>
-                                <input type="email" id="opEmail" placeholder="cliente@email.com" class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition">
+                                <input type="email" id="opEmail" placeholder="cliente@email.com" oninput="app.syncDealModalSeguradoHeader();" class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition">
                             </div>
                             <div class="pt-4 mt-2 border-t border-slate-100">
                                 <label class="text-[11px] font-bold text-primary mb-2 block uppercase tracking-wider flex items-center gap-1">
@@ -789,9 +807,10 @@
                                 </div>
                                 <p class="text-[10px] text-textMuted mt-1.5 font-medium">* O ID pode ser preenchido ao sair do campo Telefone, se existir no Chatwoot.</p>
                             </div>
+                            </div>
                         </div>
 
-                        <label class="flex items-center gap-2 text-sm font-semibold cursor-pointer text-textMain select-none">
+                        <label class="flex items-center gap-2 text-sm font-semibold cursor-pointer text-textMain select-none bg-amber-100 border border-amber-200 rounded-lg px-3 py-2">
                             <input type="checkbox" id="opResponsavelMesmo" checked onchange="app.toggleResponsavelMesmo()" class="w-4 h-4 accent-primary">
                             O responsável pela negociação é o mesmo que o segurado
                         </label>
@@ -804,12 +823,13 @@
                                 </div>
                                 <button type="button" onclick="app.desvincularResponsavel()" class="shrink-0 text-[10px] font-bold uppercase text-red-600 hover:bg-red-50 px-2 py-1.5 rounded-lg border border-red-100 transition outline-none">Desvincular</button>
                             </div>
-                            <div class="relative">
+                            <div id="responsavel-busca-wrap" class="relative">
                                 <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Buscar responsável</label>
                                 <input type="text" id="opBuscaResponsavel" oninput="app.onBuscaContatoModalInput('responsavel', this.value)" onfocus="app.onBuscaContatoModalFocus('responsavel')" placeholder="Nome, CPF, CNPJ ou telefone..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition bg-white">
                                 <div id="opBuscaRespResultados" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-border rounded-lg shadow-xl z-30 max-h-64 overflow-y-auto"></div>
                                 <p id="opBuscaRespStatus" class="text-[11px] text-textMuted mt-1"></p>
                             </div>
+                            <div id="responsavel-dados-wrap" class="hidden space-y-4">
                             <div>
                                 <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">CNPJ / CPF</label>
                                 <input type="text" id="opRespDocumento" oninput="this.value = window.ui.maskDoc(this.value); app.handleContatoFieldInput('responsavel', 'documento', this.value)" placeholder="Apenas números..." class="w-full border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono bg-white">
@@ -842,6 +862,7 @@
                                     </button>
                                 </div>
                             </div>
+                            </div>
                         </div>
                     </div>
 
@@ -853,8 +874,8 @@
                                 <input type="date" id="opVigencia" class="w-full border border-border rounded-md px-3 py-2 text-sm text-center outline-none focus:border-primary shadow-sm">
                             </div>
                             <div class="flex-1 text-center">
-                                <label class="text-xs text-textMuted mb-1 block font-semibold">Retorno:</label>
-                                <input type="date" id="opRetorno" class="w-full border border-border rounded-md px-3 py-2 text-sm text-center outline-none focus:border-primary shadow-sm">
+                                <label class="text-xs text-textMuted mb-1 block font-semibold">Retorno <span class="text-red-500">*</span></label>
+                                <input type="date" id="opRetorno" form="dealForm" required class="w-full border border-border rounded-md px-3 py-2 text-sm text-center outline-none focus:border-primary shadow-sm">
                             </div>
                             <div class="flex items-center justify-center pt-5">
                                 <label class="flex items-center gap-2 text-sm font-semibold cursor-pointer text-textMain">
@@ -896,9 +917,9 @@
                     </div>
 
                     <div id="modal-content-produtores" class="hidden space-y-10 max-w-2xl mx-auto text-center pt-6">
-                        
                         <div>
                             <h3 class="text-lg font-bold text-textMain mb-3">Gerente</h3>
+                            <p class="text-sm text-textMuted mb-3 max-w-lg mx-auto leading-snug">Corresponde ao gerente do cadastro do segurado vinculado a esta negociação.</p>
                             <div class="flex items-center justify-center gap-3">
                                 <div id="opGerenteAvatar" class="w-10 h-10 rounded-full bg-slate-200 border border-border flex items-center justify-center shadow-sm shrink-0 bg-cover bg-center">
                                     <i class="fa-solid fa-user text-textMuted"></i>
@@ -908,7 +929,6 @@
                                 </select>
                             </div>
                         </div>
-                        
                         <div class="grid grid-cols-2 gap-10 border-t border-border pt-10">
                             <div>
                                 <h3 class="text-lg font-bold text-textMain mb-3">Indicador</h3>
@@ -1481,6 +1501,12 @@
                 return v.substring(0, 15);
             },
 
+            tituloOportunidadeExibicao: (o) => {
+                const t = (o && o.nome_oportunidade != null) ? String(o.nome_oportunidade).trim() : '';
+                if (t) return t;
+                return (o && o.nome_segurado != null) ? String(o.nome_segurado).trim() : '';
+            },
+
             oportunidadeRamoExibicao: (o) => {
                 if (o.ramo_seguro != null && String(o.ramo_seguro).trim() !== '') {
                     return o.ramo_seguro;
@@ -2004,10 +2030,8 @@
                 document.getElementById('opId').value = '';
                 document.getElementById('contatoId').value = '';
                 document.getElementById('responsavelId').value = '';
-                document.getElementById('modal-header-nome').value = '';
                 app.resetBuscaContatoModal();
-                
-                document.getElementById('modal-header-status').innerText = 'NOVO NEGÓCIO';
+
                 const headerOpId = document.getElementById('modal-header-op-id');
                 if (headerOpId) {
                     headerOpId.innerText = '#-';
@@ -2029,7 +2053,9 @@
                     const userNaLista = app.corretores.find(c => c.id === app.user.id);
                     prodSel.value = userNaLista ? app.user.id : '';
                 }
-                ui.refreshProdutoresModalAvatars(); 
+                const grt = document.getElementById('opGerente');
+                if (grt) grt.value = '';
+                ui.refreshProdutoresModalAvatars();
                 
                 const defaultRamo = app.ramos.length > 0 ? app.ramos[0].nome : 'Automóvel';
                 ui.produtos = [{ 
@@ -2068,6 +2094,8 @@
                 document.querySelectorAll('#dealForm input:not([type="hidden"]), #dealForm select, #dealForm textarea').forEach((el) => {
                     el.disabled = true;
                 });
+                const nomeOpLock = document.getElementById('opNomeOportunidade');
+                if (nomeOpLock) nomeOpLock.disabled = true;
                 const pl = document.getElementById('produtos-list');
                 if (pl) {
                     pl.querySelectorAll('input, select').forEach((el) => { el.disabled = true; });
@@ -2092,6 +2120,8 @@
                 document.querySelectorAll('#dealForm input:not([type="hidden"]), #dealForm select, #dealForm textarea').forEach((el) => {
                     el.disabled = false;
                 });
+                const nomeOpUnlock = document.getElementById('opNomeOportunidade');
+                if (nomeOpUnlock) nomeOpUnlock.disabled = false;
                 const pl = document.getElementById('produtos-list');
                 if (pl) {
                     pl.querySelectorAll('input, select').forEach((el) => { el.disabled = false; });
@@ -2119,6 +2149,11 @@
                 document.getElementById('editContatoTelefone').value = c.telefone ? ui.maskPhone(c.telefone) : '';
                 document.getElementById('editContatoEmail').value = c.email || '';
                 document.getElementById('editContatoChatwoot').value = c.chatwoot_id || '';
+                const ecg = document.getElementById('editContatoGerente');
+                if (ecg) {
+                    ecg.value = c.gerente_id || '';
+                    ui.syncCorretorAvatar('editContatoGerente', 'editContatoGerenteAvatar');
+                }
                 
                 document.getElementById('contatoModal').classList.remove('hidden');
             },
@@ -2178,17 +2213,23 @@
                     headerOpId.classList.remove('hidden');
                 }
                 document.getElementById('contatoId').value = d.contato_id || '';
+
+                const nomeOpEl = document.getElementById('opNomeOportunidade');
+                if (nomeOpEl) {
+                    nomeOpEl.value = d.nome_oportunidade || '';
+                }
                 
                 document.getElementById('opDocumento').value = d.documento_contato ? ui.maskDoc(d.documento_contato) : ''; 
                 document.getElementById('opNome').value = d.nome_segurado;
-                document.getElementById('modal-header-nome').value = d.nome_segurado;
                 document.getElementById('opEmail').value = d.email_contato || '';
                 document.getElementById('opTelefone').value = d.telefone_contato ? ui.maskPhone(d.telefone_contato) : '';
                 document.getElementById('opChatwootId').value = d.chatwoot_id || '';
                 document.getElementById('opBuscaCliente').value = d.nome_segurado || '';
                 document.getElementById('opBuscaStatus').innerText = d.contato_id ? 'Segurado vinculado a um cadastro existente.' : '';
+                app.syncDealModalSeguradoHeader();
                 const buscaResultados = document.getElementById('opBuscaResultados');
                 if (buscaResultados) buscaResultados.classList.add('hidden');
+                app.setContatoModalView('segurado', d.contato_id ? 'dados' : 'busca');
 
                 const chkResp = document.getElementById('opResponsavelMesmo');
                 const blocoResp = document.getElementById('bloco-responsavel');
@@ -2205,6 +2246,7 @@
                     document.getElementById('opRespChatwootId').value = d.chatwoot_responsavel || rc?.chatwoot_id || '';
                     document.getElementById('opBuscaResponsavel').value = (d.nome_responsavel || rc?.nome || '');
                     document.getElementById('opBuscaRespStatus').innerText = 'Responsável vinculado a um cadastro existente.';
+                    app.setContatoModalView('responsavel', 'dados');
                 } else {
                     if (chkResp) chkResp.checked = true;
                     if (blocoResp) blocoResp.classList.add('hidden');
@@ -2218,6 +2260,7 @@
                     document.getElementById('opBuscaRespStatus').innerText = '';
                     const br = document.getElementById('opBuscaRespResultados');
                     if (br) br.classList.add('hidden');
+                    app.setContatoModalView('responsavel', 'busca');
                 }
                 
                 document.getElementById('opVigencia').value = d.vigencia || '';
@@ -2240,7 +2283,6 @@
                 document.getElementById('btnDeleteDeal').classList.remove('hidden');
                 
                 if (d.status === 'ganho') {
-                    document.getElementById('modal-header-status').innerText = 'NEGÓCIO FECHADO';
                     badgeStatus.innerText = 'GANHO';
                     badgeStatus.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-700';
                     badgeStatus.classList.remove('hidden');
@@ -2260,7 +2302,6 @@
                     btnGanhar.classList.add('hidden');
                     btnPerder.classList.add('hidden');
                 } else if (d.status === 'perdido') {
-                    document.getElementById('modal-header-status').innerText = 'NEGÓCIO FECHADO';
                     badgeStatus.innerText = 'PERDIDO';
                     badgeStatus.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-red-100 text-red-700';
                     badgeStatus.classList.remove('hidden');
@@ -2277,12 +2318,15 @@
                     btnGanhar.classList.add('hidden');
                     btnPerder.classList.add('hidden');
                 } else {
-                    document.getElementById('modal-header-status').innerText = 'OPORTUNIDADE ABERTA';
                     badgeStatus.classList.add('hidden');
                     selEtapa.disabled = false;
                     selEtapa.value = d.etapa_nome || '';
                     
-                    btnGanhar.classList.remove('hidden');
+                    if (d.contato_id) {
+                        btnGanhar.classList.remove('hidden');
+                    } else {
+                        btnGanhar.classList.add('hidden');
+                    }
                     btnPerder.classList.remove('hidden');
                 }
 
@@ -2291,7 +2335,12 @@
                     opStatusFechadoEl.value = d.status === 'ganho' ? 'ganho' : 'perdido';
                 }
 
-                document.getElementById('opGerente').value = d.gerente_id || '';
+                const ctGerente = d.contato_id ? app.contatos.find(c => c.id == d.contato_id) : null;
+                const selG = document.getElementById('opGerente');
+                if (selG) {
+                    selG.value = ctGerente?.gerente_id || '';
+                }
+                ui.syncCorretorAvatar('opGerente', 'opGerenteAvatar');
                 document.getElementById('opIndicador').value = d.indicador || '';
                 document.getElementById('opProdutor').value = d.corretor_id || '';
                 ui.refreshProdutoresModalAvatars();
@@ -2429,7 +2478,7 @@
                     }
                 }
                 
-                el.className = `p-3 rounded-xl border ${colorClasses} shadow-sm cursor-pointer hover:shadow-md transition group w-full h-[126px] min-h-[126px] max-h-[126px] flex flex-col overflow-hidden`;
+                el.className = `p-3 rounded-xl border ${colorClasses} shadow-sm cursor-pointer hover:shadow-md transition group w-full min-h-[126px] flex flex-col`;
                 el.dataset.id = d.id;
                 el.onclick = () => window.ui.editDealById(d.id);
                 
@@ -2468,7 +2517,12 @@
                 }
 
                 const vendedorNome = (d.nome_corretor || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-                const seguradoNome = (d.nome_segurado || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                const tituloCard = (ui.tituloOportunidadeExibicao(d) || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                const nomeSegPuro = (d.nome_segurado || '').trim();
+                const nomeOpTrim = (d.nome_oportunidade != null) ? String(d.nome_oportunidade).trim() : '';
+                const subSegurado = (nomeOpTrim && nomeSegPuro && window.app.normalizeText(nomeOpTrim) !== window.app.normalizeText(nomeSegPuro))
+                    ? nomeSegPuro.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+                    : '';
                 const ramosEsc = (ramosText || '').replace(/"/g, '&quot;');
                 const segEsc = (d.seguradora || '-').replace(/&/g, '&amp;').replace(/</g, '&lt;');
                 let avatarCell = '';
@@ -2484,21 +2538,22 @@
                         <span class="text-[8px] font-bold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 truncate max-w-[45%]" title="${ramosEsc}">${ramosText}</span>
                         ${rightBadge}
                     </div>
-                    <h4 class="font-bold text-textMain text-sm leading-snug truncate shrink-0">${seguradoNome}</h4>
+                    <h4 class="font-bold text-textMain text-sm leading-snug truncate shrink-0">${tituloCard || '—'}</h4>
+                    ${subSegurado ? `<p class="text-[10px] text-textMuted truncate shrink-0 leading-snug mt-0.5">${subSegurado}</p>` : ''}
                     <div class="border-t border-slate-200 shrink-0 my-1.5"></div>
-                    <div class="flex justify-between items-end gap-2 min-h-0 flex-1 pt-0.5">
-                        <div class="flex items-end gap-2 min-w-0">
+                    <div class="flex justify-between items-center gap-2 shrink-0 pt-0.5">
+                        <div class="flex items-center gap-2 min-w-0">
                             ${avatarCell}
                             <div class="min-w-0 text-left">
-                                <p class="text-[9px] text-textMain font-semibold truncate leading-tight">Vendedor: ${vendedorNome || '—'}</p>
-                                <p class="text-[8px] text-textMuted flex items-center gap-1 truncate leading-tight mt-0.5">
+                                <p class="text-[9px] text-textMain font-semibold truncate leading-snug">Vendedor: ${vendedorNome || '—'}</p>
+                                <p class="text-[8px] text-textMuted flex items-center gap-1 truncate leading-snug mt-0.5">
                                     <i class="fa-regular fa-building shrink-0"></i><span class="truncate">${segEsc}</span>
                                 </p>
                             </div>
                         </div>
-                        <div class="text-right shrink-0">
-                            <p class="text-[10px] font-bold text-emerald-600 tracking-wide leading-none mb-0.5">Comissão do negócio</p>
-                            <p class="font-extrabold text-emerald-600 text-xs leading-none">${formatBRL(val)}</p>
+                        <div class="text-right shrink-0 self-center">
+                            <p class="text-[10px] font-bold text-emerald-600 tracking-wide leading-tight mb-0.5">Comissão do negócio</p>
+                            <p class="font-extrabold text-emerald-600 text-xs leading-tight">${formatBRL(val)}</p>
                         </div>
                     </div>
                 `;
@@ -2585,9 +2640,15 @@
                             ? `<td class="px-6 py-4 text-center text-base hover:opacity-80" title="Conferir fechamento ou exclusão"><span onclick="event.stopPropagation(); app.toggleOportunidadeChecked(${d.id})"><i class="fa-solid ${d.is_checked ? 'fa-circle-check text-emerald-600' : 'fa-clock text-amber-500'}"></i></span></td>`
                             : `<td class="px-6 py-4 text-center text-base text-textMuted" title="Somente gerente altera"><i class="fa-solid ${d.is_checked ? 'fa-circle-check text-emerald-600' : 'fa-minus text-slate-300'}"></i></td>`;
 
+                    const titList = app.escapeHtml(ui.tituloOportunidadeExibicao(d) || '—');
+                    const nomeOpList = (d.nome_oportunidade != null) ? String(d.nome_oportunidade).trim() : '';
+                    const nomeSegList = (d.nome_segurado || '').trim();
+                    const subList = (nomeOpList && nomeSegList && app.normalizeText(nomeOpList) !== app.normalizeText(nomeSegList))
+                        ? `<div class="text-xs font-normal text-textMuted mt-0.5">${app.escapeHtml(nomeSegList)}</div>` : '';
+
                     return `
                     <tr class="transition cursor-pointer ${bgRowClass}" onclick="ui.editDealById(${d.id})">
-                        <td class="px-6 py-4 font-bold text-textMain">${d.nome_segurado}</td>
+                        <td class="px-6 py-4 font-bold text-textMain"><span class="block">${titList}</span>${subList}</td>
                         <td class="px-6 py-4 text-textMuted text-xs font-semibold">${ramosText}</td>
                         <td class="px-6 py-4"><span class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider">${d.etapa_nome}</span></td>
                         <td class="px-6 py-4">${statusCellInner}</td>
@@ -2697,6 +2758,8 @@
         const MODAL_CONTATO_FIELDS = {
             segurado: {
                 busca: 'opBuscaCliente',
+                buscaWrap: 'segurado-busca-wrap',
+                dadosWrap: 'segurado-dados-wrap',
                 resultados: 'opBuscaResultados',
                 status: 'opBuscaStatus',
                 hiddenId: 'contatoId',
@@ -2709,6 +2772,8 @@
             },
             responsavel: {
                 busca: 'opBuscaResponsavel',
+                buscaWrap: 'responsavel-busca-wrap',
+                dadosWrap: 'responsavel-dados-wrap',
                 resultados: 'opBuscaRespResultados',
                 status: 'opBuscaRespStatus',
                 hiddenId: 'responsavelId',
@@ -2948,28 +3013,21 @@
                         app.contatos = [];
                     }
 
-                    const gerenteSelect = document.getElementById('opGerente');
-                    const produtorSelect = document.getElementById('opProdutor');
                     const filtroSelect = document.getElementById('filter-corretor');
                     let optionsHtml = '';
-                    
                     app.corretores.forEach(c => {
-                        let displayName = c.nome_completo || 'Corretor';
+                        const displayName = c.nome_completo || 'Corretor';
                         optionsHtml += `<option value="${c.id}">${displayName}</option>`;
                     });
-                    
-                    if (gerenteSelect) {
-                        gerenteSelect.innerHTML = '<option value="">Selecione o Gerente...</option>' + optionsHtml;
-                    }
-                    if (produtorSelect) {
-                        produtorSelect.innerHTML = '<option value="">Selecione o Produtor...</option>' + optionsHtml;
-                    }
-                    if (gerenteSelect) {
-                        gerenteSelect.onchange = () => ui.syncCorretorAvatar('opGerente', 'opGerenteAvatar');
-                    }
-                    if (produtorSelect) {
-                        produtorSelect.onchange = () => ui.syncCorretorAvatar('opProdutor', 'opProdutorAvatar');
-                    }
+                    const fillCorretorSelect = (selId, avId, placeholder) => {
+                        const el = document.getElementById(selId);
+                        if (!el) return;
+                        el.innerHTML = `<option value="">${placeholder}</option>` + optionsHtml;
+                        el.onchange = () => ui.syncCorretorAvatar(selId, avId);
+                    };
+                    fillCorretorSelect('opGerente', 'opGerenteAvatar', 'Selecione o Gerente...');
+                    fillCorretorSelect('editContatoGerente', 'editContatoGerenteAvatar', 'Selecione o Gerente...');
+                    fillCorretorSelect('opProdutor', 'opProdutorAvatar', 'Selecione o Produtor...');
                     
                     // SPRINT 4: Identificando o Perfil do Usuário Logado
                     const perfil = app.corretores.find(c => c.id === app.user.id);
@@ -3052,10 +3110,104 @@
                     document.getElementById('loginOverlay').classList.add('hidden');
                     app.setupGlobalSearch();
                     
-                    app.sb.channel('db-changes').on('postgres_changes', { event: '*', schema: 'public' }, () => {
-                        app.loadData();
-                        app.loadContatos();
-                    }).subscribe();
+                    const realtimeDebounceMs = 400;
+                    app._realtimeBoardDebounceMs = realtimeDebounceMs;
+                    app._realtimePendingEvents = [];
+                    const scheduleRealtimeSync = (payload) => {
+                        app._realtimePendingEvents.push(payload);
+                        if (app._realtimeBoardDebounceTimer) {
+                            clearTimeout(app._realtimeBoardDebounceTimer);
+                        }
+                        app._realtimeBoardDebounceTimer = setTimeout(async () => {
+                            app._realtimeBoardDebounceTimer = null;
+                            const events = [...app._realtimePendingEvents];
+                            app._realtimePendingEvents = [];
+                            
+                            const now = Date.now();
+                            const until = app._suppressRealtimeBoardSyncUntil || 0;
+                            const suppressed = until && now < until;
+
+                            if (app._realtimeSyncApplying) {
+                                app._realtimePendingEvents.unshift(...events);
+                                if (!app._realtimeBoardDebounceTimer) {
+                                    app._realtimeBoardDebounceTimer = setTimeout(() => scheduleRealtimeSync({ _dummy: true }), 200);
+                                }
+                                return;
+                            }
+
+                            if (suppressed) {
+                                return;
+                            }
+                            app._realtimeSyncApplying = true;
+                            
+                            try {
+                                const validEvents = events.filter(e => !e._dummy);
+                                if (validEvents.length === 0) return;
+
+                                const isContatoChanged = validEvents.some(e => e.table === 'contatos');
+                                if (isContatoChanged) {
+                                    await app.loadContatos();
+                                }
+                                
+                                const viewListActive = !document.getElementById('board-lista').classList.contains('hidden');
+                                if (viewListActive) {
+                                    // Se estiver na lista ou precisar atualizar tudo
+                                    await app.loadData();
+                                } else {
+                                    // Modo incremental no Kanban
+                                    const opEvents = validEvents.filter(e => e.table === 'oportunidades');
+                                    let fullReloadNeeded = false;
+                                    
+                                    for (const ev of opEvents) {
+                                        try {
+                                            app.syncKanbanOpFromRecord(ev);
+                                        } catch (err) {
+                                            console.warn('[Realtime] Falha no sync incremental, forçando reload.', err);
+                                            fullReloadNeeded = true;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if (fullReloadNeeded) {
+                                        await app.loadData();
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('[Realtime] Falha ao sincronizar:', e);
+                            } finally {
+                                app._realtimeSyncApplying = false;
+                            }
+                        }, realtimeDebounceMs);
+                    };
+
+                    const realtimeChannel = app.sb.channel('db-changes')
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'oportunidades' }, scheduleRealtimeSync)
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'contatos' }, scheduleRealtimeSync);
+
+                    realtimeChannel.subscribe((status, err) => {
+                        if (status === 'SUBSCRIBED') {
+                            console.info('[Realtime] Canal db-changes inscrito (oportunidades, contatos).');
+                        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                            console.warn('[Realtime]', status, err || '');
+                        }
+                    });
+
+                    if (!app._visibilitySyncBound) {
+                        app._visibilitySyncBound = true;
+                        document.addEventListener('visibilitychange', () => {
+                            if (document.visibilityState !== 'visible' || !app.sb || !app.user) {
+                                return;
+                            }
+                            (async () => {
+                                try {
+                                    await app.loadContatos();
+                                    await app.loadData();
+                                } catch (e) {
+                                    console.error('[Visibilidade] Falha ao sincronizar:', e);
+                                }
+                            })();
+                        });
+                    }
 
                 } catch (error) {
                     app.showLoginLoading(false);
@@ -3207,6 +3359,116 @@
 
             normalizeDigits: (v) => (v || '').toString().replace(/\D/g, ''),
 
+            /** Somente dígitos para validação de documento (CPF/CNPJ). */
+            normalizeDocumento: (v) => app.normalizeDigits(v),
+
+            isValidCPF: (digits) => {
+                const d = typeof digits === 'string' ? digits : '';
+                if (!d || d.length !== 11 || /^(\d)\1{10}$/.test(d)) {
+                    return false;
+                }
+                let sum = 0;
+                for (let i = 0; i < 9; i++) {
+                    sum += parseInt(d[i], 10) * (10 - i);
+                }
+                let r = sum % 11;
+                const dv1 = r < 2 ? 0 : 11 - r;
+                if (dv1 !== parseInt(d[9], 10)) {
+                    return false;
+                }
+                sum = 0;
+                for (let i = 0; i < 10; i++) {
+                    sum += parseInt(d[i], 10) * (11 - i);
+                }
+                r = sum % 11;
+                const dv2 = r < 2 ? 0 : 11 - r;
+                return dv2 === parseInt(d[10], 10);
+            },
+
+            isValidCNPJ: (digits) => {
+                const d = typeof digits === 'string' ? digits : '';
+                if (!d || d.length !== 14 || /^(\d)\1{13}$/.test(d)) {
+                    return false;
+                }
+                const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+                let sum = 0;
+                for (let i = 0; i < 12; i++) {
+                    sum += parseInt(d[i], 10) * w1[i];
+                }
+                let r = sum % 11;
+                const dv1 = r < 2 ? 0 : 11 - r;
+                if (dv1 !== parseInt(d[12], 10)) {
+                    return false;
+                }
+                const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+                sum = 0;
+                for (let i = 0; i < 13; i++) {
+                    sum += parseInt(d[i], 10) * w2[i];
+                }
+                r = sum % 11;
+                const dv2 = r < 2 ? 0 : 11 - r;
+                return dv2 === parseInt(d[13], 10);
+            },
+
+            /**
+             * Valida documento brasileiro para cadastro.
+             * @returns {string|null} Mensagem de erro ou null se OK.
+             */
+            documentoCadastroError: (valorCampo, opts = {}) => {
+                const obrigatorio = !!opts.obrigatorio;
+                const prefixo = opts.prefixo ? String(opts.prefixo).trim() : '';
+                const d = app.normalizeDocumento(valorCampo);
+                const pre = prefixo ? `${prefixo}: ` : '';
+                if (!d) {
+                    return obrigatorio ? `${pre}CPF/CNPJ é obrigatório.` : null;
+                }
+                if (d.length === 11) {
+                    return app.isValidCPF(d) ? null : `${pre}CPF inválido (verifique os dígitos).`;
+                }
+                if (d.length === 14) {
+                    return app.isValidCNPJ(d) ? null : `${pre}CNPJ inválido (verifique os dígitos).`;
+                }
+                return `${pre}Informe CPF (11 dígitos) ou CNPJ (14 dígitos).`;
+            },
+
+            syncDealModalSeguradoHeader: () => {
+                const hidden = document.getElementById('modal-header-nome');
+                const wrap = document.getElementById('deal-header-segurado-wrap');
+                const nomeEl = document.getElementById('modal-header-nome-display');
+                const sepEl = document.getElementById('modal-header-segurado-sep');
+                const contatoEl = document.getElementById('modal-header-segurado-contato');
+                if (!wrap || !nomeEl || !contatoEl) {
+                    return;
+                }
+                const nome = (document.getElementById('opNome')?.value || '').trim();
+                const tel = (document.getElementById('opTelefone')?.value || '').trim();
+                const em = (document.getElementById('opEmail')?.value || '').trim();
+                if (!nome) {
+                    if (hidden) hidden.value = '';
+                    wrap.classList.add('hidden');
+                    nomeEl.textContent = '';
+                    contatoEl.textContent = '';
+                    contatoEl.classList.add('hidden');
+                    if (sepEl) sepEl.classList.add('hidden');
+                    return;
+                }
+                if (hidden) hidden.value = nome;
+                wrap.classList.remove('hidden');
+                nomeEl.textContent = nome;
+                const parts = [];
+                if (tel) parts.push(tel);
+                if (em) parts.push(em);
+                if (parts.length) {
+                    contatoEl.textContent = parts.join(' · ');
+                    contatoEl.classList.remove('hidden');
+                    if (sepEl) sepEl.classList.remove('hidden');
+                } else {
+                    contatoEl.textContent = '';
+                    contatoEl.classList.add('hidden');
+                    if (sepEl) sepEl.classList.add('hidden');
+                }
+            },
+
             normalizeText: (v) => (v || '').toString().trim().toLowerCase(),
 
             escapeHtml: (v) => (v || '').toString()
@@ -3296,6 +3558,10 @@
                     if (qText && nomeSeg.includes(qText)) {
                         score = Math.max(score, 85);
                     }
+                    const nomeTituloOp = app.normalizeText(op.nome_oportunidade || '');
+                    if (qText && nomeTituloOp.includes(qText)) {
+                        score = Math.max(score, 86);
+                    }
                     if (qText && nomeCt && nomeCt.includes(qText)) {
                         score = Math.max(score, 82);
                     }
@@ -3320,7 +3586,7 @@
                 return (app.oportunidades || [])
                     .map(op => ({ op, score: scoreOp(op) }))
                     .filter(x => x.score > 0)
-                    .sort((a, b) => b.score - a.score || String(a.op.nome_segurado || '').localeCompare(String(b.op.nome_segurado || ''), 'pt-BR'))
+                    .sort((a, b) => b.score - a.score || String(ui.tituloOportunidadeExibicao(a.op) || '').localeCompare(String(ui.tituloOportunidadeExibicao(b.op) || ''), 'pt-BR'))
                     .slice(0, 8)
                     .map(x => x.op);
             },
@@ -3370,11 +3636,13 @@
                     boxOps.innerHTML = '<p class="text-xs text-textMuted py-2 px-1">Nenhuma oportunidade neste funil corresponde ao termo.</p>';
                 } else {
                     boxOps.innerHTML = opsMatches.map(op => {
-                        const title = app.escapeHtml(op.nome_segurado || 'Sem nome');
+                        const title = app.escapeHtml(ui.tituloOportunidadeExibicao(op) || 'Sem nome');
                         const etapa = app.escapeHtml(op.etapa_nome || '—');
                         const ct = op.contato_id ? app.contatos.find(c => c.id === op.contato_id) : null;
                         const subParts = [];
-                        if (ct && ct.nome && app.normalizeText(ct.nome) !== app.normalizeText(op.nome_segurado)) {
+                        const nomeTit = (op.nome_oportunidade != null) ? String(op.nome_oportunidade).trim() : '';
+                        const nomeAlinha = app.normalizeText(op.nome_segurado || '');
+                        if (ct && ct.nome && app.normalizeText(ct.nome) !== nomeAlinha && !(nomeTit && app.normalizeText(ct.nome) === app.normalizeText(nomeTit))) {
                             subParts.push(app.escapeHtml(ct.nome));
                         }
                         if (op.documento_contato || ct?.documento) {
@@ -3463,10 +3731,22 @@
             onBuscaContatoModalFocus: (role) => {
                 const f = MODAL_CONTATO_FIELDS[role];
                 if (!f) return;
+                const buscaWrap = document.getElementById(f.buscaWrap);
+                if (buscaWrap && buscaWrap.classList.contains('hidden')) return;
                 const termo = document.getElementById(f.busca)?.value || '';
                 if (termo.trim()) {
                     app.onBuscaContatoModalInput(role, termo);
                 }
+            },
+
+            setContatoModalView: (role, view = 'busca') => {
+                const f = MODAL_CONTATO_FIELDS[role];
+                if (!f) return;
+                const buscaWrap = document.getElementById(f.buscaWrap);
+                const dadosWrap = document.getElementById(f.dadosWrap);
+                const mostrarDados = view === 'dados';
+                if (buscaWrap) buscaWrap.classList.toggle('hidden', mostrarDados);
+                if (dadosWrap) dadosWrap.classList.toggle('hidden', !mostrarDados);
             },
 
             onBuscaContatoModalInput: (role, termo) => {
@@ -3564,10 +3844,28 @@
                 const f = MODAL_CONTATO_FIELDS[role];
                 if (!f) return;
                 document.getElementById(f.hiddenId).value = '';
+                document.getElementById(f.busca).value = '';
+                document.getElementById(f.nome).value = '';
+                document.getElementById(f.documento).value = '';
+                document.getElementById(f.telefone).value = '';
+                document.getElementById(f.email).value = '';
+                document.getElementById(f.chatwoot).value = '';
+                if (role === 'segurado') {
+                    app.syncDealModalSeguradoHeader();
+                    const grt = document.getElementById('opGerente');
+                    if (grt) {
+                        grt.value = '';
+                        ui.syncCorretorAvatar('opGerente', 'opGerenteAvatar');
+                    }
+                }
                 const box = document.getElementById(f.resultados);
-                if (box) box.classList.add('hidden');
+                if (box) {
+                    box.classList.add('hidden');
+                    box.innerHTML = '';
+                }
                 const status = document.getElementById(f.status);
                 if (status) status.innerText = 'Novo cliente: os dados serão cadastrados ao salvar.';
+                app.setContatoModalView(role, 'dados');
             },
 
             selecionarContatoModal: (role, contatoId) => {
@@ -3584,7 +3882,20 @@
                 document.getElementById(f.email).value = c.email || '';
                 document.getElementById(f.chatwoot).value = c.chatwoot_id || '';
                 if (role === 'segurado') {
-                    document.getElementById('modal-header-nome').value = c.nome || '';
+                    const oid = document.getElementById('opId')?.value;
+                    const btnGh = document.getElementById('btnGanharDeal');
+                    if (btnGh && oid) {
+                        const cur = app.oportunidades.find(o => String(o.id) === String(oid));
+                        if (cur && cur.status === 'aberto' && !cur.excluido) {
+                            btnGh.classList.remove('hidden');
+                        }
+                    }
+                    app.syncDealModalSeguradoHeader();
+                    const grt = document.getElementById('opGerente');
+                    if (grt) {
+                        grt.value = c.gerente_id || '';
+                        ui.syncCorretorAvatar('opGerente', 'opGerenteAvatar');
+                    }
                 }
                 document.getElementById(f.busca).value = c.nome || '';
 
@@ -3595,6 +3906,7 @@
                     const label = role === 'segurado' ? 'Segurado' : 'Responsável';
                     status.innerText = `${label} vinculado: ${c.nome || 'sem nome'}.`;
                 }
+                app.setContatoModalView(role, 'dados');
 
                 app.isSelectingContatoModalRole = null;
             },
@@ -3612,6 +3924,14 @@
                 const status = document.getElementById(f.status);
                 if (status && tinhaVinculo) {
                     status.innerText = 'Contato desvinculado por edição manual. Será salvo como novo cadastro.';
+                }
+
+                if (role === 'segurado' && tinhaVinculo) {
+                    const grt = document.getElementById('opGerente');
+                    if (grt) {
+                        grt.value = '';
+                        ui.syncCorretorAvatar('opGerente', 'opGerenteAvatar');
+                    }
                 }
 
                 if (fieldName === 'nome' || fieldName === 'documento' || fieldName === 'telefone') {
@@ -3636,11 +3956,27 @@
                 }
                 const status = document.getElementById(f.status);
                 if (status) status.innerText = '';
+                app.setContatoModalView(role, 'busca');
+                if (role === 'segurado') {
+                    app.syncDealModalSeguradoHeader();
+                    const grt = document.getElementById('opGerente');
+                    if (grt) {
+                        grt.value = '';
+                        ui.syncCorretorAvatar('opGerente', 'opGerenteAvatar');
+                    }
+                }
             },
 
             desvincularSegurado: () => {
                 app.limparCamposModalRole('segurado');
-                document.getElementById('modal-header-nome').value = '';
+                const oid = document.getElementById('opId')?.value;
+                const btnGh = document.getElementById('btnGanharDeal');
+                if (btnGh && oid) {
+                    const cur = app.oportunidades.find(o => String(o.id) === String(oid));
+                    if (cur && cur.status === 'aberto' && !cur.excluido) {
+                        btnGh.classList.add('hidden');
+                    }
+                }
             },
 
             desvincularResponsavel: () => {
@@ -3649,12 +3985,21 @@
 
             toggleResponsavelMesmo: () => {
                 const mesmo = document.getElementById('opResponsavelMesmo').checked;
+                const cid = document.getElementById('contatoId')?.value;
+                const tituloOp = (document.getElementById('opNomeOportunidade')?.value || '').trim();
+                if (!mesmo && !cid && tituloOp) {
+                    document.getElementById('opResponsavelMesmo').checked = true;
+                    Swal.fire('Atenção', 'Sem segurado vinculado, mantenha marcado que o responsável é o mesmo que o segurado até completar o cadastro.', 'info');
+                    return;
+                }
                 const bloco = document.getElementById('bloco-responsavel');
                 if (mesmo) {
                     if (bloco) bloco.classList.add('hidden');
                     app.desvincularResponsavel();
                 } else {
                     if (bloco) bloco.classList.remove('hidden');
+                    const respId = document.getElementById('responsavelId')?.value;
+                    app.setContatoModalView('responsavel', respId ? 'dados' : 'busca');
                 }
             },
 
@@ -3951,6 +4296,103 @@
                 }
             },
 
+            /** Evita segundo redesenho quando o Realtime ecoa uma alteração feita nesta aba (debounce + tempo de loadData). */
+            suppressRealtimeBoardSync: (ms) => {
+                const deb = app._realtimeBoardDebounceMs ?? 400;
+                const delta = ms !== undefined && ms !== null ? ms : deb + 1000;
+                const until = Date.now() + delta;
+                const prev = app._suppressRealtimeBoardSyncUntil || 0;
+                app._suppressRealtimeBoardSyncUntil = Math.max(prev, until);
+            },
+
+            enrichOp: (op) => {
+                const ct = app.contatos.find(c => c.id === op.contato_id);
+                if (ct) {
+                    op.documento_contato = ct.documento;
+                    op.chatwoot_id = ct.chatwoot_id;
+                    op.email_contato = ct.email;          
+                    op.telefone_contato = ct.telefone;    
+                }
+
+                const respCt = op.responsavel_id ? app.contatos.find(c => c.id === op.responsavel_id) : null;
+                if (respCt) {
+                    op.nome_responsavel = respCt.nome;
+                    op.documento_responsavel = respCt.documento;
+                    op.telefone_responsavel = respCt.telefone;
+                    op.email_responsavel = respCt.email;
+                    op.chatwoot_responsavel = respCt.chatwoot_id;
+                }
+                
+                const cor = app.corretores.find(c => c.id === op.corretor_id);
+                if (cor) {
+                    op.nome_corretor = cor.nome_completo;
+                    op.avatar_corretor = cor.avatar_url || null;
+                } else {
+                    op.avatar_corretor = null;
+                }
+                return op;
+            },
+
+            applyOpFilters: (o) => {
+                if (String(o.funil_id) !== String(config.activePipeline)) {
+                    return false;
+                }
+                const fStatus = document.getElementById('filter-status')?.value;
+                if (fStatus === 'excluido') {
+                    if (!o.excluido) return false;
+                } else {
+                    if (o.excluido) return false;
+                    if (fStatus && fStatus !== 'excluido' && (o.status || 'aberto') !== fStatus) {
+                        return false;
+                    }
+                }
+
+                if (!app.isGerente && app.user && app.user.id) {
+                    if (o.corretor_id !== app.user.id) return false;
+                }
+
+                const fDataIni = document.getElementById('filter-data-ini')?.value;
+                const fDataFim = document.getElementById('filter-data-fim')?.value;
+                const fDataCampo = document.getElementById('filter-data-campo')?.value || 'vigencia';
+                if (fDataIni || fDataFim) {
+                    const raw = o[fDataCampo];
+                    if (!raw) return false;
+                    const d = String(raw).slice(0, 10);
+                    if (fDataIni && d < fDataIni) return false;
+                    if (fDataFim && d > fDataFim) return false;
+                }
+
+                const fEtapa = document.getElementById('filter-etapa')?.value;
+                if (fEtapa && o.etapa_nome !== fEtapa) return false;
+
+                const fSeguradora = document.getElementById('filter-seguradora')?.value;
+                if (fSeguradora && (o.seguradora || '') !== fSeguradora) return false;
+
+                const fNomeCliente = (document.getElementById('filter-nome-cliente')?.value || '').trim().toLowerCase();
+                if (fNomeCliente) {
+                    const hay = `${o.nome_segurado || ''} ${o.nome_oportunidade || ''}`.toLowerCase();
+                    if (!hay.includes(fNomeCliente)) return false;
+                }
+
+                const fOrigem = document.getElementById('filter-origem')?.value;
+                if (fOrigem && o.origem !== fOrigem) return false;
+
+                const fCorretor = document.getElementById('filter-corretor')?.value;
+                if (fCorretor && o.corretor_id !== fCorretor) return false;
+
+                const fConf = document.getElementById('filter-conferencia')?.value;
+                if (fConf === 'nao' && o.is_checked) return false;
+                if (fConf === 'sim' && o.is_checked !== true) return false;
+
+                const fRamo = document.getElementById('filter-ramo')?.value;
+                if (fRamo) {
+                    const matchRamo = o.ramo_seguro === fRamo || (o.produtos && Array.isArray(o.produtos) && o.produtos.some(p => p.ramo === fRamo));
+                    if (!matchRamo) return false;
+                }
+
+                return true;
+            },
+
             loadData: async () => {
                 try {
                     const {data: etapas, error: errEtapas} = await app.sb.from('etapas_funil').select('*').eq('funil_id', config.activePipeline).order('ordem');
@@ -3985,93 +4427,11 @@
                         console.error("Erro oportunidades:", errOps);
                     }
                     
-                    let baseOps = (ops || []).filter(o => o.funil_id == config.activePipeline);
+                    let baseOps = ops || [];
                     
-                    baseOps.forEach(op => {
-                        const ct = app.contatos.find(c => c.id === op.contato_id);
-                        if (ct) {
-                            op.documento_contato = ct.documento;
-                            op.chatwoot_id = ct.chatwoot_id;
-                            op.email_contato = ct.email;          
-                            op.telefone_contato = ct.telefone;    
-                        }
+                    baseOps.forEach(op => app.enrichOp(op));
 
-                        const respCt = op.responsavel_id ? app.contatos.find(c => c.id === op.responsavel_id) : null;
-                        if (respCt) {
-                            op.nome_responsavel = respCt.nome;
-                            op.documento_responsavel = respCt.documento;
-                            op.telefone_responsavel = respCt.telefone;
-                            op.email_responsavel = respCt.email;
-                            op.chatwoot_responsavel = respCt.chatwoot_id;
-                        }
-                        
-                        const cor = app.corretores.find(c => c.id === op.corretor_id);
-                        if (cor) {
-                            op.nome_corretor = cor.nome_completo;
-                            op.avatar_corretor = cor.avatar_url || null;
-                        } else {
-                            op.avatar_corretor = null;
-                        }
-                    });
-
-                    const fDataIni = document.getElementById('filter-data-ini')?.value;
-                    const fDataFim = document.getElementById('filter-data-fim')?.value;
-                    const fDataCampo = document.getElementById('filter-data-campo')?.value || 'vigencia';
-                    const fEtapa = document.getElementById('filter-etapa')?.value;
-                    const fRamo = document.getElementById('filter-ramo')?.value;
-                    const fOrigem = document.getElementById('filter-origem')?.value;
-                    const fCorretor = document.getElementById('filter-corretor')?.value;
-                    const fConf = document.getElementById('filter-conferencia')?.value;
-                    const fSeguradora = document.getElementById('filter-seguradora')?.value;
-                    const fNomeCliente = (document.getElementById('filter-nome-cliente')?.value || '').trim().toLowerCase();
-
-                    if (fDataIni || fDataFim) {
-                        baseOps = baseOps.filter(o => {
-                            const raw = o[fDataCampo];
-                            if (!raw) {
-                                return false;
-                            }
-                            const d = String(raw).slice(0, 10);
-                            if (fDataIni && d < fDataIni) {
-                                return false;
-                            }
-                            if (fDataFim && d > fDataFim) {
-                                return false;
-                            }
-                            return true;
-                        });
-                    }
-                    if (fEtapa) {
-                        baseOps = baseOps.filter(o => o.etapa_nome === fEtapa);
-                    }
-                    if (fStatus && fStatus !== 'excluido') {
-                        baseOps = baseOps.filter(o => (o.status || 'aberto') === fStatus);
-                    }
-                    if (fSeguradora) {
-                        baseOps = baseOps.filter(o => (o.seguradora || '') === fSeguradora);
-                    }
-                    if (fNomeCliente) {
-                        baseOps = baseOps.filter(o => String(o.nome_segurado || '').toLowerCase().includes(fNomeCliente));
-                    }
-                    if (fOrigem) {
-                        baseOps = baseOps.filter(o => o.origem === fOrigem);
-                    }
-                    if (fCorretor) {
-                        baseOps = baseOps.filter(o => o.corretor_id === fCorretor);
-                    }
-                    if (fConf === 'nao') {
-                        baseOps = baseOps.filter(o => !o.is_checked);
-                    }
-                    if (fConf === 'sim') {
-                        baseOps = baseOps.filter(o => o.is_checked === true);
-                    }
-                    
-                    if (fRamo) {
-                        baseOps = baseOps.filter(o => o.ramo_seguro === fRamo ||
-                            (o.produtos && Array.isArray(o.produtos) && o.produtos.some(p => p.ramo === fRamo)));
-                    }
-
-                    app.oportunidades = baseOps;
+                    app.oportunidades = baseOps.filter(o => app.applyOpFilters(o));
 
                     app.sortList(app.currentSortCol, true);
                     
@@ -4131,10 +4491,17 @@
                         return app.currentSortAsc ? ca : -ca;
                     }
                     
-                    if (valA < valB) return app.currentSortAsc ? -1 : 1;
-                    if (valA > valB) return app.currentSortAsc ? 1 : -1;
-                    return 0;
-                });
+                    if (col === 'nome_segurado') {
+                        const na = String(ui.tituloOportunidadeExibicao(a) || '');
+                        const nb = String(ui.tituloOportunidadeExibicao(b) || '');
+                        const c = na.localeCompare(nb, 'pt-BR');
+                        return app.currentSortAsc ? c : -c;
+                    }
+
+                if (valA < valB) return app.currentSortAsc ? -1 : 1;
+                if (valA > valB) return app.currentSortAsc ? 1 : -1;
+                return 0;
+            });
                 
                 ui.renderListTable();
             },
@@ -4155,6 +4522,98 @@
                         }
                     }
                 });
+            },
+
+            syncKanbanOpFromRecord: (payload) => {
+                const { eventType, new: newRec, old: oldRec } = payload;
+                const id = newRec ? newRec.id : (oldRec ? oldRec.id : null);
+                if (!id) return;
+
+                const existingIdx = app.oportunidades.findIndex(o => String(o.id) === String(id));
+                const existingEl = document.querySelector(`.kanban-list [data-id="${id}"]`);
+
+                if (eventType === 'DELETE') {
+                    if (existingIdx > -1) app.oportunidades.splice(existingIdx, 1);
+                    if (existingEl) existingEl.remove();
+                    app.updateKanbanCounts();
+                    return;
+                }
+
+                if (!newRec) return;
+
+                // Merge com o que já existe (para preservar contatos/corretores caso payload seja parcial)
+                let op = { ...newRec };
+                if (existingIdx > -1) {
+                    op = { ...app.oportunidades[existingIdx], ...newRec };
+                }
+
+                app.enrichOp(op);
+                const matches = app.applyOpFilters(op) && !op.excluido && op.status === 'aberto';
+
+                if (!matches) {
+                    if (existingIdx > -1) app.oportunidades.splice(existingIdx, 1);
+                    if (existingEl) existingEl.remove();
+                } else {
+                    if (existingIdx > -1) {
+                        app.oportunidades[existingIdx] = op;
+                    } else {
+                        app.oportunidades.push(op);
+                    }
+
+                    const targetStage = op.etapa_nome;
+                    const col = document.querySelector(`.kanban-list[data-stage="${targetStage}"]`);
+                    
+                    if (existingEl) existingEl.remove();
+
+                    if (col) {
+                        const newEl = ui.createCard(op);
+                        app._insertCardSorted(col, newEl, op);
+                    }
+                }
+                
+                let pendentesCount = 0;
+                document.querySelectorAll('.kanban-list').forEach(list => {
+                    pendentesCount += list.children.length;
+                });
+                const headerLeads = document.getElementById('header-total-leads');
+                if (headerLeads) {
+                    headerLeads.innerText = `${pendentesCount} pendentes`;
+                }
+
+                app.updateKanbanCounts();
+            },
+
+            _insertCardSorted: (col, newEl, op) => {
+                const dataOp = op.retorno ? new Date(`${op.retorno}T12:00:00`).getTime() : Number.POSITIVE_INFINITY;
+                const cards = Array.from(col.children);
+                let inserted = false;
+
+                for (let i = 0; i < cards.length; i++) {
+                    const cardId = cards[i].dataset.id;
+                    const siblingOp = app.oportunidades.find(o => String(o.id) === cardId);
+                    if (siblingOp) {
+                        const dataSib = siblingOp.retorno ? new Date(`${siblingOp.retorno}T12:00:00`).getTime() : Number.POSITIVE_INFINITY;
+                        let shouldInsertBefore = false;
+                        
+                        if (dataOp < dataSib) {
+                            shouldInsertBefore = true;
+                        } else if (dataOp === dataSib) {
+                            if (String(ui.tituloOportunidadeExibicao(op) || '').localeCompare(String(ui.tituloOportunidadeExibicao(siblingOp) || ''), 'pt-BR') < 0) {
+                                shouldInsertBefore = true;
+                            }
+                        }
+
+                        if (shouldInsertBefore) {
+                            col.insertBefore(newEl, cards[i]);
+                            inserted = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!inserted) {
+                    col.appendChild(newEl);
+                }
             },
 
             renderKanban: () => {
@@ -4367,6 +4826,14 @@
                 const email = document.getElementById('editContatoEmail').value;
                 const cwId = document.getElementById('editContatoChatwoot').value;
 
+                const errDocEdicao = app.documentoCadastroError(document.getElementById('editContatoDocumento').value, { obrigatorio: false });
+                if (errDocEdicao) {
+                    Swal.fire('Atenção', errDocEdicao, 'warning');
+                    btnSubmit.innerHTML = originalText;
+                    btnSubmit.disabled = false;
+                    return;
+                }
+
                 if (docRaw) {
                     const docExiste = app.contatos.find(c => c.documento && c.documento.replace(/\D/g, '') === docRaw && c.id != contatoId);
                     if (docExiste) {
@@ -4392,9 +4859,11 @@
                         documento: document.getElementById('editContatoDocumento').value, 
                         telefone: document.getElementById('editContatoTelefone').value, 
                         email: email, 
-                        chatwoot_id: cwId 
+                        chatwoot_id: cwId,
+                        gerente_id: document.getElementById('editContatoGerente').value || null
                     };
                     
+                    app.suppressRealtimeBoardSync();
                     const { error } = await app.sb.from('contatos').update(dadosParaSalvar).eq('id', contatoId);
                     if (error) {
                         throw error;
@@ -4413,10 +4882,10 @@
             },
 
             saveDeal: async (e) => {
-                e.preventDefault(); 
+                e.preventDefault();
                 const btnSubmit = e.target.querySelector('button[type="submit"]');
                 const originalBtnText = btnSubmit.innerHTML;
-                
+
                 btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
                 btnSubmit.disabled = true;
 
@@ -4430,7 +4899,19 @@
                         return;
                     }
                 }
+
+                const retornoVal = document.getElementById('opRetorno').value;
+                if (!retornoVal) {
+                    Swal.fire('Atenção', 'Informe a data de retorno.', 'warning');
+                    btnSubmit.innerHTML = originalBtnText;
+                    btnSubmit.disabled = false;
+                    return;
+                }
+
                 let contatoId = document.getElementById('contatoId').value;
+                const titulo = (document.getElementById('opNomeOportunidade')?.value || '').trim();
+                const nomeSegRaw = document.getElementById('opNome').value;
+                const nomeSeg = (nomeSegRaw || '').trim();
                 const mesmoResp = document.getElementById('opResponsavelMesmo').checked;
                 let responsavelId = document.getElementById('responsavelId').value;
 
@@ -4446,48 +4927,83 @@
                     responsavelId = '';
                 }
 
-                const contatoData = { 
-                    nome: document.getElementById('opNome').value, 
-                    documento: document.getElementById('opDocumento').value, 
-                    email: document.getElementById('opEmail').value, 
+                const tituloOnly = !contatoId && titulo.length > 0;
+
+                if (tituloOnly && !mesmoResp) {
+                    Swal.fire('Atenção', 'Quando a oportunidade ainda não possui segurado cadastrado, marque que o responsável pela negociação é o mesmo que o segurado.', 'warning');
+                    btnSubmit.innerHTML = originalBtnText;
+                    btnSubmit.disabled = false;
+                    return;
+                }
+
+                const contatoData = {
+                    nome: nomeSegRaw || '',
+                    documento: document.getElementById('opDocumento').value,
+                    email: document.getElementById('opEmail').value,
                     telefone: document.getElementById('opTelefone').value,
                     chatwoot_id: document.getElementById('opChatwootId').value,
-                    corretor_id: app.user.id 
+                    corretor_id: app.user.id,
+                    gerente_id: document.getElementById('opGerente').value || null
                 };
 
-                const idsExcluirSeg = [contatoId, (!mesmoResp ? responsavelId : '')].filter(Boolean);
-                const docRaw = contatoData.documento.replace(/\D/g, '');
-                if (docRaw) {
-                    const docExiste = app.contatos.find(c => c.documento && c.documento.replace(/\D/g, '') === docRaw && !idsExcluirSeg.some(id => c.id == id));
-                    if (docExiste) {
-                        Swal.fire('Atenção', 'Já existe um cliente cadastrado com este CPF/CNPJ: ' + docExiste.nome, 'warning');
-                        btnSubmit.innerHTML = originalBtnText;
-                        btnSubmit.disabled = false;
-                        return;
-                    }
-                }
-                
-                const telRawSeg = contatoData.telefone.replace(/\D/g, '');
-                if (telRawSeg) {
-                    const telExiste = app.contatos.find(c => c.telefone && c.telefone.replace(/\D/g, '') === telRawSeg && !idsExcluirSeg.some(id => c.id == id));
-                    if (telExiste) {
-                        Swal.fire('Atenção', 'Já existe um cliente cadastrado com este telefone: ' + telExiste.nome, 'warning');
-                        btnSubmit.innerHTML = originalBtnText;
-                        btnSubmit.disabled = false;
-                        return;
-                    }
-                }
-
                 const respData = !mesmoResp ? {
-                    nome: document.getElementById('opRespNome').value, 
-                    documento: document.getElementById('opRespDocumento').value, 
-                    email: document.getElementById('opRespEmail').value, 
+                    nome: document.getElementById('opRespNome').value,
+                    documento: document.getElementById('opRespDocumento').value,
+                    email: document.getElementById('opRespEmail').value,
                     telefone: document.getElementById('opRespTelefone').value,
                     chatwoot_id: document.getElementById('opRespChatwootId').value,
-                    corretor_id: app.user.id 
+                    corretor_id: app.user.id
                 } : null;
 
-                if (respData) {
+                if (!tituloOnly) {
+                    if (!contatoId) {
+                        if (!nomeSeg) {
+                            Swal.fire('Atenção', 'Informe o nome da oportunidade no cabeçalho ou complete o cadastro do segurado (nome e CPF/CNPJ).', 'warning');
+                            btnSubmit.innerHTML = originalBtnText;
+                            btnSubmit.disabled = false;
+                            return;
+                        }
+                    }
+                    const errDocSeg = app.documentoCadastroError(contatoData.documento, { obrigatorio: true, prefixo: 'Segurado' });
+                    if (errDocSeg) {
+                        Swal.fire('Atenção', errDocSeg, 'warning');
+                        btnSubmit.innerHTML = originalBtnText;
+                        btnSubmit.disabled = false;
+                        return;
+                    }
+
+                    const idsExcluirSeg = [contatoId, (!mesmoResp ? responsavelId : '')].filter(Boolean);
+                    const docRaw = contatoData.documento.replace(/\D/g, '');
+                    if (docRaw) {
+                        const docExiste = app.contatos.find(c => c.documento && c.documento.replace(/\D/g, '') === docRaw && !idsExcluirSeg.some(id => c.id == id));
+                        if (docExiste) {
+                            Swal.fire('Atenção', 'Já existe um cliente cadastrado com este CPF/CNPJ: ' + docExiste.nome, 'warning');
+                            btnSubmit.innerHTML = originalBtnText;
+                            btnSubmit.disabled = false;
+                            return;
+                        }
+                    }
+
+                    const telRawSeg = contatoData.telefone.replace(/\D/g, '');
+                    if (telRawSeg) {
+                        const telExiste = app.contatos.find(c => c.telefone && c.telefone.replace(/\D/g, '') === telRawSeg && !idsExcluirSeg.some(id => c.id == id));
+                        if (telExiste) {
+                            Swal.fire('Atenção', 'Já existe um cliente cadastrado com este telefone: ' + telExiste.nome, 'warning');
+                            btnSubmit.innerHTML = originalBtnText;
+                            btnSubmit.disabled = false;
+                            return;
+                        }
+                    }
+                }
+
+                if (respData && !tituloOnly) {
+                    const errDocResp = app.documentoCadastroError(respData.documento, { obrigatorio: false, prefixo: 'Responsável' });
+                    if (errDocResp) {
+                        Swal.fire('Atenção', errDocResp, 'warning');
+                        btnSubmit.innerHTML = originalBtnText;
+                        btnSubmit.disabled = false;
+                        return;
+                    }
                     const idsExcluirResp = [contatoId, responsavelId].filter(Boolean);
                     const docR = respData.documento.replace(/\D/g, '');
                     if (docR) {
@@ -4511,44 +5027,105 @@
                     }
                 }
 
-                try {
-                    if (!contatoId) {
-                        const {data: newContato, error: errC} = await app.sb.from('contatos').insert([contatoData]).select();
-                        if (errC) {
-                            throw errC;
-                        }
-                        contatoId = newContato[0].id;
-                        app.contatos.push(newContato[0]);
-                        ui.renderContatosTable();
-                    } else { 
-                        await app.sb.from('contatos').update(contatoData).eq('id', contatoId); 
-                        const ctIndex = app.contatos.findIndex(c => c.id == contatoId);
-                        if (ctIndex >= 0) {
-                            app.contatos[ctIndex] = {...app.contatos[ctIndex], ...contatoData};
-                        }
-                        ui.renderContatosTable();
-                    }
+                let etapa = document.getElementById('opEtapaHeader').value || (app.etapas[0] ? app.etapas[0].nome : 'Nova');
 
-                    let responsavelIdFinal = null;
-                    if (!mesmoResp && respData) {
-                        let rid = responsavelId;
-                        if (!rid) {
-                            const {data: newR, error: errR} = await app.sb.from('contatos').insert([respData]).select();
-                            if (errR) {
-                                throw errR;
+                let st = 'aberto';
+                let opAtual = null;
+                if (opId) {
+                    opAtual = app.oportunidades.find(o => o.id == opId);
+                    if (opAtual) {
+                        st = opAtual.status;
+                        const osf = document.getElementById('opStatusFechado');
+                        if (app.isGerente && osf && !osf.classList.contains('hidden')) {
+                            st = osf.value;
+                        }
+                        const gerenteEditaFechado = app.isGerente && osf && !osf.classList.contains('hidden');
+                        if ((st === 'ganho' || st === 'perdido') && !gerenteEditaFechado) {
+                            etapa = opAtual.etapa_nome || etapa;
+                            if (!app.etapas.some(e => e.nome === etapa)) {
+                                const ultima = app.getUltimaEtapaNome();
+                                const primeira = app.etapas[0]?.nome;
+                                if (st === 'ganho' && ultima) {
+                                    etapa = ultima;
+                                } else if (primeira) {
+                                    etapa = primeira;
+                                }
                             }
-                            rid = newR[0].id;
-                            app.contatos.push(newR[0]);
+                        }
+                    }
+                }
+
+                if (st === 'ganho' && tituloOnly) {
+                    Swal.fire('Atenção', 'Para fechar como ganho é obrigatório cadastrar o segurado completo (nome e CPF/CNPJ na aba Envolvidos).', 'warning');
+                    btnSubmit.innerHTML = originalBtnText;
+                    btnSubmit.disabled = false;
+                    return;
+                }
+                if (st === 'ganho') {
+                    const errG = app.documentoCadastroError(contatoData.documento, { obrigatorio: true, prefixo: 'Segurado' });
+                    if (errG) {
+                        Swal.fire('Atenção', errG, 'warning');
+                        btnSubmit.innerHTML = originalBtnText;
+                        btnSubmit.disabled = false;
+                        return;
+                    }
+                    if (!nomeSeg) {
+                        Swal.fire('Atenção', 'Informe o nome do segurado para fechar o negócio como ganho.', 'warning');
+                        btnSubmit.innerHTML = originalBtnText;
+                        btnSubmit.disabled = false;
+                        return;
+                    }
+                }
+
+                let nomeSeguradoDeal;
+                let nomeOportunidadeDeal = titulo || null;
+                let responsavelIdFinal = null;
+
+                try {
+                    if (!tituloOnly) {
+                        if (!contatoId) {
+                            const { data: newContato, error: errC } = await app.sb.from('contatos').insert([contatoData]).select();
+                            if (errC) {
+                                throw errC;
+                            }
+                            contatoId = String(newContato[0].id);
+                            app.contatos.push(newContato[0]);
                             ui.renderContatosTable();
                         } else {
-                            await app.sb.from('contatos').update(respData).eq('id', rid);
-                            const ri = app.contatos.findIndex(c => c.id == rid);
-                            if (ri >= 0) {
-                                app.contatos[ri] = {...app.contatos[ri], ...respData};
+                            await app.sb.from('contatos').update(contatoData).eq('id', contatoId);
+                            const ctIndex = app.contatos.findIndex(c => c.id == contatoId);
+                            if (ctIndex >= 0) {
+                                app.contatos[ctIndex] = { ...app.contatos[ctIndex], ...contatoData };
                             }
                             ui.renderContatosTable();
                         }
-                        responsavelIdFinal = rid;
+
+                        if (!mesmoResp && respData) {
+                            let rid = responsavelId;
+                            if (!rid) {
+                                const { data: newR, error: errR } = await app.sb.from('contatos').insert([respData]).select();
+                                if (errR) {
+                                    throw errR;
+                                }
+                                rid = String(newR[0].id);
+                                app.contatos.push(newR[0]);
+                                ui.renderContatosTable();
+                            } else {
+                                await app.sb.from('contatos').update(respData).eq('id', rid);
+                                const ri = app.contatos.findIndex(c => c.id == rid);
+                                if (ri >= 0) {
+                                    app.contatos[ri] = { ...app.contatos[ri], ...respData };
+                                }
+                                ui.renderContatosTable();
+                            }
+                            responsavelIdFinal = rid;
+                        }
+
+                        nomeSeguradoDeal = (contatoData.nome || '').trim() || nomeSeg;
+                    } else {
+                        contatoId = '';
+                        nomeSeguradoDeal = titulo;
+                        responsavelIdFinal = null;
                     }
 
                     const defaultRamoSave = app.ramos.length > 0 ? app.ramos[0].nome : 'Automóvel';
@@ -4556,52 +5133,25 @@
                     const premioLiq = parseFloat(p0.premio) || 0;
                     const comissPct = parseFloat(p0.comissao) || 0;
                     const agencPct = parseFloat(p0.agenciamento) || 0;
-                    
-                    let etapa = document.getElementById('opEtapaHeader').value || (app.etapas[0] ? app.etapas[0].nome : 'Nova');
-                    
-                    let st = 'aberto';
-                    let opAtual = null;
-                    if (opId) {
-                        opAtual = app.oportunidades.find(o => o.id == opId);
-                        if (opAtual) {
-                            st = opAtual.status;
-                            const osf = document.getElementById('opStatusFechado');
-                            if (app.isGerente && osf && !osf.classList.contains('hidden')) {
-                                st = osf.value;
-                            }
-                            const gerenteEditaFechado = app.isGerente && osf && !osf.classList.contains('hidden');
-                            if ((st === 'ganho' || st === 'perdido') && !gerenteEditaFechado) {
-                                etapa = opAtual.etapa_nome || etapa;
-                                if (!app.etapas.some(e => e.nome === etapa)) {
-                                    const ultima = app.getUltimaEtapaNome();
-                                    const primeira = app.etapas[0]?.nome;
-                                    if (st === 'ganho' && ultima) {
-                                        etapa = ultima;
-                                    } else if (primeira) {
-                                        etapa = primeira;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    const deal = { 
-                        contato_id: contatoId, 
+
+                    const deal = {
+                        contato_id: tituloOnly ? null : contatoId,
                         responsavel_id: responsavelIdFinal,
-                        nome_segurado: contatoData.nome, 
-                        vigencia: document.getElementById('opVigencia').value || null, 
-                        retorno: document.getElementById('opRetorno').value || null,
-                        ativo: document.getElementById('opAtivo').checked, 
-                        origem: document.getElementById('opOrigem').value, 
+                        nome_segurado: nomeSeguradoDeal,
+                        nome_oportunidade: nomeOportunidadeDeal,
+                        vigencia: document.getElementById('opVigencia').value || null,
+                        retorno: retornoVal,
+                        ativo: document.getElementById('opAtivo').checked,
+                        origem: document.getElementById('opOrigem').value,
                         seguradora: document.getElementById('opSeguradora').value,
-                        ramo_seguro: p0.ramo || defaultRamoSave, 
-                        tipo_seguro: p0.tipo || 'Novo', 
-                        premio_liquido: premioLiq, 
-                        comissao_percentual: comissPct, 
-                        agenciamento_percentual: agencPct, 
-                        gerente_id: document.getElementById('opGerente').value || null, 
+                        ramo_seguro: p0.ramo || defaultRamoSave,
+                        tipo_seguro: p0.tipo || 'Novo',
+                        premio_liquido: premioLiq,
+                        comissao_percentual: comissPct,
+                        agenciamento_percentual: agencPct,
                         indicador: document.getElementById('opIndicador').value,
-                        corretor_id: document.getElementById('opProdutor').value || app.user.id, 
-                        etapa_nome: etapa, 
+                        corretor_id: document.getElementById('opProdutor').value || app.user.id,
+                        etapa_nome: etapa,
                         status: st
                     };
 
@@ -4628,33 +5178,38 @@
                         }
                     }
 
+                    app.suppressRealtimeBoardSync();
                     if (!opId) {
                         deal.funil_id = config.activePipeline;
-                        const {data: newOp, error: errOp} = await app.sb.from('oportunidades').insert([deal]).select();
+                        const { data: newOp, error: errOp } = await app.sb.from('oportunidades').insert([deal]).select();
                         if (errOp) {
                             throw errOp;
                         }
-                        app.logTimeline(newOp[0].id, 'Criação', 'Oportunidade gerada e atrelada ao contato.');
-                    } else { 
-                        const {error: errOp} = await app.sb.from('oportunidades').update(deal).eq('id', opId);
+                        const logMsg = tituloOnly
+                            ? 'Oportunidade criada (cadastro do segurado pendente).'
+                            : 'Oportunidade gerada e atrelada ao contato.';
+                        app.logTimeline(newOp[0].id, 'Criação', logMsg);
+                    } else {
+                        const { error: errOp } = await app.sb.from('oportunidades').update(deal).eq('id', opId);
                         if (errOp) {
                             throw errOp;
                         }
                         app.logTimeline(opId, 'Atualização', 'Informações da Oportunidade foram editadas e salvas.');
                     }
-                    
-                    ui.closeDealModal(); 
-                    
-                    if (st === 'ganho') {
-                        await app.sb.from('contatos').update({is_segurado: true}).eq('id', contatoId);
-                        confetti({particleCount:150, spread:70, origin:{y:0.6}, colors: ['#10B981', '#047857']});
-                        await app.loadContatos(); 
+
+                    ui.closeDealModal();
+
+                    if (st === 'ganho' && contatoId) {
+                        app.suppressRealtimeBoardSync();
+                        await app.sb.from('contatos').update({ is_segurado: true }).eq('id', contatoId);
+                        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#10B981', '#047857'] });
+                        await app.loadContatos();
                     }
-                    
+
                     await app.loadData();
 
-                } catch(err) { 
-                    Swal.fire('Erro ao Salvar', err.message, 'error'); 
+                } catch (err) {
+                    Swal.fire('Erro ao Salvar', err.message, 'error');
                 } finally {
                     btnSubmit.innerHTML = originalBtnText;
                     btnSubmit.disabled = false;
@@ -4674,12 +5229,14 @@
                 const comissPct = parseFloat(p0.comissao) || parseFloat(opOrigem.comissao_percentual) || 0;
                 const agencPct = parseFloat(p0.agenciamento) || parseFloat(opOrigem.agenciamento_percentual) || 0;
 
+                const retornoReag = reag.retorno || reag.vigencia || opOrigem.retorno || new Date().toISOString().slice(0, 10);
                 const deal = {
                     contato_id: contatoId,
                     responsavel_id: responsavelIdFinal,
                     nome_segurado: opOrigem.nome_segurado,
+                    nome_oportunidade: opOrigem.nome_oportunidade || null,
                     vigencia: reag.vigencia || null,
-                    retorno: reag.retorno || null,
+                    retorno: retornoReag,
                     ativo: true,
                     origem: opOrigem.origem,
                     seguradora: opOrigem.seguradora || '',
@@ -4688,7 +5245,6 @@
                     premio_liquido: premioLiq,
                     comissao_percentual: comissPct,
                     agenciamento_percentual: agencPct,
-                    gerente_id: opOrigem.gerente_id || null,
                     indicador: opOrigem.indicador || null,
                     corretor_id: opOrigem.corretor_id,
                     etapa_nome: primeiraEtapa,
@@ -4714,6 +5270,17 @@
                 const opEx = app.oportunidades.find(o => o.id == opId);
                 if (opEx && (opEx.status === 'ganho' || opEx.status === 'perdido')) {
                     return;
+                }
+
+                if (!contatoId) {
+                    return Swal.fire('Atenção', 'Cadastre o segurado na aba Envolvidos (com CPF/CNPJ válido) antes de marcar como ganho.', 'warning');
+                }
+                const errDocG = app.documentoCadastroError(document.getElementById('opDocumento').value, { obrigatorio: true, prefixo: 'Segurado' });
+                if (errDocG) {
+                    return Swal.fire('Atenção', errDocG, 'warning');
+                }
+                if (!(document.getElementById('opNome').value || '').trim()) {
+                    return Swal.fire('Atenção', 'Informe o nome do segurado para fechar o negócio.', 'warning');
                 }
 
                 const tf = ui.getTipoFunilDealModalContext();
@@ -4742,12 +5309,14 @@
                     const opAtual = app.oportunidades.find(o => o.id == opId);
                     const ultima = app.getUltimaEtapaNome();
                     const etapaGanho = ultima || (opAtual && opAtual.etapa_nome) || (app.etapas[0] && app.etapas[0].nome) || 'Nova';
+                    app.suppressRealtimeBoardSync();
                     await app.sb.from('oportunidades').update({
                         status: 'ganho',
                         etapa_nome: etapaGanho,
                         data_fechamento: new Date().toISOString()
                     }).eq('id', opId);
                     
+                    app.suppressRealtimeBoardSync();
                     await app.sb.from('contatos').update({ is_segurado: true }).eq('id', contatoId);
                     await app.logTimeline(opId, 'Movimentação', `Negócio GANHO com sucesso!`);
                     
@@ -4827,6 +5396,7 @@
                     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                     btn.disabled = true;
 
+                    app.suppressRealtimeBoardSync();
                     await app.sb.from('oportunidades').update({
                         status: 'perdido',
                         motivo_perda_id: motivoStep.id,
@@ -4839,6 +5409,7 @@
                     let novaOportunidadeId = null;
                     if (reag.criar) {
                         novaOportunidadeId = await app.insertReagendamentoOportunidade(opEx, reag);
+                        app.suppressRealtimeBoardSync();
                     }
 
                     const { data: opRowArr } = await app.sb.from('oportunidades').select('*').eq('id', opId);
@@ -4885,6 +5456,7 @@
             deleteDeal: async () => {
                 const id = document.getElementById('opId').value;
                 if (confirm('Tem certeza que deseja excluir esta oportunidade? Ela sairá do seu painel.')) { 
+                    app.suppressRealtimeBoardSync();
                     await app.sb.from('oportunidades').update({ excluido: true }).eq('id', id); 
                     app.logTimeline(id, 'Exclusão', 'Card movido para lixeira lógica.');
                     ui.closeDealModal(); 
@@ -4898,9 +5470,21 @@
                     await app.loadData();
                     return;
                 }
+                
+                d.etapa_nome = toStage;
+
+                const cardEl = document.querySelector(`.kanban-list [data-id="${id}"]`);
+                const destCol = document.querySelector(`.kanban-list[data-stage="${toStage}"]`);
+                if (cardEl && destCol) {
+                    cardEl.remove();
+                    app._insertCardSorted(destCol, cardEl, d);
+                }
+
+                app.updateKanbanCounts();
+                
+                app.suppressRealtimeBoardSync();
                 await app.sb.from('oportunidades').update({ etapa_nome: toStage }).eq('id', id);
                 app.logTimeline(id, 'Movimentação', `O card foi movido da coluna "${fromStage}" para "${toStage}".`);
-                await app.loadData();
             },
 
             toggleOportunidadeChecked: async (id) => {
@@ -4912,6 +5496,7 @@
                     return;
                 }
                 try {
+                    app.suppressRealtimeBoardSync();
                     await app.sb.from('oportunidades').update({ is_checked: !o.is_checked }).eq('id', id);
                     await app.loadData();
                 } catch (err) {
@@ -5234,7 +5819,7 @@
                         return `
                         <tr class="hover:bg-slate-50 transition cursor-pointer" onclick="ui.editDealById(${o.id})">
                             <td class="px-4 py-3 text-textMuted text-xs font-mono">${dtFechamento}</td>
-                            <td class="px-4 py-3 font-bold text-textMain">${o.nome_segurado}</td>
+                            <td class="px-4 py-3 font-bold text-textMain">${ui.tituloOportunidadeExibicao(o)}</td>
                             <td class="px-4 py-3 text-textMuted text-xs">${ramosText}</td>
                             <td class="px-4 py-3 text-textMuted text-xs">${produtor}</td>
                             <td class="px-4 py-3 font-extrabold text-emerald-600 text-right">${formatBRL(rec)}</td>
@@ -5315,6 +5900,7 @@
                         
                         const fid = app.settingsEditingFunilId || config.activePipeline;
                         if (oldName !== v.n) {
+                            app.suppressRealtimeBoardSync();
                             await app.sb.from('oportunidades').update({ etapa_nome: v.n }).eq('etapa_nome', oldName).eq('funil_id', fid);
                         }
                         
@@ -5406,6 +5992,97 @@
                         }
                     }
                 });
+            }
+        };
+
+        /**
+         * Fechamento unificado: Esc e clique no backdrop (fora do card).
+         * z-index alinhado às classes Tailwind dos overlays (deal 100, contato/fluxo 110, perfil/settings 150).
+         */
+        const overlayModals = {
+            _flowDismiss: null,
+
+            setFlowDismiss(fn) {
+                this._flowDismiss = typeof fn === 'function' ? fn : null;
+            },
+
+            clearFlowDismiss() {
+                this._flowDismiss = null;
+            },
+
+            _invokeFlowDismiss() {
+                if (this._flowDismiss) {
+                    this._flowDismiss();
+                }
+            },
+
+            _defs() {
+                const self = this;
+                return [
+                    { id: 'settingsModal', z: 150, close: () => ui.closeSettingsModal() },
+                    { id: 'profileModal', z: 150, close: () => ui.closeProfileModal() },
+                    { id: 'contatoModal', z: 110, close: () => ui.closeContatoModal() },
+                    { id: 'modalReagendamento', z: 110, close: () => self._invokeFlowDismiss() },
+                    { id: 'modalMotivoPerda', z: 110, close: () => self._invokeFlowDismiss() },
+                    { id: 'modalEmailErp', z: 110, close: () => self._invokeFlowDismiss() },
+                    { id: 'modalEmailProposta', z: 110, close: () => self._invokeFlowDismiss() },
+                    { id: 'dealModal', z: 100, close: () => ui.closeDealModal() }
+                ];
+            },
+
+            getTopOpen() {
+                const open = [];
+                for (const d of this._defs()) {
+                    const el = document.getElementById(d.id);
+                    if (!el || el.classList.contains('hidden')) {
+                        continue;
+                    }
+                    open.push({ ...d, el });
+                }
+                if (!open.length) {
+                    return null;
+                }
+                open.sort((a, b) => {
+                    if (b.z !== a.z) {
+                        return b.z - a.z;
+                    }
+                    const pos = a.el.compareDocumentPosition(b.el);
+                    if (pos & Node.DOCUMENT_POSITION_FOLLOWING) {
+                        return 1;
+                    }
+                    if (pos & Node.DOCUMENT_POSITION_PRECEDING) {
+                        return -1;
+                    }
+                    return 0;
+                });
+                return open[0];
+            },
+
+            closeTop() {
+                const top = this.getTopOpen();
+                if (top) {
+                    top.close();
+                }
+            },
+
+            attachBackdropCloses() {
+                for (const d of this._defs()) {
+                    const el = document.getElementById(d.id);
+                    if (!el || el.dataset.backdropCloseBound === '1') {
+                        continue;
+                    }
+                    el.dataset.backdropCloseBound = '1';
+                    el.addEventListener('mousedown', (e) => {
+                        if (e.target !== el) {
+                            return;
+                        }
+                        d.close();
+                    });
+                }
+            },
+
+            init() {
+                this.attachBackdropCloses();
             }
         };
 
@@ -5619,11 +6296,13 @@
                     assunto.value = ui.buildPropostaAssuntoDefault();
                     obs.value = '';
                     const finish = (payload) => {
+                        overlayModals.clearFlowDismiss();
                         document.getElementById('btnEmailPropostaCancel').onclick = null;
                         document.getElementById('btnEmailPropostaSend').onclick = null;
                         closeFlowModals.show(m, false);
                         resolve(payload);
                     };
+                    overlayModals.setFlowDismiss(() => finish({ cancelled: true }));
                     document.getElementById('btnEmailPropostaCancel').onclick = () => finish({ cancelled: true });
                     document.getElementById('btnEmailPropostaSend').onclick = async () => {
                         const anexos = await closeFlowModals.filesToPayload('emailPropostaFiles');
@@ -5645,11 +6324,13 @@
                     assunto.value = ui.buildErpAssuntoDefault();
                     obs.value = '';
                     const finish = (payload) => {
+                        overlayModals.clearFlowDismiss();
                         document.getElementById('btnEmailErpCancel').onclick = null;
                         document.getElementById('btnEmailErpSend').onclick = null;
                         closeFlowModals.show(m, false);
                         resolve(payload);
                     };
+                    overlayModals.setFlowDismiss(() => finish({ cancelled: true }));
                     document.getElementById('btnEmailErpCancel').onclick = () => finish({ cancelled: true });
                     document.getElementById('btnEmailErpSend').onclick = async () => {
                         const anexos = await closeFlowModals.filesToPayload('emailErpFiles');
@@ -5678,11 +6359,13 @@
                     ta.value = '';
                     const m = 'modalMotivoPerda';
                     const finish = (payload) => {
+                        overlayModals.clearFlowDismiss();
                         document.getElementById('btnMotivoPerdaCancel').onclick = null;
                         document.getElementById('btnMotivoPerdaOk').onclick = null;
                         closeFlowModals.show(m, false);
                         resolve(payload);
                     };
+                    overlayModals.setFlowDismiss(() => finish({ cancelled: true }));
                     document.getElementById('btnMotivoPerdaCancel').onclick = () => finish({ cancelled: true });
                     document.getElementById('btnMotivoPerdaOk').onclick = () => {
                         const selectedId = sel.value;
@@ -5739,11 +6422,13 @@
                     document.getElementById('reagRetorno').value = toDateInputValue(retornoDefaultDate);
                     const m = 'modalReagendamento';
                     const finish = (payload) => {
+                        overlayModals.clearFlowDismiss();
                         document.getElementById('btnReagNaoCriar').onclick = null;
                         document.getElementById('btnReagCriar').onclick = null;
                         closeFlowModals.show(m, false);
                         resolve(payload);
                     };
+                    overlayModals.setFlowDismiss(() => finish({ criar: false }));
                     document.getElementById('btnReagNaoCriar').onclick = () => finish({ criar: false });
                     document.getElementById('btnReagCriar').onclick = () => finish({
                         criar: true,
@@ -5757,8 +6442,14 @@
 
         // Inicia o app quando o DOM estiver pronto
         document.addEventListener('DOMContentLoaded', () => {
+            if (window.Swal && typeof Swal.mixin === 'function') {
+                Swal.mixin({ allowEscapeKey: true, allowOutsideClick: true });
+            }
+
             closeFlowModals.setupFileDropProposta();
             closeFlowModals.setupFileDropErp();
+
+            overlayModals.init();
 
             ui.initSidebar();
             ui.initOportunidadesFiltros();
@@ -5768,9 +6459,9 @@
                 if (e.key !== 'Escape') {
                     return;
                 }
-                const dm = document.getElementById('dealModal');
-                if (dm && !dm.classList.contains('hidden')) {
-                    ui.closeDealModal();
+                const top = overlayModals.getTopOpen();
+                if (top) {
+                    top.close();
                     e.preventDefault();
                 }
             });

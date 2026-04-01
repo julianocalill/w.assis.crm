@@ -1,0 +1,32 @@
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":5},"timestamp":1775064675085}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":6},"timestamp":1775064675343}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":6},"timestamp":1775064680996}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":7},"timestamp":1775064681208}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":8},"timestamp":1775064707485}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":7},"timestamp":1775064707724}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":1},"timestamp":1775064714118}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":1},"timestamp":1775064716460}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H2","location":"index:suppressRealtimeBoardSync","message":"suppress window extended","data":{"until":1775064722907,"delta":1400},"timestamp":1775064721507}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H1","location":"index:moveDeal","message":"before loadData after update","data":{"id":"31"},"timestamp":1775064721804}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":2},"timestamp":1775064721805}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H3-H4","location":"index:scheduleRealtimeSync","message":"realtime schedule invoked","data":{"hadTimer":false,"fix":"global-debounce"},"timestamp":1775064721942}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H3-H4","location":"index:scheduleRealtimeSync","message":"realtime schedule invoked","data":{"hadTimer":false,"fix":"global-debounce"},"timestamp":1775064721944}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H2","location":"index:suppressRealtimeBoardSync","message":"suppress window extended","data":{"until":1775064723031,"delta":750},"timestamp":1775064722281}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H2-H4","location":"index:realtimeDebounce","message":"debounced tick","data":{"now":1775064722347,"until":0,"suppressed":0,"willReload":true},"timestamp":1775064722347}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H2-H4","location":"index:realtimeDebounce","message":"debounced tick","data":{"now":1775064722350,"until":1775064723031,"suppressed":true,"willReload":false},"timestamp":1775064722350}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":2},"timestamp":1775064722582}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H2","location":"index:suppressRealtimeBoardSync","message":"suppress window extended","data":{"until":1775064728207,"delta":1400},"timestamp":1775064726807}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H1","location":"index:moveDeal","message":"before loadData after update","data":{"id":"31"},"timestamp":1775064727028}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":3},"timestamp":1775064727029}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H3-H4","location":"index:scheduleRealtimeSync","message":"realtime schedule invoked","data":{"hadTimer":false,"fix":"global-debounce"},"timestamp":1775064727112}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H3-H4","location":"index:scheduleRealtimeSync","message":"realtime schedule invoked","data":{"hadTimer":false,"fix":"global-debounce"},"timestamp":1775064727117}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H2","location":"index:suppressRealtimeBoardSync","message":"suppress window extended","data":{"until":1775064728236,"delta":750},"timestamp":1775064727486}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H2-H4","location":"index:realtimeDebounce","message":"debounced tick","data":{"now":1775064727515,"until":0,"suppressed":0,"willReload":true},"timestamp":1775064727515}
+{"sessionId":"0d0441","runId":"post-fix","hypothesisId":"H2-H4","location":"index:realtimeDebounce","message":"debounced tick","data":{"now":1775064727518,"until":1775064728236,"suppressed":true,"willReload":false},"timestamp":1775064727518}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":3},"timestamp":1775064727724}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":4},"timestamp":1775065228731}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":4},"timestamp":1775065229039}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":5},"timestamp":1775065251355}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":5},"timestamp":1775065251566}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":6},"timestamp":1775065642151}
+{"sessionId":"0d0441","runId":"pre","hypothesisId":"H1-H5","location":"index:loadData","message":"loadData entry","data":{"seq":6},"timestamp":1775065642481}

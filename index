@@ -578,6 +578,17 @@
             <div id="view-contatos" class="h-full overflow-y-auto p-8 hidden">
                 <h2 class="text-3xl font-extrabold text-textMain mb-2">Base de Contatos</h2>
                 <p class="text-textMuted mb-8">Acesse e gerencie o cadastro dos seus clientes.</p>
+                <div class="mb-4">
+                    <label for="contatos-search-input" class="text-[10px] font-bold text-textMuted uppercase mb-1 block">Pesquisar contatos</label>
+                    <input
+                        type="search"
+                        id="contatos-search-input"
+                        placeholder="Nome, CPF/CNPJ, e-mail ou telefone..."
+                        autocomplete="off"
+                        oninput="app.onContatosSearchInput(this.value)"
+                        class="w-full md:w-[520px] text-sm px-3 py-2 rounded-lg border border-border outline-none focus:border-primary bg-white"
+                    >
+                </div>
                 
                 <div class="bg-surface border border-border rounded-2xl shadow-sm overflow-hidden">
                     <table class="w-full text-left border-collapse">
@@ -593,6 +604,24 @@
                         <tbody id="contatos-tbody" class="divide-y divide-border text-sm">
                             </tbody>
                     </table>
+                </div>
+                <div id="contatos-pagination" class="mt-4 flex items-center justify-between gap-3">
+                    <span id="contatos-pagination-info" class="text-xs text-textMuted"></span>
+                    <div class="flex items-center gap-2">
+                        <button
+                            type="button"
+                            id="contatos-pagination-prev"
+                            onclick="app.changeContatosPage(-1)"
+                            class="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-textMain hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >Anterior</button>
+                        <span id="contatos-pagination-page" class="text-xs font-semibold text-textMuted min-w-[90px] text-center"></span>
+                        <button
+                            type="button"
+                            id="contatos-pagination-next"
+                            onclick="app.changeContatosPage(1)"
+                            class="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-textMain hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >Próxima</button>
+                    </div>
                 </div>
             </div>
 
@@ -2661,33 +2690,70 @@
                 }).join('');
             },
 
-            renderContatosTable: () => {
-                const tbody = document.getElementById('contatos-tbody');
-                
-                if (!app.contatos || app.contatos.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-textMuted font-medium">Nenhum contato encontrado.</td></tr>';
+            renderContatosPagination: (meta) => {
+                const infoEl = document.getElementById('contatos-pagination-info');
+                const pageEl = document.getElementById('contatos-pagination-page');
+                const prevBtn = document.getElementById('contatos-pagination-prev');
+                const nextBtn = document.getElementById('contatos-pagination-next');
+                if (!infoEl || !pageEl || !prevBtn || !nextBtn) {
                     return;
                 }
 
-                tbody.innerHTML = app.contatos.map(c => {
+                if (meta.totalItems === 0) {
+                    infoEl.innerText = 'Mostrando 0 de 0 contatos';
+                    pageEl.innerText = 'Página 0 de 0';
+                    prevBtn.disabled = true;
+                    nextBtn.disabled = true;
+                    return;
+                }
+
+                const startHuman = meta.start + 1;
+                const endHuman = Math.min(meta.end, meta.totalItems);
+                infoEl.innerText = `Mostrando ${startHuman}-${endHuman} de ${meta.totalItems} contatos`;
+                pageEl.innerText = `Página ${meta.currentPage} de ${meta.totalPages}`;
+                prevBtn.disabled = meta.currentPage <= 1;
+                nextBtn.disabled = meta.currentPage >= meta.totalPages;
+            },
+
+            renderContatosTable: () => {
+                const tbody = document.getElementById('contatos-tbody');
+                if (!tbody) {
+                    return;
+                }
+
+                const contatosFiltrados = app.getFilteredContatos();
+                const meta = app.getContatosPaginationMeta(contatosFiltrados.length);
+                const contatosPagina = contatosFiltrados.slice(meta.start, meta.end);
+
+                if (contatosFiltrados.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-textMuted font-medium">Nenhum contato encontrado.</td></tr>';
+                    ui.renderContatosPagination(meta);
+                    return;
+                }
+
+                tbody.innerHTML = contatosPagina.map(c => {
                     const docSpan = c.documento ? `<span class="text-[10px] font-normal text-textMuted uppercase mt-1 block tracking-wider">${ui.maskDoc(c.documento)}</span>` : '';
                     const telSpan = c.telefone ? ui.maskPhone(c.telefone) : '-';
                     const badgeClass = c.is_segurado ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200';
                     const badgeText = c.is_segurado ? 'Segurado' : 'Lead Ativo';
+                    const nome = app.escapeHtml(c.nome || 'Sem nome');
+                    const email = app.escapeHtml(c.email || '-');
+                    const chatwootId = app.escapeHtml(c.chatwoot_id || '-');
 
                     return `
                     <tr class="hover:bg-slate-50 transition border-b border-border cursor-pointer" onclick="ui.openContatoModal(${c.id})">
                         <td class="px-6 py-4 font-bold text-textMain">
-                            <i class="fa-regular fa-user mr-2 text-textMuted"></i>${c.nome}
+                            <i class="fa-regular fa-user mr-2 text-textMuted"></i>${nome}
                             ${docSpan}
                         </td>
-                        <td class="px-6 py-4 text-textMuted">${c.email || '-'}</td>
+                        <td class="px-6 py-4 text-textMuted">${email}</td>
                         <td class="px-6 py-4 text-textMuted font-mono text-xs">${telSpan}</td>
-                        <td class="px-6 py-4 text-xs font-mono text-slate-400">${c.chatwoot_id || '-'}</td>
+                        <td class="px-6 py-4 text-xs font-mono text-slate-400">${chatwootId}</td>
                         <td class="px-6 py-4"><span class="${badgeClass} border px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider">${badgeText}</span></td>
                     </tr>
                     `;
                 }).join('');
+                ui.renderContatosPagination(meta);
             },
 
             renderSeguradosTable: () => {
@@ -2803,6 +2869,9 @@
             responsavelBuscaTimeout: null,
             globalSearchTimeout: null,
             _globalSearchBound: false,
+            contatosSearchTerm: '',
+            contatosPage: 1,
+            contatosPageSize: 15,
             
             currentSortCol: 'criado_em',
             currentSortAsc: false,
@@ -2997,6 +3066,35 @@
                 location.reload();
             },
 
+            loadAllContatos: async () => {
+                const batchSize = 1000;
+                let offset = 0;
+                const contatos = [];
+
+                while (true) {
+                    const { data, error } = await app.sb
+                        .from('contatos')
+                        .select('*')
+                        .order('id', { ascending: true })
+                        .range(offset, offset + batchSize - 1);
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    const batch = data || [];
+                    contatos.push(...batch);
+                    if (batch.length < batchSize) {
+                        break;
+                    }
+
+                    offset += batchSize;
+                }
+
+                contatos.sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
+                return contatos;
+            },
+
             initApp: async () => {
                 try {
                     try {
@@ -3007,8 +3105,7 @@
                     }
 
                     try {
-                        const {data: conts} = await app.sb.from('contatos').select('*').order('nome');
-                        app.contatos = conts || [];
+                        app.contatos = await app.loadAllContatos();
                     } catch(e) {
                         app.contatos = [];
                     }
@@ -3470,6 +3567,97 @@
             },
 
             normalizeText: (v) => (v || '').toString().trim().toLowerCase(),
+
+            normalizeSearchText: (v) => (v || '')
+                .toString()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim()
+                .toLowerCase(),
+
+            scoreContatoByQuery: (contato, rawQuery) => {
+                const qText = app.normalizeSearchText(rawQuery);
+                const qDigits = app.normalizeDigits(rawQuery);
+                if (!qText && !qDigits) {
+                    return 0;
+                }
+
+                const nome = app.normalizeSearchText(contato?.nome);
+                const doc = app.normalizeDigits(contato?.documento);
+                const email = app.normalizeSearchText(contato?.email);
+                const telefone = app.normalizeDigits(contato?.telefone);
+                let score = 0;
+
+                if (qDigits) {
+                    if ((qDigits.length === 11 || qDigits.length === 14) && doc === qDigits) score = Math.max(score, 130);
+                    else if (doc && doc.startsWith(qDigits)) score = Math.max(score, 110);
+                    else if (doc && doc.includes(qDigits)) score = Math.max(score, 95);
+
+                    if (telefone) {
+                        if (telefone === qDigits) score = Math.max(score, 120);
+                        else if (telefone.startsWith(qDigits)) score = Math.max(score, 105);
+                        else if (telefone.includes(qDigits)) score = Math.max(score, 90);
+                    }
+                }
+
+                if (qText) {
+                    if (nome === qText) score = Math.max(score, 125);
+                    else if (nome.startsWith(qText)) score = Math.max(score, 108);
+                    else if (nome.includes(qText)) score = Math.max(score, 92);
+
+                    if (email) {
+                        if (email === qText) score = Math.max(score, 115);
+                        else if (email.startsWith(qText)) score = Math.max(score, 100);
+                        else if (email.includes(qText)) score = Math.max(score, 88);
+                    }
+                }
+
+                return score;
+            },
+
+            getFilteredContatos: () => {
+                const query = app.contatosSearchTerm || '';
+                if (!query.trim()) {
+                    return [...(app.contatos || [])].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
+                }
+
+                const scoredContatos = (app.contatos || [])
+                    .map(contato => ({ contato, score: app.scoreContatoByQuery(contato, query) }))
+                    .sort((a, b) => b.score - a.score || (a.contato.nome || '').localeCompare(b.contato.nome || '', 'pt-BR'));
+                const filteredContatos = scoredContatos.filter(item => item.score > 0);
+                return filteredContatos.map(item => item.contato);
+            },
+
+            getContatosPaginationMeta: (totalItems) => {
+                const pageSize = app.contatosPageSize || 15;
+                const totalPages = Math.max(1, Math.ceil((totalItems || 0) / pageSize));
+                app.contatosPage = Math.min(Math.max(1, app.contatosPage || 1), totalPages);
+                const currentPage = app.contatosPage;
+                const start = (currentPage - 1) * pageSize;
+                const end = start + pageSize;
+
+                return {
+                    totalItems: totalItems || 0,
+                    pageSize,
+                    totalPages,
+                    currentPage,
+                    start,
+                    end
+                };
+            },
+
+            onContatosSearchInput: (value) => {
+                app.contatosSearchTerm = (value || '').trimStart();
+                app.contatosPage = 1;
+                ui.renderContatosTable();
+            },
+
+            changeContatosPage: (delta) => {
+                const step = Number(delta) || 0;
+                if (!step) return;
+                app.contatosPage = Math.max(1, (app.contatosPage || 1) + step);
+                ui.renderContatosTable();
+            },
 
             escapeHtml: (v) => (v || '').toString()
                 .replace(/&/g, '&amp;')
@@ -4288,8 +4476,7 @@
 
             loadContatos: async () => {
                 try {
-                    const {data: conts} = await app.sb.from('contatos').select('*').order('nome');
-                    app.contatos = conts || [];
+                    app.contatos = await app.loadAllContatos();
                     ui.renderContatosTable();
                 } catch (e) {
                     console.error("Erro ao carregar contatos:", e);

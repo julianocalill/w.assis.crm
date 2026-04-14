@@ -1530,10 +1530,18 @@
                 return v.substring(0, 15);
             },
 
+            nomeSeguradoExibicao: (o) => {
+                if (!o) return '';
+                const nc = (o.nome_contato != null) ? String(o.nome_contato).trim() : '';
+                if (nc) return nc;
+                const no = (o.nome_oportunidade != null) ? String(o.nome_oportunidade).trim() : '';
+                return no;
+            },
+
             tituloOportunidadeExibicao: (o) => {
                 const t = (o && o.nome_oportunidade != null) ? String(o.nome_oportunidade).trim() : '';
                 if (t) return t;
-                return (o && o.nome_segurado != null) ? String(o.nome_segurado).trim() : '';
+                return ui.nomeSeguradoExibicao(o);
             },
 
             oportunidadeRamoExibicao: (o) => {
@@ -1547,6 +1555,12 @@
             },
 
             oportunidadeReceitaEstimada: (o) => {
+                if (o && o.valor_receita != null && String(o.valor_receita).trim() !== '') {
+                    const parsed = parseFloat(o.valor_receita);
+                    if (!Number.isNaN(parsed)) {
+                        return parsed;
+                    }
+                }
                 const temFlat = (o.ramo_seguro != null && String(o.ramo_seguro).trim() !== '') ||
                     (parseFloat(o.premio_liquido) || 0) !== 0 ||
                     (o.tipo_seguro != null && String(o.tipo_seguro).trim() !== '') ||
@@ -2249,11 +2263,11 @@
                 }
                 
                 document.getElementById('opDocumento').value = d.documento_contato ? ui.maskDoc(d.documento_contato) : ''; 
-                document.getElementById('opNome').value = d.nome_segurado;
+                document.getElementById('opNome').value = ui.nomeSeguradoExibicao(d);
                 document.getElementById('opEmail').value = d.email_contato || '';
                 document.getElementById('opTelefone').value = d.telefone_contato ? ui.maskPhone(d.telefone_contato) : '';
                 document.getElementById('opChatwootId').value = d.chatwoot_id || '';
-                document.getElementById('opBuscaCliente').value = d.nome_segurado || '';
+                document.getElementById('opBuscaCliente').value = ui.nomeSeguradoExibicao(d) || '';
                 document.getElementById('opBuscaStatus').innerText = d.contato_id ? 'Segurado vinculado a um cadastro existente.' : '';
                 app.syncDealModalSeguradoHeader();
                 const buscaResultados = document.getElementById('opBuscaResultados');
@@ -2547,10 +2561,10 @@
 
                 const vendedorNome = (d.nome_corretor || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
                 const tituloCard = (ui.tituloOportunidadeExibicao(d) || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-                const nomeSegPuro = (d.nome_segurado || '').trim();
-                const nomeOpTrim = (d.nome_oportunidade != null) ? String(d.nome_oportunidade).trim() : '';
-                const subSegurado = (nomeOpTrim && nomeSegPuro && window.app.normalizeText(nomeOpTrim) !== window.app.normalizeText(nomeSegPuro))
-                    ? nomeSegPuro.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+                const tituloCardRaw = (ui.tituloOportunidadeExibicao(d) || '').trim();
+                const nomeSegLinha = (ui.nomeSeguradoExibicao(d) || '').trim();
+                const subSegurado = (tituloCardRaw && nomeSegLinha && window.app.normalizeText(tituloCardRaw) !== window.app.normalizeText(nomeSegLinha))
+                    ? nomeSegLinha.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
                     : '';
                 const ramosEsc = (ramosText || '').replace(/"/g, '&quot;');
                 const segEsc = (d.seguradora || '-').replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -2671,7 +2685,7 @@
 
                     const titList = app.escapeHtml(ui.tituloOportunidadeExibicao(d) || '—');
                     const nomeOpList = (d.nome_oportunidade != null) ? String(d.nome_oportunidade).trim() : '';
-                    const nomeSegList = (d.nome_segurado || '').trim();
+                    const nomeSegList = (ui.nomeSeguradoExibicao(d) || '').trim();
                     const subList = (nomeOpList && nomeSegList && app.normalizeText(nomeOpList) !== app.normalizeText(nomeSegList))
                         ? `<div class="text-xs font-normal text-textMuted mt-0.5">${app.escapeHtml(nomeSegList)}</div>` : '';
 
@@ -2777,7 +2791,7 @@
 
                     return `
                     <tr class="hover:bg-slate-50 transition border-b border-border cursor-pointer" onclick="ui.editDealById(${o.id})">
-                        <td class="px-6 py-4 font-bold text-textMain"><i class="fa-solid fa-shield-check mr-2 text-emerald-500"></i>${o.nome_segurado}</td>
+                        <td class="px-6 py-4 font-bold text-textMain"><i class="fa-solid fa-shield-check mr-2 text-emerald-500"></i>${ui.nomeSeguradoExibicao(o)}</td>
                         <td class="px-6 py-4 text-textMuted text-xs font-semibold">${ramosText}</td>
                         <td class="px-6 py-4 text-textMuted text-center text-xs"><i class="fa-regular fa-calendar mr-1"></i>${dataFechamento}</td>
                         <td class="px-6 py-4 font-bold text-emerald-600 text-right">${formatBRL(val)}</td>
@@ -3723,7 +3737,7 @@
 
                 const scoreOp = (op) => {
                     let score = 0;
-                    const nomeSeg = app.normalizeText(op.nome_segurado);
+                    const nomeSeg = app.normalizeText(ui.nomeSeguradoExibicao(op));
                     const ct = op.contato_id ? app.contatos.find(c => c.id === op.contato_id) : null;
                     const docCt = app.normalizeDigits(op.documento_contato ?? ct?.documento);
                     const telCt = app.normalizeDigits(op.telefone_contato ?? ct?.telefone);
@@ -3829,8 +3843,9 @@
                         const ct = op.contato_id ? app.contatos.find(c => c.id === op.contato_id) : null;
                         const subParts = [];
                         const nomeTit = (op.nome_oportunidade != null) ? String(op.nome_oportunidade).trim() : '';
-                        const nomeAlinha = app.normalizeText(op.nome_segurado || '');
-                        if (ct && ct.nome && app.normalizeText(ct.nome) !== nomeAlinha && !(nomeTit && app.normalizeText(ct.nome) === app.normalizeText(nomeTit))) {
+                        const tituloNorm = app.normalizeText(ui.tituloOportunidadeExibicao(op) || '');
+                        const ctNomeNorm = ct ? app.normalizeText(ct.nome || '') : '';
+                        if (ct && ct.nome && ctNomeNorm && ctNomeNorm !== tituloNorm) {
                             subParts.push(app.escapeHtml(ct.nome));
                         }
                         if (op.documento_contato || ct?.documento) {
@@ -4495,6 +4510,7 @@
             enrichOp: (op) => {
                 const ct = app.contatos.find(c => c.id === op.contato_id);
                 if (ct) {
+                    op.nome_contato = ct.nome;
                     op.documento_contato = ct.documento;
                     op.chatwoot_id = ct.chatwoot_id;
                     op.email_contato = ct.email;          
@@ -4557,7 +4573,7 @@
 
                 const fNomeCliente = (document.getElementById('filter-nome-cliente')?.value || '').trim().toLowerCase();
                 if (fNomeCliente) {
-                    const hay = `${o.nome_segurado || ''} ${o.nome_oportunidade || ''}`.toLowerCase();
+                    const hay = `${ui.nomeSeguradoExibicao(o)} ${o.nome_oportunidade || ''}`.toLowerCase();
                     if (!hay.includes(fNomeCliente)) return false;
                 }
 
@@ -4814,7 +4830,7 @@
                     const dataA = a.retorno ? new Date(`${a.retorno}T12:00:00`).getTime() : Number.POSITIVE_INFINITY;
                     const dataB = b.retorno ? new Date(`${b.retorno}T12:00:00`).getTime() : Number.POSITIVE_INFINITY;
                     if (dataA !== dataB) return dataA - dataB;
-                    return String(a.nome_segurado || '').localeCompare(String(b.nome_segurado || ''), 'pt-BR');
+                    return String(ui.tituloOportunidadeExibicao(a) || '').localeCompare(String(ui.tituloOportunidadeExibicao(b) || ''), 'pt-BR');
                 });
 
                 oportunidadesOrdenadas.forEach(d => {
@@ -5264,7 +5280,6 @@
                     }
                 }
 
-                let nomeSeguradoDeal;
                 let nomeOportunidadeDeal = titulo || null;
                 let responsavelIdFinal = null;
 
@@ -5308,10 +5323,8 @@
                             responsavelIdFinal = rid;
                         }
 
-                        nomeSeguradoDeal = (contatoData.nome || '').trim() || nomeSeg;
                     } else {
                         contatoId = '';
-                        nomeSeguradoDeal = titulo;
                         responsavelIdFinal = null;
                     }
 
@@ -5320,11 +5333,11 @@
                     const premioLiq = parseFloat(p0.premio) || 0;
                     const comissPct = parseFloat(p0.comissao) || 0;
                     const agencPct = parseFloat(p0.agenciamento) || 0;
+                    const valorReceita = premioLiq * ((comissPct + agencPct) / 100);
 
                     const deal = {
                         contato_id: tituloOnly ? null : contatoId,
                         responsavel_id: responsavelIdFinal,
-                        nome_segurado: nomeSeguradoDeal,
                         nome_oportunidade: nomeOportunidadeDeal,
                         vigencia: document.getElementById('opVigencia').value || null,
                         retorno: retornoVal,
@@ -5336,6 +5349,7 @@
                         premio_liquido: premioLiq,
                         comissao_percentual: comissPct,
                         agenciamento_percentual: agencPct,
+                        valor_receita: valorReceita,
                         indicador: document.getElementById('opIndicador').value,
                         corretor_id: document.getElementById('opProdutor').value || app.user.id,
                         etapa_nome: etapa,
@@ -5415,12 +5429,12 @@
                 const premioLiq = parseFloat(p0.premio) || parseFloat(opOrigem.premio_liquido) || 0;
                 const comissPct = parseFloat(p0.comissao) || parseFloat(opOrigem.comissao_percentual) || 0;
                 const agencPct = parseFloat(p0.agenciamento) || parseFloat(opOrigem.agenciamento_percentual) || 0;
+                const valorReceitaReag = premioLiq * ((comissPct + agencPct) / 100);
 
                 const retornoReag = reag.retorno || reag.vigencia || opOrigem.retorno || new Date().toISOString().slice(0, 10);
                 const deal = {
                     contato_id: contatoId,
                     responsavel_id: responsavelIdFinal,
-                    nome_segurado: opOrigem.nome_segurado,
                     nome_oportunidade: opOrigem.nome_oportunidade || null,
                     vigencia: reag.vigencia || null,
                     retorno: retornoReag,
@@ -5432,6 +5446,7 @@
                     premio_liquido: premioLiq,
                     comissao_percentual: comissPct,
                     agenciamento_percentual: agencPct,
+                    valor_receita: valorReceitaReag,
                     indicador: opOrigem.indicador || null,
                     corretor_id: opOrigem.corretor_id,
                     etapa_nome: primeiraEtapa,

@@ -74,7 +74,6 @@ CREATE TABLE IF NOT EXISTS oportunidades (
     contato_id BIGINT REFERENCES contatos(id) ON DELETE CASCADE,
     responsavel_id BIGINT REFERENCES contatos(id),
     corretor_id UUID REFERENCES corretores(id),
-    nome_segurado TEXT NOT NULL,
     nome_oportunidade TEXT,
     vigencia DATE,
     retorno DATE NOT NULL,
@@ -87,6 +86,7 @@ CREATE TABLE IF NOT EXISTS oportunidades (
     premio_liquido NUMERIC DEFAULT 0,
     comissao_percentual NUMERIC DEFAULT 0,
     agenciamento_percentual NUMERIC DEFAULT 0,
+    valor_receita NUMERIC DEFAULT 0,
     indicador TEXT,
     etapa_nome TEXT NOT NULL,
     status TEXT DEFAULT 'aberto', -- 'aberto', 'ganho', 'perdido'
@@ -112,6 +112,13 @@ CREATE TABLE IF NOT EXISTS oportunidades (
 -- UPDATE public.oportunidades SET retorno = COALESCE(retorno, vigencia, (CURRENT_DATE AT TIME ZONE 'utc')::date) WHERE retorno IS NULL;
 -- ALTER TABLE public.oportunidades ALTER COLUMN retorno SET NOT NULL;
 -- (adicionar CONSTRAINTs conforme apply_migration oportunidades_nome_oportunidade_retorno_obrigatorio)
+-- ==============================================================================
+
+-- ==============================================================================
+-- MIGRACAO: valor_receita e remocao de nome_segurado (nome do titular vem de contatos.nome; sem contato, usar nome_oportunidade)
+-- ALTER TABLE public.oportunidades ADD COLUMN IF NOT EXISTS valor_receita NUMERIC DEFAULT 0;
+-- UPDATE public.oportunidades SET valor_receita = COALESCE(premio_liquido,0) * ((COALESCE(comissao_percentual,0) + COALESCE(agenciamento_percentual,0)) / 100);
+-- ALTER TABLE public.oportunidades DROP COLUMN IF EXISTS nome_segurado;
 -- ==============================================================================
 
 -- ==============================================================================

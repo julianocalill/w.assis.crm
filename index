@@ -478,6 +478,11 @@
                                 <option value="">Todas as etapas</option>
                             </select>
                         </div>
+
+                        <div class="flex-1 min-w-[100px]">
+                            <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">ID oportunidade</label>
+                            <input type="text" inputmode="numeric" id="filter-oportunidade-id" placeholder="Ex: 12345" autocomplete="off" class="w-full text-xs p-2 rounded border border-border outline-none focus:border-primary bg-white font-mono">
+                        </div>
                         
                         <div class="flex-1 min-w-[120px]">
                             <label class="text-[9px] font-bold text-textMuted uppercase mb-1 block">Status</label>
@@ -571,6 +576,11 @@
                             <tbody id="lista-tbody" class="divide-y divide-border text-sm">
                                 </tbody>
                         </table>
+                    </div>
+                    <div class="flex justify-center py-4">
+                        <button type="button" id="btn-lista-load-more" onclick="app.loadListaPage(false)" class="hidden bg-slate-800 text-white px-6 py-2 rounded-lg text-xs font-bold hover:bg-slate-700 transition shadow-sm">
+                            Carregar mais
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1719,7 +1729,9 @@
                     kanban.classList.add('hidden'); 
                     lista.classList.remove('hidden'); 
                     
-                    ui.renderListTable(); 
+                    (async () => {
+                        await app.loadListaPage(true);
+                    })();
                     
                     btnLista.classList.add('bg-white', 'shadow-sm', 'text-primary'); 
                     btnLista.classList.remove('text-textMuted');
@@ -2615,12 +2627,14 @@
                 }
                 const colCount = app.isGerente ? 8 : 7;
                 
-                if (!app.oportunidades || app.oportunidades.length === 0) {
+                const listaOps = app.listaOportunidades || [];
+                if (!listaOps.length) {
                     tbody.innerHTML = `<tr><td colspan="${colCount}" class="px-6 py-10 text-center text-textMuted font-medium">Nenhuma oportunidade com esses filtros.</td></tr>`;
+                    app.syncListaLoadMoreButton();
                     return;
                 }
 
-                tbody.innerHTML = app.oportunidades.map(d => {
+                tbody.innerHTML = listaOps.map(d => {
                     const ramosText = ui.oportunidadeRamoExibicao(d);
 
                     let bgRowClass = 'hover:bg-slate-50 border-b border-border';
@@ -2702,6 +2716,7 @@
                     </tr>
                     `;
                 }).join('');
+                app.syncListaLoadMoreButton();
             },
 
             renderContatosPagination: (meta) => {
@@ -2776,7 +2791,7 @@
                     return;
                 }
 
-                const negociosGanhos = app.oportunidades.filter(o => o.status === 'ganho' && !o.excluido);
+                const negociosGanhos = (app.negociosGanhosCache || []).filter(o => o.status === 'ganho' && !o.excluido);
                 
                 if (negociosGanhos.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-textMuted font-medium">Nenhum segurado fechado até o momento.</td></tr>';
@@ -2886,6 +2901,17 @@
             contatosSearchTerm: '',
             contatosPage: 1,
             contatosPageSize: 15,
+            listaOportunidades: [],
+            listaQueryOffset: 0,
+            listaHasMore: true,
+            listaLoading: false,
+            listaPageSize: 80,
+            kanbanColState: {},
+            kanbanPageSize: 60,
+            _kanbanScrollHandlers: [],
+            _kanbanScrollTimers: {},
+            negociosGanhosCache: [],
+            _metricsOps: null,
             
             currentSortCol: 'criado_em',
             currentSortAsc: false,
@@ -3786,6 +3812,7 @@
                 };
 
                 return (app.oportunidades || [])
+                    .filter(op => String(op.funil_id) === String(config.activePipeline))
                     .map(op => ({ op, score: scoreOp(op) }))
                     .filter(x => x.score > 0)
                     .sort((a, b) => b.score - a.score || String(ui.tituloOportunidadeExibicao(a.op) || '').localeCompare(String(ui.tituloOportunidadeExibicao(b.op) || ''), 'pt-BR'))
@@ -3895,6 +3922,10 @@
                     try {
                         const { data: opArr } = await app.sb.from('oportunidades').select('*').eq('id', id).limit(1);
                         opSnapshot = opArr?.[0] || null;
+                        if (opSnapshot) {
+                            app.enrichOp(opSnapshot);
+                            app.mergeOportunidadeIntoCache(opSnapshot);
+                        }
                     } catch (e) {
                         console.error('Falha ao carregar oportunidade por ID', e);
                     }
@@ -4437,7 +4468,10 @@
                 }
                 
                 if (view === 'dashboard') {
-                    app.updateDashboard();
+                    (async () => {
+                        await app.loadMetricsOpsSnapshot();
+                        app.updateDashboard();
+                    })();
                 }
             },
 
@@ -4474,7 +4508,7 @@
                 }
             },
 
-            switchPipeline: (id) => { 
+            switchPipeline: async (id) => { 
                 config.activePipeline = id;
                 try {
                     localStorage.setItem('nexus_active_pipe', String(id));
@@ -4482,11 +4516,7 @@
                     /* ignore */
                 }
                 app.loadPipelines(); 
-                app.loadData(); 
-                
-                if (!document.getElementById('view-dashboard').classList.contains('hidden')) {
-                    app.updateDashboard(); 
-                }
+                await app.loadData(); 
             },
 
             loadContatos: async () => {
@@ -4539,6 +4569,13 @@
             applyOpFilters: (o) => {
                 if (String(o.funil_id) !== String(config.activePipeline)) {
                     return false;
+                }
+                const fOpId = (document.getElementById('filter-oportunidade-id')?.value || '').trim();
+                if (fOpId) {
+                    const pid = parseInt(fOpId, 10);
+                    if (!Number.isFinite(pid) || String(o.id) !== String(pid)) {
+                        return false;
+                    }
                 }
                 const fStatus = document.getElementById('filter-status')?.value;
                 if (fStatus === 'excluido') {
@@ -4596,8 +4633,446 @@
                 return true;
             },
 
+            mergeOportunidadeIntoCache: (op) => {
+                if (!op || op.id == null) return;
+                const idx = app.oportunidades.findIndex(o => String(o.id) === String(op.id));
+                if (idx >= 0) {
+                    app.oportunidades[idx] = { ...app.oportunidades[idx], ...op };
+                } else {
+                    app.oportunidades.push(op);
+                }
+            },
+
+            isKanbanCardMode: () => {
+                const fStatus = document.getElementById('filter-status')?.value || '';
+                return fStatus !== 'excluido' && fStatus !== 'ganho' && fStatus !== 'perdido';
+            },
+
+            shouldSkipKanbanColumn: (stageName) => {
+                if (!app.isKanbanCardMode()) {
+                    return true;
+                }
+                const fEtapa = document.getElementById('filter-etapa')?.value;
+                if (fEtapa && fEtapa !== stageName) {
+                    return true;
+                }
+                return false;
+            },
+
+            setKanbanBadge: (stageName, n) => {
+                const col = document.querySelector(`.kanban-list[data-stage="${CSS.escape(stageName)}"]`)?.closest('.kanban-col');
+                if (!col) return;
+                const bubbleFull = col.querySelector('.count');
+                const bubbleCollapsed = col.querySelector('.count-collapsed');
+                const txt = String(n);
+                if (bubbleFull) bubbleFull.innerText = txt;
+                if (bubbleCollapsed) bubbleCollapsed.innerText = txt;
+            },
+
+            applyOportunidadesDbFilters: (q, opts = {}) => {
+                const mode = opts.mode || 'lista';
+                const etapaNome = opts.etapaNome;
+
+                if ((mode === 'kanbanCount' || mode === 'kanbanPage') && !app.isKanbanCardMode()) {
+                    return null;
+                }
+
+                q = q.eq('funil_id', config.activePipeline);
+
+                const fStatus = document.getElementById('filter-status')?.value;
+                if (fStatus === 'excluido') {
+                    q = q.eq('excluido', true);
+                } else {
+                    q = q.eq('excluido', false);
+                    if (fStatus && fStatus !== 'excluido') {
+                        q = q.eq('status', fStatus);
+                    }
+                }
+
+                if (mode === 'kanbanCount' || mode === 'kanbanPage') {
+                    q = q.eq('status', 'aberto');
+                    if (etapaNome) {
+                        q = q.eq('etapa_nome', etapaNome);
+                    }
+                    const fEtapa = document.getElementById('filter-etapa')?.value;
+                    if (fEtapa && fEtapa !== etapaNome) {
+                        return null;
+                    }
+                } else {
+                    const fEtapa = document.getElementById('filter-etapa')?.value;
+                    if (fEtapa) {
+                        q = q.eq('etapa_nome', fEtapa);
+                    }
+                }
+
+                if (!app.isGerente && app.user && app.user.id) {
+                    q = q.eq('corretor_id', app.user.id);
+                }
+
+                const opIdRaw = (document.getElementById('filter-oportunidade-id')?.value || '').trim();
+                if (opIdRaw) {
+                    const pid = parseInt(opIdRaw, 10);
+                    if (Number.isFinite(pid)) {
+                        q = q.eq('id', pid);
+                    } else {
+                        return null;
+                    }
+                }
+
+                const fDataIni = document.getElementById('filter-data-ini')?.value;
+                const fDataFim = document.getElementById('filter-data-fim')?.value;
+                const fDataCampo = document.getElementById('filter-data-campo')?.value || 'vigencia';
+                if (fDataIni) {
+                    q = q.gte(fDataCampo, fDataIni);
+                }
+                if (fDataFim) {
+                    q = q.lte(fDataCampo, fDataFim);
+                }
+
+                const fSeguradora = document.getElementById('filter-seguradora')?.value;
+                if (fSeguradora) {
+                    q = q.eq('seguradora', fSeguradora);
+                }
+
+                const fOrigem = document.getElementById('filter-origem')?.value;
+                if (fOrigem) {
+                    q = q.eq('origem', fOrigem);
+                }
+
+                const fCorretor = document.getElementById('filter-corretor')?.value;
+                if (fCorretor) {
+                    q = q.eq('corretor_id', fCorretor);
+                }
+
+                const fConf = document.getElementById('filter-conferencia')?.value;
+                if (fConf === 'nao') {
+                    q = q.eq('is_checked', false);
+                }
+                if (fConf === 'sim') {
+                    q = q.eq('is_checked', true);
+                }
+
+                const fRamo = document.getElementById('filter-ramo')?.value;
+                if (fRamo) {
+                    q = q.eq('ramo_seguro', fRamo);
+                }
+
+                return q;
+            },
+
+            teardownKanbanScrollListeners: () => {
+                (app._kanbanScrollHandlers || []).forEach(({ list, onScroll }) => {
+                    list.removeEventListener('scroll', onScroll);
+                });
+                app._kanbanScrollHandlers = [];
+                Object.keys(app._kanbanScrollTimers || {}).forEach((k) => {
+                    clearTimeout(app._kanbanScrollTimers[k]);
+                });
+                app._kanbanScrollTimers = {};
+            },
+
+            attachKanbanColumnScrollListeners: () => {
+                app.teardownKanbanScrollListeners();
+                document.querySelectorAll('.kanban-list').forEach((list) => {
+                    const stage = list.dataset.stage;
+                    if (!stage) return;
+                    const onScroll = () => {
+                        if (app._kanbanScrollTimers[stage]) {
+                            clearTimeout(app._kanbanScrollTimers[stage]);
+                        }
+                        app._kanbanScrollTimers[stage] = setTimeout(() => {
+                            const nearBottom = list.scrollTop + list.clientHeight >= list.scrollHeight - 120;
+                            if (nearBottom) {
+                                app.loadKanbanColumnPage(stage, false);
+                            }
+                        }, 120);
+                    };
+                    list.addEventListener('scroll', onScroll, { passive: true });
+                    app._kanbanScrollHandlers.push({ list, onScroll });
+                });
+            },
+
+            refreshKanbanColumnCounts: async () => {
+                if (!app.etapas || !app.etapas.length) {
+                    return;
+                }
+                await Promise.all(app.etapas.map(async (e) => {
+                    const stage = e.nome;
+                    if (app.shouldSkipKanbanColumn(stage)) {
+                        app.kanbanColState[stage] = { offset: 0, loading: false, hasMore: false, serverTotal: 0 };
+                        app.setKanbanBadge(stage, 0);
+                        return;
+                    }
+                    let q = app.sb.from('oportunidades').select('*', { count: 'exact', head: true });
+                    q = app.applyOportunidadesDbFilters(q, { mode: 'kanbanCount', etapaNome: stage });
+                    if (!q) {
+                        app.kanbanColState[stage] = { offset: 0, loading: false, hasMore: false, serverTotal: 0 };
+                        app.setKanbanBadge(stage, 0);
+                        return;
+                    }
+                    const { count, error } = await q;
+                    if (error) {
+                        console.error('Erro count kanban', stage, error);
+                    }
+                    const total = count || 0;
+                    app.kanbanColState[stage] = {
+                        offset: 0,
+                        loading: false,
+                        hasMore: total > 0,
+                        serverTotal: total
+                    };
+                    app.setKanbanBadge(stage, total);
+                }));
+                app.refreshHeaderPendenteFromServerTotals();
+            },
+
+            refreshHeaderPendenteFromServerTotals: () => {
+                let sum = 0;
+                Object.keys(app.kanbanColState || {}).forEach((k) => {
+                    sum += app.kanbanColState[k].serverTotal || 0;
+                });
+                const headerLeads = document.getElementById('header-total-leads');
+                if (headerLeads) {
+                    headerLeads.innerText = `${sum} pendentes`;
+                }
+            },
+
+            adjustKanbanColumnTotal: (stageName, delta) => {
+                if (!stageName || !delta) {
+                    return;
+                }
+                const st = app.kanbanColState[stageName];
+                if (!st) {
+                    return;
+                }
+                st.serverTotal = Math.max(0, (st.serverTotal || 0) + delta);
+                app.setKanbanBadge(stageName, st.serverTotal);
+                app.refreshHeaderPendenteFromServerTotals();
+            },
+
+            scheduleKanbanCountsDebounced: () => {
+                if (app._debounceKanbanCounts) {
+                    clearTimeout(app._debounceKanbanCounts);
+                }
+                app._debounceKanbanCounts = setTimeout(async () => {
+                    app._debounceKanbanCounts = null;
+                    try {
+                        await app.refreshKanbanColumnCounts();
+                    } catch (e) {
+                        console.warn('refreshKanbanColumnCounts', e);
+                    }
+                }, 500);
+            },
+
+            loadKanbanColumnPage: async (stageName, reset) => {
+                if (app.shouldSkipKanbanColumn(stageName)) {
+                    return;
+                }
+                let st = app.kanbanColState[stageName];
+                if (!st) {
+                    st = { offset: 0, loading: false, hasMore: true, serverTotal: 0 };
+                    app.kanbanColState[stageName] = st;
+                }
+                if (reset) {
+                    st.offset = 0;
+                    st.hasMore = (st.serverTotal || 0) > 0;
+                    const list = document.querySelector(`.kanban-list[data-stage="${CSS.escape(stageName)}"]`);
+                    if (list) {
+                        list.innerHTML = '';
+                    }
+                }
+                if (st.loading || !st.hasMore) {
+                    return;
+                }
+                st.loading = true;
+                const pageSize = app.kanbanPageSize || 60;
+                let q = app.sb.from('oportunidades').select('*');
+                q = app.applyOportunidadesDbFilters(q, { mode: 'kanbanPage', etapaNome: stageName });
+                if (!q) {
+                    st.loading = false;
+                    st.hasMore = false;
+                    return;
+                }
+                q = q
+                    .order('retorno', { ascending: true })
+                    .order('id', { ascending: true })
+                    .range(st.offset, st.offset + pageSize - 1);
+
+                try {
+                    const { data, error } = await q;
+                    if (error) {
+                        throw error;
+                    }
+                    const batch = data || [];
+                    const list = document.querySelector(`.kanban-list[data-stage="${CSS.escape(stageName)}"]`);
+                    for (const raw of batch) {
+                        const op = { ...raw };
+                        app.enrichOp(op);
+                        if (!app.applyOpFilters(op)) {
+                            continue;
+                        }
+                        if (op.excluido || op.status !== 'aberto' || op.etapa_nome !== stageName) {
+                            continue;
+                        }
+                        app.mergeOportunidadeIntoCache(op);
+                        if (list) {
+                            const newEl = ui.createCard(op);
+                            app._insertCardSorted(list, newEl, op);
+                        }
+                    }
+                    st.offset += batch.length;
+                    if (batch.length < pageSize) {
+                        st.hasMore = false;
+                    }
+                } catch (e) {
+                    console.error('Erro ao carregar coluna kanban', stageName, e);
+                    st.hasMore = false;
+                } finally {
+                    st.loading = false;
+                }
+            },
+
+            bootstrapKanbanColumns: async () => {
+                if (!app.isKanbanCardMode() || !app.etapas) {
+                    return;
+                }
+                await Promise.all(app.etapas.map(e => app.loadKanbanColumnPage(e.nome, true)));
+                app.attachKanbanColumnScrollListeners();
+            },
+
+            loadListaPage: async (reset) => {
+                if (app.listaLoading) {
+                    return;
+                }
+                if (reset) {
+                    app.listaOportunidades = [];
+                    app.listaQueryOffset = 0;
+                    app.listaHasMore = true;
+                }
+                if (!app.listaHasMore && !reset) {
+                    return;
+                }
+                app.listaLoading = true;
+                const pageSize = app.listaPageSize || 80;
+                let q = app.sb.from('oportunidades').select('*');
+                q = app.applyOportunidadesDbFilters(q, { mode: 'lista' });
+                if (!q) {
+                    app.listaLoading = false;
+                    app.listaHasMore = false;
+                    ui.renderListTable();
+                    app.syncListaLoadMoreButton();
+                    return;
+                }
+                q = q.order('criado_em', { ascending: false }).range(app.listaQueryOffset, app.listaQueryOffset + pageSize - 1);
+                try {
+                    const { data, error } = await q;
+                    if (error) {
+                        throw error;
+                    }
+                    const batch = data || [];
+                    for (const raw of batch) {
+                        const op = { ...raw };
+                        app.enrichOp(op);
+                        if (!app.applyOpFilters(op)) {
+                            continue;
+                        }
+                        app.mergeOportunidadeIntoCache(op);
+                        app.listaOportunidades.push(op);
+                    }
+                    app.listaQueryOffset += batch.length;
+                    app.listaHasMore = batch.length === pageSize;
+                } catch (e) {
+                    console.error('Erro loadListaPage', e);
+                    app.listaHasMore = false;
+                } finally {
+                    app.listaLoading = false;
+                }
+                app.sortList(app.currentSortCol, true);
+                app.syncListaLoadMoreButton();
+            },
+
+            syncListaLoadMoreButton: () => {
+                const btn = document.getElementById('btn-lista-load-more');
+                if (!btn) return;
+                const listaVis = document.getElementById('board-lista') && !document.getElementById('board-lista').classList.contains('hidden');
+                const show = listaVis && app.listaHasMore;
+                btn.classList.toggle('hidden', !show);
+            },
+
+            loadNegociosGanhosCache: async () => {
+                const batchSize = 1000;
+                let offset = 0;
+                const all = [];
+                try {
+                    while (true) {
+                        let q = app.sb.from('oportunidades').select('*')
+                            .eq('funil_id', config.activePipeline)
+                            .eq('status', 'ganho')
+                            .eq('excluido', false)
+                            .order('criado_em', { ascending: false })
+                            .range(offset, offset + batchSize - 1);
+                        if (!app.isGerente && app.user && app.user.id) {
+                            q = q.eq('corretor_id', app.user.id);
+                        }
+                        const { data, error } = await q;
+                        if (error) {
+                            throw error;
+                        }
+                        const batch = data || [];
+                        batch.forEach(o => app.enrichOp(o));
+                        all.push(...batch);
+                        if (batch.length < batchSize) {
+                            break;
+                        }
+                        offset += batchSize;
+                    }
+                } catch (e) {
+                    console.error('Erro loadNegociosGanhosCache', e);
+                }
+                app.negociosGanhosCache = all;
+            },
+
+            loadMetricsOpsSnapshot: async () => {
+                const batchSize = 1000;
+                let offset = 0;
+                const all = [];
+                try {
+                    while (true) {
+                        let q = app.sb.from('oportunidades').select('*')
+                            .eq('funil_id', config.activePipeline)
+                            .eq('excluido', false)
+                            .order('criado_em', { ascending: false })
+                            .range(offset, offset + batchSize - 1);
+                        if (!app.isGerente && app.user && app.user.id) {
+                            q = q.eq('corretor_id', app.user.id);
+                        }
+                        const { data, error } = await q;
+                        if (error) {
+                            throw error;
+                        }
+                        const batch = data || [];
+                        batch.forEach(o => app.enrichOp(o));
+                        all.push(...batch);
+                        if (batch.length < batchSize) {
+                            break;
+                        }
+                        offset += batchSize;
+                    }
+                } catch (e) {
+                    console.error('Erro loadMetricsOpsSnapshot', e);
+                }
+                app._metricsOps = all;
+            },
+
             loadData: async () => {
                 try {
+                    app.teardownKanbanScrollListeners();
+                    app.oportunidades = [];
+                    app.kanbanColState = {};
+                    app.listaOportunidades = [];
+                    app.listaQueryOffset = 0;
+                    app.listaHasMore = true;
+
                     const {data: etapas, error: errEtapas} = await app.sb.from('etapas_funil').select('*').eq('funil_id', config.activePipeline).order('ordem');
                     if (errEtapas) {
                         console.error("Erro etapas:", errEtapas);
@@ -4615,33 +5090,37 @@
                         }
                     }
 
-                    const fStatus = document.getElementById('filter-status')?.value;
-                    let qOps = app.sb.from('oportunidades').select('*').order('criado_em', {ascending:false});
-                    if (fStatus === 'excluido') {
-                        qOps = qOps.eq('excluido', true);
+                    if (app.isKanbanCardMode()) {
+                        await app.refreshKanbanColumnCounts();
+                        await app.bootstrapKanbanColumns();
                     } else {
-                        qOps = qOps.eq('excluido', false);
+                        document.querySelectorAll('.kanban-col').forEach((col) => {
+                            const stageEl = col.querySelector('.kanban-list');
+                            const stage = stageEl?.dataset?.stage;
+                            if (stage) {
+                                app.kanbanColState[stage] = { offset: 0, loading: false, hasMore: false, serverTotal: 0 };
+                                app.setKanbanBadge(stage, 0);
+                            }
+                            if (stageEl) {
+                                stageEl.innerHTML = '';
+                            }
+                        });
+                        app.refreshHeaderPendenteFromServerTotals();
                     }
-                    if (!app.isGerente && app.user && app.user.id) {
-                        qOps = qOps.eq('corretor_id', app.user.id);
-                    }
-                    const {data: ops, error: errOps} = await qOps;
-                    if (errOps) {
-                        console.error("Erro oportunidades:", errOps);
-                    }
-                    
-                    let baseOps = ops || [];
-                    
-                    baseOps.forEach(op => app.enrichOp(op));
 
-                    app.oportunidades = baseOps.filter(o => app.applyOpFilters(o));
-
-                    app.sortList(app.currentSortCol, true);
-                    
-                    app.renderKanban(); 
+                    await app.loadNegociosGanhosCache();
                     ui.renderSeguradosTable();
-                    
+
+                    const listaVisivel = !document.getElementById('board-lista').classList.contains('hidden');
+                    if (listaVisivel) {
+                        await app.loadListaPage(true);
+                    } else {
+                        ui.renderListTable();
+                        app.syncListaLoadMoreButton();
+                    }
+
                     if (!document.getElementById('view-dashboard').classList.contains('hidden')) {
+                        await app.loadMetricsOpsSnapshot();
                         app.updateDashboard();
                     }
 
@@ -4660,7 +5139,8 @@
                     }
                 }
                 
-                app.oportunidades.sort((a, b) => {
+                const listaArr = app.listaOportunidades || [];
+                listaArr.sort((a, b) => {
                     let valA = a[col] || '';
                     let valB = b[col] || '';
 
@@ -4710,21 +5190,7 @@
             },
 
             updateKanbanCounts: () => {
-                document.querySelectorAll('.kanban-col').forEach(col => {
-                    const list = col.querySelector('.kanban-list');
-                    if (list) {
-                        const len = list.children.length;
-                        const bubbleFull = col.querySelector('.count');
-                        const bubbleCollapsed = col.querySelector('.count-collapsed');
-                        
-                        if (bubbleFull) {
-                            bubbleFull.innerText = len;
-                        }
-                        if (bubbleCollapsed) {
-                            bubbleCollapsed.innerText = len;
-                        }
-                    }
-                });
+                app.refreshHeaderPendenteFromServerTotals();
             },
 
             syncKanbanOpFromRecord: (payload) => {
@@ -4738,7 +5204,8 @@
                 if (eventType === 'DELETE') {
                     if (existingIdx > -1) app.oportunidades.splice(existingIdx, 1);
                     if (existingEl) existingEl.remove();
-                    app.updateKanbanCounts();
+                    app.scheduleKanbanCountsDebounced();
+                    app.refreshHeaderPendenteFromServerTotals();
                     return;
                 }
 
@@ -4774,16 +5241,8 @@
                     }
                 }
                 
-                let pendentesCount = 0;
-                document.querySelectorAll('.kanban-list').forEach(list => {
-                    pendentesCount += list.children.length;
-                });
-                const headerLeads = document.getElementById('header-total-leads');
-                if (headerLeads) {
-                    headerLeads.innerText = `${pendentesCount} pendentes`;
-                }
-
-                app.updateKanbanCounts();
+                app.scheduleKanbanCountsDebounced();
+                app.refreshHeaderPendenteFromServerTotals();
             },
 
             _insertCardSorted: (col, newEl, op) => {
@@ -5682,7 +6141,8 @@
                     app._insertCardSorted(destCol, cardEl, d);
                 }
 
-                app.updateKanbanCounts();
+                app.adjustKanbanColumnTotal(fromStage, -1);
+                app.adjustKanbanColumnTotal(toStage, 1);
                 
                 app.suppressRealtimeBoardSync();
                 await app.sb.from('oportunidades').update({ etapa_nome: toStage }).eq('id', id);
@@ -5893,7 +6353,8 @@
             },
 
             updateDashboard: () => {
-                const ops = app.oportunidades.filter(o => !o.excluido);
+                const src = (app._metricsOps && app._metricsOps.length) ? app._metricsOps : app.oportunidades;
+                const ops = src.filter(o => !o.excluido);
                 
                 document.getElementById('kpi-count').innerText = ops.length;
                 

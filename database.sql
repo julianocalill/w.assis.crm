@@ -160,8 +160,12 @@ CREATE TABLE IF NOT EXISTS historico_oportunidades (
     criado_por UUID REFERENCES corretores(id),
     tipo TEXT NOT NULL,
     descricao TEXT NOT NULL,
+    is_log BOOLEAN NOT NULL DEFAULT FALSE,
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
+
+ALTER TABLE historico_oportunidades
+ADD COLUMN IF NOT EXISTS is_log BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- 7. Tabela de Anexos (Arquivos)
 CREATE TABLE IF NOT EXISTS anexos (

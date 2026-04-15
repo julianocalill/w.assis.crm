@@ -987,22 +987,29 @@
                         </div>
                     </div>
 
-                    <div id="modal-content-arquivos" class="hidden space-y-4 max-w-2xl mx-auto text-center">
+                    <div id="modal-content-arquivos" class="hidden space-y-4 max-w-5xl mx-auto text-center">
                         
                         <div id="arquivos-aviso-salvar" class="py-16 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 text-textMuted font-bold">
                             <i class="fa-solid fa-lock text-3xl mb-3 block text-slate-300"></i>
                             Salve a oportunidade primeiro para anexar arquivos e propostas.
                         </div>
                         
-                        <div id="arquivos-area-upload" class="hidden">
-                            <div class="border-2 border-dashed border-primary rounded-xl p-10 hover:bg-blue-50 transition cursor-pointer relative bg-slate-50">
-                                <input type="file" id="fileUploadInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="app.uploadArquivo()">
-                                <i class="fa-solid fa-cloud-arrow-up text-4xl text-primary mb-3"></i>
-                                <p class="text-textMain font-bold text-lg">Clique ou arraste os arquivos aqui</p>
-                                <p class="text-xs text-textMuted mt-1">PDFs, Imagens, Apólices e Propostas</p>
+                        <div id="arquivos-area-upload" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
+                            <div>
+                                <div class="border-2 border-dashed border-primary rounded-xl p-10 hover:bg-blue-50 transition cursor-pointer relative bg-slate-50 text-center">
+                                    <input type="file" id="fileUploadInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="app.uploadArquivo()">
+                                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-primary mb-3"></i>
+                                    <p class="text-textMain font-bold text-lg">Clique ou arraste os arquivos aqui</p>
+                                    <p class="text-xs text-textMuted mt-1">PDFs, Imagens, Apólices e Propostas</p>
+                                </div>
+                                <ul id="lista-anexos" class="space-y-3 mt-6 text-left">
+                                </ul>
                             </div>
-                            <ul id="lista-anexos" class="space-y-3 mt-6 text-left">
-                            </ul>
+                            <div class="border border-border rounded-xl bg-white p-4 shadow-sm">
+                                <h3 class="text-sm font-bold text-textMain uppercase tracking-wider mb-3">Logs</h3>
+                                <div id="logs-container" class="space-y-4 h-[360px] overflow-y-auto custom-scrollbar pr-1">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1633,6 +1640,12 @@
                     const id = document.getElementById('opId').value;
                     if (id) {
                         app.loadTimeline(id);
+                    }
+                }
+                if (tabName === 'arquivos') {
+                    const id = document.getElementById('opId').value;
+                    if (id) {
+                        app.loadLogs(id);
                     }
                 }
 
@@ -5741,6 +5754,54 @@
 
                 let nomeOportunidadeDeal = titulo || null;
                 let responsavelIdFinal = null;
+                const formatDateLog = (v) => {
+                    if (!v) {
+                        return '';
+                    }
+                    const d = new Date(v);
+                    if (Number.isNaN(d.getTime())) {
+                        return String(v);
+                    }
+                    return d.toLocaleDateString('pt-BR');
+                };
+                const formatValueLog = (field, value) => {
+                    if (value === null || value === undefined || value === '') {
+                        return '';
+                    }
+                    if (field === 'retorno' || field === 'vigencia') {
+                        return formatDateLog(value);
+                    }
+                    if (field === 'premio_liquido') {
+                        return formatBRL(parseFloat(value) || 0);
+                    }
+                    if (field === 'comissao_percentual' || field === 'agenciamento_percentual') {
+                        return `${ui.fmtPctBR(value)}%`;
+                    }
+                    if (field === 'ativo') {
+                        return value ? 'Ativo' : 'Inativo';
+                    }
+                    if (field === 'corretor_id') {
+                        const cor = app.corretores.find(c => String(c.id) === String(value));
+                        return cor?.nome_completo || '';
+                    }
+                    return String(value);
+                };
+                const normalizeValueLog = (field, value) => {
+                    if (value === null || value === undefined) {
+                        return '';
+                    }
+                    if (field === 'retorno' || field === 'vigencia') {
+                        const d = new Date(value);
+                        return Number.isNaN(d.getTime()) ? String(value) : d.toISOString().slice(0, 10);
+                    }
+                    if (field === 'premio_liquido' || field === 'comissao_percentual' || field === 'agenciamento_percentual') {
+                        return String(parseFloat(value) || 0);
+                    }
+                    if (field === 'ativo') {
+                        return value ? '1' : '0';
+                    }
+                    return String(value);
+                };
 
                 try {
                     if (!tituloOnly) {
@@ -5848,13 +5909,47 @@
                         const logMsg = tituloOnly
                             ? 'Oportunidade criada (cadastro do segurado pendente).'
                             : 'Oportunidade gerada e atrelada ao contato.';
-                        app.logTimeline(newOp[0].id, 'Criação', logMsg);
+                        app.logTimeline(newOp[0].id, 'Criação', logMsg, true);
                     } else {
+                        const trackedFields = [
+                            { key: 'etapa_nome', label: 'etapa' },
+                            { key: 'retorno', label: 'data de retorno' },
+                            { key: 'premio_liquido', label: 'prêmio líquido' },
+                            { key: 'comissao_percentual', label: 'comissão' },
+                            { key: 'agenciamento_percentual', label: 'agenciamento' },
+                            { key: 'ramo_seguro', label: 'ramo' },
+                            { key: 'tipo_seguro', label: 'tipo de seguro' },
+                            { key: 'seguradora', label: 'seguradora' },
+                            { key: 'origem', label: 'origem' },
+                            { key: 'vigencia', label: 'vigência' },
+                            { key: 'corretor_id', label: 'produtor' },
+                            { key: 'status', label: 'status' },
+                            { key: 'indicador', label: 'indicador' },
+                            { key: 'ativo', label: 'status ativo' }
+                        ];
+                        const nomeAutor = (() => {
+                            const cor = app.corretores.find(c => String(c.id) === String(app.user?.id));
+                            const nome = (cor?.nome_completo || '').trim();
+                            return nome ? nome.split(' ')[0] : 'Usuário';
+                        })();
+                        const linhasMudancas = [];
+                        trackedFields.forEach(({ key, label }) => {
+                            const antigoNormalizado = normalizeValueLog(key, opAtual?.[key]);
+                            const novoNormalizado = normalizeValueLog(key, deal[key]);
+                            if (antigoNormalizado === novoNormalizado) {
+                                return;
+                            }
+                            const antigoFmt = formatValueLog(key, opAtual?.[key]) || '—';
+                            const novoFmt = formatValueLog(key, deal[key]) || '—';
+                            linhasMudancas.push(`${nomeAutor} mudou ${label} de ${antigoFmt} para ${novoFmt}`);
+                        });
                         const { error: errOp } = await app.sb.from('oportunidades').update(deal).eq('id', opId);
                         if (errOp) {
                             throw errOp;
                         }
-                        app.logTimeline(opId, 'Atualização', 'Informações da Oportunidade foram editadas e salvas.');
+                        if (linhasMudancas.length > 0) {
+                            await app.logTimeline(opId, 'Atualização', linhasMudancas.join('\n'), true);
+                        }
                     }
 
                     ui.closeDealModal();
@@ -5918,7 +6013,7 @@
                 }
                 const nid = ins?.[0]?.id;
                 if (nid) {
-                    await app.logTimeline(nid, 'Criação', 'Oportunidade reagendada após perda.');
+                    await app.logTimeline(nid, 'Criação', 'Oportunidade reagendada após perda.', true);
                 }
                 return nid || null;
             },
@@ -5979,7 +6074,7 @@
                     
                     app.suppressRealtimeBoardSync();
                     await app.sb.from('contatos').update({ is_segurado: true }).eq('id', contatoId);
-                    await app.logTimeline(opId, 'Movimentação', `Negócio GANHO com sucesso!`);
+                    await app.logTimeline(opId, 'Movimentação', `Negócio GANHO com sucesso!`, true);
                     
                     const { data: opRowArr } = await app.sb.from('oportunidades').select('*').eq('id', opId);
                     const opRow = opRowArr?.[0];
@@ -6065,7 +6160,7 @@
                         data_fechamento: new Date().toISOString()
                     }).eq('id', opId);
                     
-                    await app.logTimeline(opId, 'Movimentação', `Negócio PERDIDO. Motivo: ${motivoResumo}`);
+                    await app.logTimeline(opId, 'Movimentação', `Negócio PERDIDO. Motivo: ${motivoResumo}`, true);
 
                     let novaOportunidadeId = null;
                     if (reag.criar) {
@@ -6119,7 +6214,7 @@
                 if (confirm('Tem certeza que deseja excluir esta oportunidade? Ela sairá do seu painel.')) { 
                     app.suppressRealtimeBoardSync();
                     await app.sb.from('oportunidades').update({ excluido: true }).eq('id', id); 
-                    app.logTimeline(id, 'Exclusão', 'Card movido para lixeira lógica.');
+                    app.logTimeline(id, 'Exclusão', 'Card movido para lixeira lógica.', true);
                     ui.closeDealModal(); 
                     app.loadData(); 
                 }
@@ -6146,7 +6241,7 @@
                 
                 app.suppressRealtimeBoardSync();
                 await app.sb.from('oportunidades').update({ etapa_nome: toStage }).eq('id', id);
-                app.logTimeline(id, 'Movimentação', `O card foi movido da coluna "${fromStage}" para "${toStage}".`);
+                app.logTimeline(id, 'Movimentação', `O card foi movido da coluna "${fromStage}" para "${toStage}".`, true);
             },
 
             toggleOportunidadeChecked: async (id) => {
@@ -6179,23 +6274,24 @@
                 app.loadTimeline(opId);
             },
 
-            logTimeline: async (opId, tipo, desc) => {
+            logTimeline: async (opId, tipo, desc, isLog = false) => {
                 if (opId) {
                     await app.sb.from('historico_oportunidades').insert([{ 
                         oportunidade_id: opId, 
                         tipo: tipo, 
                         descricao: desc, 
-                        criado_por: app.user.id 
+                        criado_por: app.user.id,
+                        is_log: isLog
                     }]);
                 }
             },
 
             loadTimeline: async (opId) => {
                 const container = document.getElementById('timeline-container'); 
-                container.innerHTML = '<div class="py-4"><i class="fa-solid fa-spinner fa-spin text-textMuted"></i> Carregando logs...</div>';
+                container.innerHTML = '<div class="py-4"><i class="fa-solid fa-spinner fa-spin text-textMuted"></i> Carregando histórico...</div>';
                 
                 try {
-                    const {data} = await app.sb.from('historico_oportunidades').select('*').eq('oportunidade_id', opId).order('criado_em', {ascending:false});
+                    const {data} = await app.sb.from('historico_oportunidades').select('*').eq('oportunidade_id', opId).eq('is_log', false).order('criado_em', {ascending:false});
                     
                     if (!data || data.length === 0) { 
                         container.innerHTML = '<p class="text-xs text-textMuted">Nenhum evento registrado ainda.</p>'; 
@@ -6229,7 +6325,42 @@
                         `;
                     }).join('');
                 } catch(e) {
-                    container.innerHTML = '<p class="text-xs text-red-500">Erro ao carregar log.</p>'; 
+                    container.innerHTML = '<p class="text-xs text-red-500">Erro ao carregar histórico.</p>'; 
+                }
+            },
+
+            loadLogs: async (opId) => {
+                const container = document.getElementById('logs-container');
+                if (!container) {
+                    return;
+                }
+                container.innerHTML = '<div class="py-3 text-xs text-textMuted"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Carregando logs...</div>';
+                try {
+                    const {data} = await app.sb.from('historico_oportunidades').select('*').eq('oportunidade_id', opId).eq('is_log', true).order('criado_em', {ascending:false});
+                    if (!data || data.length === 0) {
+                        container.innerHTML = '<p class="text-xs text-textMuted border border-dashed border-slate-200 rounded-lg p-3 text-center">Nenhum log registrado ainda.</p>';
+                        return;
+                    }
+                    const esc = (txt) => String(txt ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    container.innerHTML = data.map(h => {
+                        const linhas = String(h.descricao || '')
+                            .split('\n')
+                            .map(l => l.trim())
+                            .filter(Boolean);
+                        const linhasHtml = linhas.length > 0
+                            ? linhas.map(l => `<p class="text-sm text-textMain">${esc(l)}</p>`).join('')
+                            : `<p class="text-sm text-textMain">${esc(h.descricao || '')}</p>`;
+                        return `
+                        <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
+                            <p class="text-[10px] text-textMuted font-bold mb-2 uppercase tracking-wider">${esc(h.tipo)} - ${new Date(h.criado_em).toLocaleString('pt-BR').slice(0,16)}</p>
+                            <div class="space-y-1">
+                                ${linhasHtml}
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                } catch (e) {
+                    container.innerHTML = '<p class="text-xs text-red-500">Erro ao carregar logs.</p>';
                 }
             },
 
@@ -6333,14 +6464,14 @@
                         throw dbError;
                     }
 
-                    app.logTimeline(opId, 'Arquivo Anexado', `O documento ${file.name} foi adicionado à pasta digital.`);
+                    app.logTimeline(opId, 'Arquivo Anexado', `O documento ${file.name} foi adicionado à pasta digital.`, true);
                     Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Sucesso!', showConfirmButton: false, timer: 1500});
                 } catch (e) {
                     Swal.fire('Erro ao Enviar', e.message, 'error');
                 } finally {
                     areaUpload.innerHTML = htmlOriginal;
                     app.loadArquivos(opId);
-                    app.loadTimeline(opId);
+                    app.loadLogs(opId);
                 }
             },
 

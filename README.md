@@ -51,7 +51,9 @@ A criação de novos usuários de forma segura e o fluxo de Pós-Venda (Negócio
 3. Insira as URLs dos Webhooks gerados no seu servidor n8n para:
    - Webhook: Negócio Ganho (Pós-Venda)
    - Webhook: Criar Novo Usuário
-4. A partir de agora, o Front-end disparará pacotes JSON automaticamente para esses endpoints sempre que as ações ocorrerem.
+4. Configure o **User API Access Token** do Chatwoot (URL e Account ID da instância ficam fixos no código).
+5. Ao salvar, os valores são persistidos na tabela **`app_config`** do Supabase (chaves `n8n_deal_webhook`, `n8n_user_webhook`, `chatwoot`). O CRM carrega essas chaves ao iniciar a sessão.
+6. A partir de agora, o front-end disparará pacotes JSON automaticamente para os webhooks quando as ações ocorrerem.
 
 ---
 

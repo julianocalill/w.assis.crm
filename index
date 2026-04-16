@@ -1213,19 +1213,15 @@
                         </div>
                         
                         <div class="space-y-5 max-w-lg">
-                            <div>
-                                <label class="text-xs font-bold text-textMuted uppercase mb-1 block">URL da sua aplicação ChatWoot</label>
-                                <input type="text" id="configCwUrl" placeholder="Ex: https://chat.wassis.com.br" class="w-full border border-border rounded-md px-4 py-2.5 text-sm outline-none focus:border-primary shadow-sm">
-                            </div>
-                            
-                            <div>
-                                <label class="text-xs font-bold text-textMuted uppercase mb-1 block">Account ID (ID da Conta)</label>
-                                <input type="text" id="configCwAccount" placeholder="Ex: 1" class="w-full border border-border rounded-md px-4 py-2.5 text-sm outline-none focus:border-primary shadow-sm">
+                            <div class="bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm text-textMain">
+                                <p class="text-[10px] text-textMuted uppercase font-bold mb-1">Instância Chatwoot (fixa no sistema)</p>
+                                <p class="font-medium"><span id="configCwUrlDisplay"></span> · Conta <span id="configCwAccountDisplay"></span></p>
                             </div>
                             
                             <div>
                                 <label class="text-xs font-bold text-textMuted uppercase mb-1 block">User API Access Token</label>
-                                <input type="text" id="configCwToken" placeholder="Cole o token gerado no painel do ChatWoot..." class="w-full border border-border rounded-md px-4 py-2.5 text-sm outline-none focus:border-primary shadow-sm">
+                                <p id="configCwTokenStatus" class="text-[10px] text-textMuted mb-1.5 leading-relaxed"></p>
+                                <input type="password" id="configCwToken" autocomplete="new-password" spellcheck="false" placeholder="Novo token (deixe em branco para manter o atual)" class="w-full border border-border rounded-md px-4 py-2.5 text-sm outline-none focus:border-primary shadow-sm">
                             </div>
                         </div>
                         
@@ -1393,7 +1389,9 @@
         const config = {
             sbUrl: 'https://hdpohfythurgbnzhygvl.supabase.co',
             sbKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkcG9oZnl0aHVyZ2Juemh5Z3ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyODI4NTIsImV4cCI6MjA4OTg1ODg1Mn0._WD6DxVqh2nwD9x07nxgWLYcbkYmu0NI1yBPyGQOi9s',
-            activePipeline: localStorage.getItem('nexus_active_pipe') || null
+            activePipeline: localStorage.getItem('nexus_active_pipe') || null,
+            cwUrl: 'https://chat.wassis.com.br',
+            cwAccount: '1'
         };
 
         const formatBRL = (val) => {
@@ -1411,6 +1409,23 @@
             if (!Number.isFinite(num)) return 0;
             return Math.round(num * 100) / 100;
         };
+
+        const formatHistoricoDataHora = (iso) => {
+            const d = new Date(iso);
+            if (Number.isNaN(d.getTime())) {
+                return '';
+            }
+            return d.toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        };
+
+        const escHtml = (txt) => String(txt ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
         const maskDecimalBRInput = (raw) => {
             if (raw == null) return '';
@@ -1696,13 +1711,22 @@
                 } else if (tabName === 'integracoes') {
                     document.getElementById('settings-content-integracoes').classList.remove('hidden');
                     
-                    document.getElementById('configCwUrl').value = localStorage.getItem('nexus_cw_url') || '';
-                    document.getElementById('configCwAccount').value = localStorage.getItem('nexus_cw_account') || '';
-                    document.getElementById('configCwToken').value = localStorage.getItem('nexus_cw_token') || '';
+                    const urlDisp = document.getElementById('configCwUrlDisplay');
+                    const accDisp = document.getElementById('configCwAccountDisplay');
+                    if (urlDisp) urlDisp.textContent = config.cwUrl || '';
+                    if (accDisp) accDisp.textContent = config.cwAccount || '';
+                    const cwTokInp = document.getElementById('configCwToken');
+                    const cwTokStatus = document.getElementById('configCwTokenStatus');
+                    if (cwTokInp) cwTokInp.value = '';
+                    if (cwTokStatus) {
+                        const hasTok = !!(app.appConfig && String(app.appConfig.chatwoot || '').trim());
+                        cwTokStatus.textContent = hasTok
+                            ? 'Token já está salvo no Supabase. O valor não é exibido. Digite abaixo apenas para substituir.'
+                            : 'Nenhum token salvo. Cole o token gerado no painel do Chatwoot.';
+                    }
                     
-                    // SPRINT 4
-                    document.getElementById('configN8nGanho').value = localStorage.getItem('nexus_n8n_ganho') || '';
-                    document.getElementById('configN8nUser').value = localStorage.getItem('nexus_n8n_user') || '';
+                    document.getElementById('configN8nGanho').value = (app.appConfig && app.appConfig.n8n_deal_webhook) || '';
+                    document.getElementById('configN8nUser').value = (app.appConfig && app.appConfig.n8n_user_webhook) || '';
                     
                 } else if (tabName === 'usuarios') {
                     document.getElementById('settings-content-usuarios').classList.remove('hidden');
@@ -2932,6 +2956,8 @@
             historicoOpsSortAsc: true,
             historicoOpsLastContatoId: null,
             isGerente: false,
+            /** Cache chave→valor da tabela public.app_config (webhooks n8n, token Chatwoot, etc.) */
+            appConfig: {},
 
             settingsEditingFunilId: null,
             settingsEtapas: [],
@@ -3253,6 +3279,7 @@
                     
                     await app.loadPipelines();
                     await app.loadConfigData();
+                    await app.loadAppConfig();
                     await app.loadData();
                     ui.renderContatosTable();
                     
@@ -3372,7 +3399,7 @@
 
             // SPRINT 4: Criar novo usuário (Dispara pro n8n)
             createUserN8n: async () => {
-                const n8nUserUrl = localStorage.getItem('nexus_n8n_user');
+                const n8nUserUrl = app.appConfig && app.appConfig.n8n_user_webhook;
                 
                 if (!n8nUserUrl) {
                     return Swal.fire('Aviso', 'A URL do webhook (Criar Usuário) não foi configurada na aba de Integrações API.', 'warning');
@@ -3446,9 +3473,9 @@
                     return Swal.fire('Atenção', 'Digite um número de telefone válido com DDD (ex: 11999999999).', 'warning');
                 }
 
-                const cwUrl = localStorage.getItem('nexus_cw_url') || config.cwUrl;
-                const cwAccount = localStorage.getItem('nexus_cw_account') || config.cwAccount;
-                const cwToken = localStorage.getItem('nexus_cw_token') || config.cwToken;
+                const cwUrl = config.cwUrl;
+                const cwAccount = config.cwAccount;
+                const cwToken = app.appConfig && app.appConfig.chatwoot;
 
                 if (!cwUrl || !cwToken || cwUrl === 'URL_DO_CHATWOOT') {
                     return Swal.fire('Integração Ausente', 'Configure a URL e o Token do Chatwoot no menu Configurações > Integrações API.', 'info');
@@ -4262,8 +4289,8 @@
             abrirChatwoot: (role = 'segurado') => {
                 const f = MODAL_CONTATO_FIELDS[role] || MODAL_CONTATO_FIELDS.segurado;
                 const cwId = document.getElementById(f.chatwoot).value.trim();
-                const cwUrl = localStorage.getItem('nexus_cw_url') || config.cwUrl;
-                const cwAccount = localStorage.getItem('nexus_cw_account') || config.cwAccount;
+                const cwUrl = config.cwUrl;
+                const cwAccount = config.cwAccount;
                 
                 if (!cwUrl || cwUrl === 'URL_DO_CHATWOOT') {
                     return Swal.fire('Aviso', 'A URL do seu Chatwoot não foi configurada.', 'info');
@@ -4276,22 +4303,69 @@
                 window.open(`${cwUrl}/app/accounts/${cwAccount}/conversations/${cwId}`, '_blank');
             },
 
-            saveIntegrations: () => {
-                const url = document.getElementById('configCwUrl').value.trim();
-                const account = document.getElementById('configCwAccount').value.trim();
+            saveIntegrations: async () => {
+                if (!app.isGerente) {
+                    return Swal.fire('Acesso negado', 'Somente gerente pode alterar integrações.', 'warning');
+                }
+
                 const token = document.getElementById('configCwToken').value.trim();
-                
                 const n8nGanho = document.getElementById('configN8nGanho').value.trim();
                 const n8nUser = document.getElementById('configN8nUser').value.trim();
 
-                localStorage.setItem('nexus_cw_url', url);
-                localStorage.setItem('nexus_cw_account', account);
-                localStorage.setItem('nexus_cw_token', token);
-                
-                localStorage.setItem('nexus_n8n_ganho', n8nGanho);
-                localStorage.setItem('nexus_n8n_user', n8nUser);
+                const now = new Date().toISOString();
+                const rows = [
+                    { key: 'n8n_deal_webhook', value: n8nGanho, descricao: 'Webhook fixo para negócio ganho / pós-venda', atualizado_em: now },
+                    { key: 'n8n_user_webhook', value: n8nUser, descricao: 'Webhook fixo para criação de novo usuário', atualizado_em: now }
+                ];
+                if (token) {
+                    rows.unshift({ key: 'chatwoot', value: token, descricao: null, atualizado_em: now });
+                }
 
-                Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Todas as integrações salvas!', showConfirmButton: false, timer: 2000});
+                try {
+                    const { error } = await app.sb.from('app_config').upsert(rows, { onConflict: 'key' });
+                    if (error) {
+                        throw error;
+                    }
+                    rows.forEach(r => { app.appConfig[r.key] = r.value; });
+                    const cwTokInp = document.getElementById('configCwToken');
+                    const cwTokStatus = document.getElementById('configCwTokenStatus');
+                    if (cwTokInp) cwTokInp.value = '';
+                    if (cwTokStatus) {
+                        const hasTok = !!(app.appConfig && String(app.appConfig.chatwoot || '').trim());
+                        cwTokStatus.textContent = hasTok
+                            ? 'Token já está salvo no Supabase. O valor não é exibido. Digite abaixo apenas para substituir.'
+                            : 'Nenhum token salvo. Cole o token gerado no painel do Chatwoot.';
+                    }
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Integrações salvas no Supabase!', showConfirmButton: false, timer: 2000 });
+                } catch (e) {
+                    console.error(e);
+                    Swal.fire('Erro', (e && e.message) ? e.message : 'Falha ao salvar app_config.', 'error');
+                }
+            },
+
+            loadAppConfig: async () => {
+                app.appConfig = {};
+                try {
+                    const { data, error } = await app.sb.from('app_config').select('key, value');
+                    if (error) {
+                        throw error;
+                    }
+                    (data || []).forEach(r => { app.appConfig[r.key] = r.value; });
+                    ['nexus_cw_url', 'nexus_cw_account', 'nexus_cw_token', 'nexus_n8n_ganho', 'nexus_n8n_user'].forEach(k => localStorage.removeItem(k));
+                    return true;
+                } catch (e) {
+                    console.error('app_config não carregou:', e);
+                    app.appConfig = {};
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'warning',
+                        title: 'Integrações (app_config) não carregaram. Verifique permissões ou rede.',
+                        showConfirmButton: false,
+                        timer: 5000
+                    });
+                    return false;
+                }
             },
 
             loadConfigData: async () => {
@@ -6087,7 +6161,7 @@
                     await app.loadContatos();
                     await app.loadData();
                     
-                    const n8nUrl = localStorage.getItem('nexus_n8n_ganho');
+                    const n8nUrl = app.appConfig && app.appConfig.n8n_deal_webhook;
                     if (n8nUrl) {
                         fetch(n8nUrl, {
                             method: 'POST',
@@ -6178,7 +6252,7 @@
                     await app.loadData();
                     Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Negócio arquivado como perdido.', showConfirmButton: false, timer: 2000 });
 
-                    const n8nUrl = localStorage.getItem('nexus_n8n_ganho');
+                    const n8nUrl = app.appConfig && app.appConfig.n8n_deal_webhook;
                     if (n8nUrl) {
                         fetch(n8nUrl, {
                             method: 'POST',
@@ -6316,11 +6390,18 @@
                             cor = 'bg-orange-500';
                         }
 
+                        const quando = formatHistoricoDataHora(h.criado_em);
+                        const autorCor = h.criado_por ? app.corretores.find(c => String(c.id) === String(h.criado_por)) : null;
+                        const autorNome = (autorCor?.nome_completo || '').trim();
+                        const metaLinha = autorNome
+                            ? `${escHtml(h.tipo)} - ${escHtml(quando)} · por ${escHtml(autorNome)}`
+                            : `${escHtml(h.tipo)} - ${escHtml(quando)}`;
+
                         return `
                         <div class="relative mb-6">
                             <span class="absolute -left-[29px] ${cor} w-3 h-3 rounded-full ring-4 ring-slate-100 shadow-sm"></span>
-                            <p class="text-[10px] text-textMuted font-bold mb-0.5 uppercase tracking-wider">${h.tipo} - ${new Date(h.criado_em).toLocaleString('pt-BR').slice(0,16)}</p>
-                            <p class="text-sm text-textMain bg-slate-50 p-3 rounded-lg border border-slate-100 shadow-sm mt-1">${h.descricao}</p>
+                            <p class="text-[10px] text-textMuted font-bold mb-0.5 uppercase tracking-wider">${metaLinha}</p>
+                            <p class="text-sm text-textMain bg-slate-50 p-3 rounded-lg border border-slate-100 shadow-sm mt-1">${escHtml(h.descricao)}</p>
                         </div>
                         `;
                     }).join('');
@@ -6341,18 +6422,23 @@
                         container.innerHTML = '<p class="text-xs text-textMuted border border-dashed border-slate-200 rounded-lg p-3 text-center">Nenhum log registrado ainda.</p>';
                         return;
                     }
-                    const esc = (txt) => String(txt ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     container.innerHTML = data.map(h => {
                         const linhas = String(h.descricao || '')
                             .split('\n')
                             .map(l => l.trim())
                             .filter(Boolean);
                         const linhasHtml = linhas.length > 0
-                            ? linhas.map(l => `<p class="text-sm text-textMain">${esc(l)}</p>`).join('')
-                            : `<p class="text-sm text-textMain">${esc(h.descricao || '')}</p>`;
+                            ? linhas.map(l => `<p class="text-sm text-textMain">${escHtml(l)}</p>`).join('')
+                            : `<p class="text-sm text-textMain">${escHtml(h.descricao || '')}</p>`;
+                        const quando = formatHistoricoDataHora(h.criado_em);
+                        const autorCor = h.criado_por ? app.corretores.find(c => String(c.id) === String(h.criado_por)) : null;
+                        const autorNome = (autorCor?.nome_completo || '').trim();
+                        const metaLinha = autorNome
+                            ? `${escHtml(h.tipo)} - ${escHtml(quando)} · por ${escHtml(autorNome)}`
+                            : `${escHtml(h.tipo)} - ${escHtml(quando)}`;
                         return `
                         <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
-                            <p class="text-[10px] text-textMuted font-bold mb-2 uppercase tracking-wider">${esc(h.tipo)} - ${new Date(h.criado_em).toLocaleString('pt-BR').slice(0,16)}</p>
+                            <p class="text-[10px] text-textMuted font-bold mb-2 uppercase tracking-wider">${metaLinha}</p>
                             <div class="space-y-1">
                                 ${linhasHtml}
                             </div>

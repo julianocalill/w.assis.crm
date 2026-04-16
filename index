@@ -3496,37 +3496,62 @@
                 inputCw.placeholder = "Buscando na nuvem...";
                 
                 try {
-                    const searchRes = await fetch(`${cwUrl}/api/v1/accounts/${cwAccount}/contacts/search?q=${encodeURIComponent(phoneQuery)}`, {
-                        headers: { 'api_access_token': cwToken }
+                    const proxyUrl = `${config.sbUrl}/functions/v1/chatwoot-proxy`;
+
+                    const searchRes = await fetch(proxyUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            path: `/api/v1/accounts/${cwAccount}/contacts/search?q=${encodeURIComponent(phoneQuery)}`,
+                            cwUrl,
+                            cwToken
+                        })
                     });
                     
-                    if (!searchRes.ok) throw new Error('Falha API');
-                    
                     const contactData = await searchRes.json();
+
+                    if (contactData.error) throw new Error(contactData.error);
                     
                     if (contactData.payload && contactData.payload.length > 0) {
                         const contactId = contactData.payload[0].id;
                         
-                        const convRes = await fetch(`${cwUrl}/api/v1/accounts/${cwAccount}/contacts/${contactId}/conversations`, {
-                            headers: { 'api_access_token': cwToken }
+                        const convRes = await fetch(proxyUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                path: `/api/v1/accounts/${cwAccount}/contacts/${contactId}/conversations`,
+                                cwUrl,
+                                cwToken
+                            })
                         });
                         const convData = await convRes.json();
                         
                         if (convData.payload && convData.payload.length > 0) {
-                            inputCw.value = convData.payload[0].id;
-                            Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Conversa Encontrada!', showConfirmButton: false, timer: 2000});
+                            const conversationId = String(convData.payload[0].id);
+                            inputCw.value = conversationId;
+
+                            const contatoId = document.getElementById(f.hiddenId)?.value;
+                            if (contatoId) {
+                                const { error: saveErr } = await app.sb.from('contatos').update({ chatwoot_id: conversationId }).eq('id', contatoId);
+                                if (!saveErr) {
+                                    const ct = app.contatos.find(c => c.id == contatoId);
+                                    if (ct) ct.chatwoot_id = conversationId;
+                                }
+                            }
+
+                            Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Conversa encontrada e salva!', showConfirmButton: false, timer: 2000});
                         } else {
                             Swal.fire('Aviso', 'Nenhuma conversa ativa foi encontrada para esse contato.', 'info');
                             inputCw.placeholder = "Sem conversa ativa";
                         }
                     } else {
-                        Swal.fire('Aviso', 'Nenhuma conversa ativa foi encontrada para esse contato.', 'info');
-                        inputCw.placeholder = "Sem conversa ativa";
+                        Swal.fire('Aviso', 'Nenhum contato encontrado com esse telefone no Chatwoot.', 'info');
+                        inputCw.placeholder = "Contato não encontrado";
                     }
                     
                 } catch (error) {
                     console.error("Erro Chatwoot:", error);
-                    Swal.fire('Erro', 'Falha ao buscar no Chatwoot (CORS ou erro de rede).', 'error');
+                    Swal.fire('Erro', 'Falha ao buscar no Chatwoot. Verifique as configurações.', 'error');
                     inputCw.placeholder = "Erro de conexão API";
                 } finally {
                     btnBusca.innerHTML = originalBtnText;

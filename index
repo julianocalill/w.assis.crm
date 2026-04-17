@@ -714,7 +714,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[11px] font-bold text-textMuted uppercase tracking-wider mb-1">Telefone</label>
-                        <input type="text" id="editContatoTelefone" oninput="this.value = window.ui.maskPhone(this.value)" placeholder="(00) 00000-0000" class="w-full border border-border rounded-lg p-2.5 outline-none focus:border-primary text-sm font-mono">
+                        <input type="text" id="editContatoTelefone" placeholder="+5511996572103" class="w-full border border-border rounded-lg p-2.5 outline-none focus:border-primary text-sm font-mono">
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-textMuted uppercase tracking-wider mb-1">E-mail</label>
@@ -824,7 +824,7 @@
                             <div>
                                 <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Telefone</label>
                                 <div class="flex gap-2">
-                                    <input type="text" id="opTelefone" placeholder="(00) 00000-0000" oninput="this.value = window.ui.maskPhone(this.value); app.handleContatoFieldInput('segurado', 'telefone', this.value); app.syncDealModalSeguradoHeader();" onblur="app.buscarChatwoot('segurado')" class="flex-1 border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono">
+                                    <input type="text" id="opTelefone" placeholder="+5511996572103" oninput="app.handleContatoFieldInput('segurado', 'telefone', this.value); app.syncDealModalSeguradoHeader();" onblur="app.buscarChatwoot('segurado')" class="flex-1 border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono">
                                     <button type="button" id="btnBuscarChatwoot" onclick="app.buscarChatwoot('segurado')" class="bg-slate-100 hover:bg-slate-200 text-textMain border border-border transition px-5 rounded-lg font-bold whitespace-nowrap outline-none shadow-sm flex items-center">
                                         <i class="fa-solid fa-magnifying-glass mr-2"></i> Buscar Conversa
                                     </button>
@@ -880,7 +880,7 @@
                             <div>
                                 <label class="text-[11px] font-bold text-textMuted mb-1 block uppercase tracking-wider">Telefone</label>
                                 <div class="flex gap-2">
-                                    <input type="text" id="opRespTelefone" placeholder="(00) 00000-0000" oninput="this.value = window.ui.maskPhone(this.value); app.handleContatoFieldInput('responsavel', 'telefone', this.value)" onblur="app.buscarChatwoot('responsavel')" class="flex-1 border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono bg-white">
+                                    <input type="text" id="opRespTelefone" placeholder="+5511996572103" oninput="app.handleContatoFieldInput('responsavel', 'telefone', this.value)" onblur="app.buscarChatwoot('responsavel')" class="flex-1 border border-border rounded-lg px-4 py-3 text-sm text-textMain outline-none focus:border-primary transition font-mono bg-white">
                                     <button type="button" id="btnBuscarChatwootResp" onclick="app.buscarChatwoot('responsavel')" class="bg-slate-100 hover:bg-slate-200 text-textMain border border-border transition px-5 rounded-lg font-bold whitespace-nowrap outline-none shadow-sm flex items-center">
                                         <i class="fa-solid fa-magnifying-glass mr-2"></i> Buscar Conversa
                                     </button>
@@ -1553,13 +1553,6 @@
                     v = v.replace(/(\d{4})(\d)/, "$1-$2");
                 }
                 return v.substring(0, 18);
-            },
-
-            maskPhone: (v) => {
-                v = v.replace(/\D/g, "");
-                v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
-                v = v.replace(/(\d)(\d{4})$/, "$1-$2");
-                return v.substring(0, 15);
             },
 
             nomeSeguradoExibicao: (o) => {
@@ -2238,7 +2231,7 @@
                 document.getElementById('editContatoId').value = c.id;
                 document.getElementById('editContatoNome').value = c.nome || '';
                 document.getElementById('editContatoDocumento').value = c.documento ? ui.maskDoc(c.documento) : '';
-                document.getElementById('editContatoTelefone').value = c.telefone ? ui.maskPhone(c.telefone) : '';
+                document.getElementById('editContatoTelefone').value = c.telefone || '';
                 document.getElementById('editContatoEmail').value = c.email || '';
                 document.getElementById('editContatoChatwoot').value = c.chatwoot_id || '';
                 const ecg = document.getElementById('editContatoGerente');
@@ -2314,7 +2307,7 @@
                 document.getElementById('opDocumento').value = d.documento_contato ? ui.maskDoc(d.documento_contato) : ''; 
                 document.getElementById('opNome').value = ui.nomeSeguradoExibicao(d);
                 document.getElementById('opEmail').value = d.email_contato || '';
-                document.getElementById('opTelefone').value = d.telefone_contato ? ui.maskPhone(d.telefone_contato) : '';
+                document.getElementById('opTelefone').value = d.telefone_contato || '';
                 document.getElementById('opChatwootId').value = d.chatwoot_id || '';
                 document.getElementById('opBuscaCliente').value = ui.nomeSeguradoExibicao(d) || '';
                 document.getElementById('opBuscaStatus').innerText = d.contato_id ? 'Segurado vinculado a um cadastro existente.' : '';
@@ -2333,7 +2326,7 @@
                     const rc = app.contatos.find(c => c.id == rid);
                     document.getElementById('opRespNome').value = (d.nome_responsavel || rc?.nome || '');
                     document.getElementById('opRespDocumento').value = (d.documento_responsavel || rc?.documento) ? ui.maskDoc(d.documento_responsavel || rc?.documento) : '';
-                    document.getElementById('opRespTelefone').value = (d.telefone_responsavel || rc?.telefone) ? ui.maskPhone(d.telefone_responsavel || rc?.telefone) : '';
+                    document.getElementById('opRespTelefone').value = (d.telefone_responsavel || rc?.telefone) || '';
                     document.getElementById('opRespEmail').value = d.email_responsavel || rc?.email || '';
                     document.getElementById('opRespChatwootId').value = d.chatwoot_responsavel || rc?.chatwoot_id || '';
                     document.getElementById('opBuscaResponsavel').value = (d.nome_responsavel || rc?.nome || '');
@@ -2799,7 +2792,7 @@
 
                 tbody.innerHTML = contatosPagina.map(c => {
                     const docSpan = c.documento ? `<span class="text-[10px] font-normal text-textMuted uppercase mt-1 block tracking-wider">${ui.maskDoc(c.documento)}</span>` : '';
-                    const telSpan = c.telefone ? ui.maskPhone(c.telefone) : '-';
+                    const telSpan = c.telefone ? app.escapeHtml(c.telefone) : '-';
                     const badgeClass = c.is_segurado ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200';
                     const badgeText = c.is_segurado ? 'Segurado' : 'Lead Ativo';
                     const nome = app.escapeHtml(c.nome || 'Sem nome');
@@ -3462,15 +3455,18 @@
 
             buscarChatwoot: async (role = 'segurado') => {
                 const f = MODAL_CONTATO_FIELDS[role] || MODAL_CONTATO_FIELDS.segurado;
-                let telRaw = document.getElementById(f.telefone).value;
-                if(!telRaw) {
+                const telInput = (document.getElementById(f.telefone).value || '').trim();
+                if (!telInput) {
                     return;
                 }
 
-                let cleanPhone = telRaw.replace(/\D/g, '');
-                
-                if (cleanPhone.length < 10) {
-                    return Swal.fire('Atenção', 'Digite um número de telefone válido com DDD (ex: 11999999999).', 'warning');
+                const e164 = app.toPhoneE164(telInput);
+                const cleanPhone = app.normalizeDigits(e164);
+                if (!e164 || !cleanPhone) {
+                    return Swal.fire('Atenção', 'Digite um telefone válido (DDD + número, ex.: 11999999999, ou E.164 ex.: +5511999999999).', 'warning');
+                }
+                if (cleanPhone.startsWith('55') && cleanPhone.length !== 12 && cleanPhone.length !== 13) {
+                    return Swal.fire('Atenção', 'Telefone Brasil inválido. Use DDD + número (10 ou 11 dígitos) ou formato +55...', 'warning');
                 }
 
                 const cwUrl = config.cwUrl;
@@ -3482,11 +3478,7 @@
                 }
 
                 const inputCw = document.getElementById(f.chatwoot);
-                
-                if (cleanPhone.length === 10 || cleanPhone.length === 11) {
-                    cleanPhone = '55' + cleanPhone;
-                }
-                const phoneQuery = '+' + cleanPhone;
+                const phoneQuery = e164;
 
                 const btnBusca = document.getElementById(f.btnChatwoot);
                 const originalBtnText = btnBusca.innerHTML;
@@ -3561,6 +3553,39 @@
 
             normalizeDigits: (v) => (v || '').toString().replace(/\D/g, ''),
 
+            /**
+             * Normaliza telefone para E.164 Brasil (+55) quando aplicável.
+             * @returns {string} Ex.: +5511996572103, ou '' se não houver dígitos suficientes.
+             */
+            toPhoneE164: (v) => {
+                const d = app.normalizeDigits(v);
+                if (!d) {
+                    return '';
+                }
+                if (d.length === 10 || d.length === 11) {
+                    return '+' + '55' + d;
+                }
+                if (d.startsWith('55')) {
+                    if (d.length >= 12 && d.length <= 13) {
+                        return '+' + d;
+                    }
+                    if (d.length > 13) {
+                        return '+' + d.slice(0, 13);
+                    }
+                    return '';
+                }
+                if (d.length >= 10) {
+                    return '+' + d;
+                }
+                return '';
+            },
+
+            /** Dígitos do E.164 (sem +) para comparação de duplicidade e busca. */
+            phoneComparableKey: (v) => {
+                const e = app.toPhoneE164(v);
+                return e ? app.normalizeDigits(e) : '';
+            },
+
             /** Somente dígitos para validação de documento (CPF/CNPJ). */
             normalizeDocumento: (v) => app.normalizeDigits(v),
 
@@ -3585,6 +3610,27 @@
                 r = sum % 11;
                 const dv2 = r < 2 ? 0 : 11 - r;
                 return dv2 === parseInt(d[10], 10);
+            },
+
+            /**
+             * Chave de telefone a partir do termo de busca (evita tratar CPF 11 dígitos como DDD+número).
+             * @returns {string} Chave comparável ou '' (use matching parcial com qDigits nesse caso).
+             */
+            queryPhoneComparableKey: (raw) => {
+                const q = app.normalizeDigits(raw);
+                if (!q) {
+                    return '';
+                }
+                if (q.length === 14) {
+                    return '';
+                }
+                if (q.length === 11 && app.isValidCPF(q)) {
+                    return '';
+                }
+                if (q.length >= 10 || q.startsWith('55')) {
+                    return app.phoneComparableKey(q);
+                }
+                return '';
             },
 
             isValidCNPJ: (digits) => {
@@ -3690,7 +3736,8 @@
                 const nome = app.normalizeSearchText(contato?.nome);
                 const doc = app.normalizeDigits(contato?.documento);
                 const email = app.normalizeSearchText(contato?.email);
-                const telefone = app.normalizeDigits(contato?.telefone);
+                const telKey = app.phoneComparableKey(contato?.telefone);
+                const qPhoneKey = app.queryPhoneComparableKey(rawQuery);
                 let score = 0;
 
                 if (qDigits) {
@@ -3698,10 +3745,12 @@
                     else if (doc && doc.startsWith(qDigits)) score = Math.max(score, 110);
                     else if (doc && doc.includes(qDigits)) score = Math.max(score, 95);
 
-                    if (telefone) {
-                        if (telefone === qDigits) score = Math.max(score, 120);
-                        else if (telefone.startsWith(qDigits)) score = Math.max(score, 105);
-                        else if (telefone.includes(qDigits)) score = Math.max(score, 90);
+                    if (telKey) {
+                        if (qPhoneKey) {
+                            if (telKey === qPhoneKey) score = Math.max(score, 120);
+                            else if (telKey.startsWith(qPhoneKey)) score = Math.max(score, 105);
+                        }
+                        if (qDigits && telKey.includes(qDigits)) score = Math.max(score, 90);
                     }
                 }
 
@@ -3819,6 +3868,7 @@
             buscarOportunidadesGlobalSearch: (termo) => {
                 const qText = app.normalizeText(termo);
                 const qDigits = app.normalizeDigits(termo);
+                const qPhoneKey = app.queryPhoneComparableKey(termo);
                 if (!qText && !qDigits) {
                     return [];
                 }
@@ -3831,21 +3881,21 @@
                     const nomeSeg = app.normalizeText(ui.nomeSeguradoExibicao(op));
                     const ct = op.contato_id ? app.contatos.find(c => c.id === op.contato_id) : null;
                     const docCt = app.normalizeDigits(op.documento_contato ?? ct?.documento);
-                    const telCt = app.normalizeDigits(op.telefone_contato ?? ct?.telefone);
+                    const telCtKey = app.phoneComparableKey(op.telefone_contato ?? ct?.telefone);
                     const nomeCt = app.normalizeText(ct?.nome || '');
                     const nomeResp = app.normalizeText(op.nome_responsavel || '');
                     const docResp = app.normalizeDigits(op.documento_responsavel || '');
-                    const telResp = app.normalizeDigits(op.telefone_responsavel || '');
+                    const telRespKey = app.phoneComparableKey(op.telefone_responsavel || '');
 
                     if (qDigits && (qDigits.length === 11 || qDigits.length === 14)) {
                         if (docCt === qDigits || docResp === qDigits) {
                             score = Math.max(score, 100);
                         }
                     }
-                    if (qDigits && telCt && (telCt === qDigits || (qDigits.length >= 8 && telCt.startsWith(qDigits)))) {
+                    if (qPhoneKey && telCtKey && (telCtKey === qPhoneKey || (qPhoneKey.length >= 8 && telCtKey.startsWith(qPhoneKey)))) {
                         score = Math.max(score, 90);
                     }
-                    if (qDigits && telResp && (telResp === qDigits || (qDigits.length >= 8 && telResp.startsWith(qDigits)))) {
+                    if (qPhoneKey && telRespKey && (telRespKey === qPhoneKey || (qPhoneKey.length >= 8 && telRespKey.startsWith(qPhoneKey)))) {
                         score = Math.max(score, 88);
                     }
                     if (qText && nomeSeg.includes(qText)) {
@@ -3864,13 +3914,13 @@
                     if (qDigits && docCt && docCt.includes(qDigits)) {
                         score = Math.max(score, 70);
                     }
-                    if (qDigits && telCt && telCt.includes(qDigits)) {
+                    if (qDigits && telCtKey && telCtKey.includes(qDigits)) {
                         score = Math.max(score, 68);
                     }
                     if (qDigits && docResp && docResp.includes(qDigits)) {
                         score = Math.max(score, 67);
                     }
-                    if (qDigits && telResp && telResp.includes(qDigits)) {
+                    if (qDigits && telRespKey && telRespKey.includes(qDigits)) {
                         score = Math.max(score, 66);
                     }
                     return score;
@@ -3961,7 +4011,7 @@
                     boxCt.innerHTML = contatosMatches.map(c => {
                         const nome = app.escapeHtml(c.nome || 'Sem nome');
                         const doc = c.documento ? ui.maskDoc(c.documento) : '-';
-                        const tel = c.telefone ? ui.maskPhone(c.telefone) : '-';
+                        const tel = c.telefone ? app.escapeHtml(c.telefone) : '-';
                         return `
                             <button type="button" role="option" onclick="app.openGlobalSearchContato(${c.id})"
                                 class="w-full text-left px-3 py-2.5 rounded-lg border border-transparent hover:bg-slate-50 hover:border-border transition">
@@ -4063,6 +4113,7 @@
             buscarContatosNoModal: (termo) => {
                 const qText = app.normalizeText(termo);
                 const qDigits = app.normalizeDigits(termo);
+                const qPhoneKey = app.queryPhoneComparableKey(termo);
 
                 if (!qText && !qDigits) return [];
                 if (!qDigits && qText.length < 2) return [];
@@ -4071,16 +4122,16 @@
                 app.contatos.forEach(c => {
                     const nome = app.normalizeText(c.nome);
                     const doc = app.normalizeDigits(c.documento);
-                    const tel = app.normalizeDigits(c.telefone);
+                    const telKey = app.phoneComparableKey(c.telefone);
                     let score = 0;
 
                     if (qDigits && (qDigits.length === 11 || qDigits.length === 14) && doc === qDigits) {
                         score = 100;
-                    } else if (qDigits && tel && (tel === qDigits || tel.startsWith(qDigits))) {
+                    } else if (qPhoneKey && telKey && (telKey === qPhoneKey || telKey.startsWith(qPhoneKey))) {
                         score = 90;
                     } else if (qText && nome.includes(qText)) {
                         score = 80;
-                    } else if (qDigits && ((doc && doc.includes(qDigits)) || (tel && tel.includes(qDigits)))) {
+                    } else if (qDigits && ((doc && doc.includes(qDigits)) || (telKey && telKey.includes(qDigits)))) {
                         score = 70;
                     }
 
@@ -4126,7 +4177,7 @@
                 box.innerHTML = resultados.map(c => {
                     const nome = app.escapeHtml(c.nome || 'Sem nome');
                     const doc = c.documento ? ui.maskDoc(c.documento) : '-';
-                    const tel = c.telefone ? ui.maskPhone(c.telefone) : '-';
+                    const tel = c.telefone ? app.escapeHtml(c.telefone) : '-';
                     return `
                         <button type="button" onclick="app.selecionarContatoModal('${role}', ${c.id})" class="w-full text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition">
                             <div class="text-sm font-semibold text-textMain">${nome}</div>
@@ -4177,7 +4228,7 @@
                 document.getElementById(f.hiddenId).value = c.id;
                 document.getElementById(f.nome).value = c.nome || '';
                 document.getElementById(f.documento).value = c.documento ? ui.maskDoc(c.documento) : '';
-                document.getElementById(f.telefone).value = c.telefone ? ui.maskPhone(c.telefone) : '';
+                document.getElementById(f.telefone).value = c.telefone || '';
                 document.getElementById(f.email).value = c.email || '';
                 document.getElementById(f.chatwoot).value = c.chatwoot_id || '';
                 if (role === 'segurado') {
@@ -5241,6 +5292,23 @@
                 }
             },
 
+            /** Atualiza listas/segurados/dashboard sem reconstruir o board Kanban (evita piscar o DOM inteiro). */
+            refreshDerivedUiAfterOpChange: async () => {
+                await app.loadNegociosGanhosCache();
+                ui.renderSeguradosTable();
+                const listaVisivel = !document.getElementById('board-lista').classList.contains('hidden');
+                if (listaVisivel) {
+                    await app.loadListaPage(true);
+                } else {
+                    ui.renderListTable();
+                    app.syncListaLoadMoreButton();
+                }
+                if (!document.getElementById('view-dashboard').classList.contains('hidden')) {
+                    await app.loadMetricsOpsSnapshot();
+                    app.updateDashboard();
+                }
+            },
+
             sortList: (col, forceCurrentDirection = false) => {
                 if (!forceCurrentDirection) {
                     if (app.currentSortCol === col) {
@@ -5596,7 +5664,7 @@
                 const contatoId = document.getElementById('editContatoId').value;
                 const nome = document.getElementById('editContatoNome').value;
                 const docRaw = document.getElementById('editContatoDocumento').value.replace(/\D/g, '');
-                const telRaw = document.getElementById('editContatoTelefone').value.replace(/\D/g, '');
+                const telKeyNew = app.phoneComparableKey(document.getElementById('editContatoTelefone').value);
                 const email = document.getElementById('editContatoEmail').value;
                 const cwId = document.getElementById('editContatoChatwoot').value;
 
@@ -5617,8 +5685,8 @@
                         return;
                     }
                 }
-                if (telRaw) {
-                    const telExiste = app.contatos.find(c => c.telefone && c.telefone.replace(/\D/g, '') === telRaw && c.id != contatoId);
+                if (telKeyNew) {
+                    const telExiste = app.contatos.find(c => c.id != contatoId && app.phoneComparableKey(c.telefone) === telKeyNew);
                     if (telExiste) {
                         Swal.fire('Atenção', 'Já existe outro cliente cadastrado com este Telefone: ' + telExiste.nome, 'warning');
                         btnSubmit.innerHTML = originalText;
@@ -5631,7 +5699,7 @@
                     const dadosParaSalvar = { 
                         nome: nome, 
                         documento: document.getElementById('editContatoDocumento').value, 
-                        telefone: document.getElementById('editContatoTelefone').value, 
+                        telefone: app.toPhoneE164(document.getElementById('editContatoTelefone').value) || '', 
                         email: email, 
                         chatwoot_id: cwId,
                         gerente_id: document.getElementById('editContatoGerente').value || null
@@ -5714,7 +5782,7 @@
                     nome: nomeSegRaw || '',
                     documento: document.getElementById('opDocumento').value,
                     email: document.getElementById('opEmail').value,
-                    telefone: document.getElementById('opTelefone').value,
+                    telefone: app.toPhoneE164(document.getElementById('opTelefone').value) || '',
                     chatwoot_id: document.getElementById('opChatwootId').value,
                     corretor_id: app.user.id,
                     gerente_id: document.getElementById('opGerente').value || null
@@ -5724,7 +5792,7 @@
                     nome: document.getElementById('opRespNome').value,
                     documento: document.getElementById('opRespDocumento').value,
                     email: document.getElementById('opRespEmail').value,
-                    telefone: document.getElementById('opRespTelefone').value,
+                    telefone: app.toPhoneE164(document.getElementById('opRespTelefone').value) || '',
                     chatwoot_id: document.getElementById('opRespChatwootId').value,
                     corretor_id: app.user.id
                 } : null;
@@ -5758,9 +5826,9 @@
                         }
                     }
 
-                    const telRawSeg = contatoData.telefone.replace(/\D/g, '');
-                    if (telRawSeg) {
-                        const telExiste = app.contatos.find(c => c.telefone && c.telefone.replace(/\D/g, '') === telRawSeg && !idsExcluirSeg.some(id => c.id == id));
+                    const telKeySeg = app.phoneComparableKey(contatoData.telefone);
+                    if (telKeySeg) {
+                        const telExiste = app.contatos.find(c => !idsExcluirSeg.some(id => c.id == id) && app.phoneComparableKey(c.telefone) === telKeySeg);
                         if (telExiste) {
                             Swal.fire('Atenção', 'Já existe um cliente cadastrado com este telefone: ' + telExiste.nome, 'warning');
                             btnSubmit.innerHTML = originalBtnText;
@@ -5789,9 +5857,9 @@
                             return;
                         }
                     }
-                    const telR = respData.telefone.replace(/\D/g, '');
-                    if (telR) {
-                        const telExiste = app.contatos.find(c => c.telefone && c.telefone.replace(/\D/g, '') === telR && !idsExcluirResp.some(id => c.id == id));
+                    const telKeyR = app.phoneComparableKey(respData.telefone);
+                    if (telKeyR) {
+                        const telExiste = app.contatos.find(c => !idsExcluirResp.some(id => c.id == id) && app.phoneComparableKey(c.telefone) === telKeyR);
                         if (telExiste) {
                             Swal.fire('Atenção', 'Responsável: já existe um cliente com este telefone: ' + telExiste.nome, 'warning');
                             btnSubmit.innerHTML = originalBtnText;
@@ -5903,6 +5971,9 @@
                 };
 
                 try {
+                    let dealSavedId = opId ? String(opId) : '';
+                    let dealWasInsert = !opId;
+
                     if (!tituloOnly) {
                         if (!contatoId) {
                             const { data: newContato, error: errC } = await app.sb.from('contatos').insert([contatoData]).select();
@@ -6009,6 +6080,8 @@
                             ? 'Oportunidade criada (cadastro do segurado pendente).'
                             : 'Oportunidade gerada e atrelada ao contato.';
                         app.logTimeline(newOp[0].id, 'Criação', logMsg, true);
+                        dealSavedId = String(newOp[0].id);
+                        dealWasInsert = true;
                     } else {
                         const trackedFields = [
                             { key: 'etapa_nome', label: 'etapa' },
@@ -6060,7 +6133,20 @@
                         await app.loadContatos();
                     }
 
-                    await app.loadData();
+                    const listaVisivelAfter = !document.getElementById('board-lista').classList.contains('hidden');
+                    const canKanbanIncremental = Boolean(dealSavedId) && !listaVisivelAfter && app.isKanbanCardMode();
+                    if (!canKanbanIncremental) {
+                        await app.loadData();
+                    } else {
+                        const { data: rowFresh, error: selErr } = await app.sb.from('oportunidades').select('*').eq('id', dealSavedId).single();
+                        if (selErr || !rowFresh) {
+                            await app.loadData();
+                        } else {
+                            const evType = dealWasInsert ? 'INSERT' : 'UPDATE';
+                            app.syncKanbanOpFromRecord({ eventType: evType, new: rowFresh, old: opAtual || {} });
+                            await app.refreshDerivedUiAfterOpChange();
+                        }
+                    }
 
                 } catch (err) {
                     Swal.fire('Erro ao Salvar', err.message, 'error');
